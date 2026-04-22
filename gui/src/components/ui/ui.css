@@ -35,12 +35,12 @@
 }
 
 .btn-primary {
-    background: #1d4ed8;
-    color: #fff;
+    background: #FFDE42;
+    color: #1f2937;
 }
 
 .btn-primary:hover {
-    background: #1e40af;
+    background: #F1C40F;
 }
 
 .btn-outline {
@@ -78,7 +78,7 @@
 }
 
 .dot-yellow {
-    background-color: #facc15;
+    background-color: #FFDE42;
 }
 
 .dot-green {
@@ -88,4 +88,3 @@
 .dot-red {
     background-color: #ef4444;
 }
-
