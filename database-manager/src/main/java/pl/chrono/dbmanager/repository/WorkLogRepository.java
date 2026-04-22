@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 import pl.chrono.dbmanager.model.WorkLog;
 
 @Repository
-public interface WorkLogRepository extends JpaRepository<WorkLog, Integer> {}
+public interface WorkLogRepository extends JpaRepository<WorkLog, Integer> {
+}

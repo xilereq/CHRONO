@@ -9,10 +9,10 @@ import pl.chrono.dbmanager.repository.UserRepository;
 @RequestMapping("/api/users")
 public class UserController extends BaseController<User, Integer> {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    public UserController(UserRepository userRepository) {
-        super(userRepository);
-        this.userRepository = userRepository;
-    }
+  public UserController(UserRepository userRepository) {
+    super(userRepository);
+    this.userRepository = userRepository;
+  }
 }

@@ -9,10 +9,10 @@ import pl.chrono.dbmanager.repository.HolidayRepository;
 @RequestMapping("/api/holiday")
 public class HolidayController extends BaseController<Holiday, Integer> {
 
-    private final HolidayRepository holidayRepository;
+  private final HolidayRepository holidayRepository;
 
-    public HolidayController(HolidayRepository holidayRepository) {
-        super(holidayRepository);
-        this.holidayRepository = holidayRepository;
-    }
+  public HolidayController(HolidayRepository holidayRepository) {
+    super(holidayRepository);
+    this.holidayRepository = holidayRepository;
+  }
 }

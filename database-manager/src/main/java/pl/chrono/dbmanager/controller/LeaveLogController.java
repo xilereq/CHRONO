@@ -9,10 +9,10 @@ import pl.chrono.dbmanager.repository.LeaveLogRepository;
 @RequestMapping("/api/leave_log")
 public class LeaveLogController extends BaseController<LeaveLog, Integer> {
 
-    private final LeaveLogRepository leaveLogRepository;
+  private final LeaveLogRepository leaveLogRepository;
 
-    public LeaveLogController(LeaveLogRepository leaveLogRepository) {
-        super(leaveLogRepository);
-        this.leaveLogRepository = leaveLogRepository;
-    }
+  public LeaveLogController(LeaveLogRepository leaveLogRepository) {
+    super(leaveLogRepository);
+    this.leaveLogRepository = leaveLogRepository;
+  }
 }

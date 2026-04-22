@@ -9,10 +9,10 @@ import pl.chrono.dbmanager.repository.PolicyRepository;
 @RequestMapping("/api/policy")
 public class PolicyController extends BaseController<Policy, Integer> {
 
-    private final PolicyRepository policyRepository;
+  private final PolicyRepository policyRepository;
 
-    public PolicyController(PolicyRepository policyRepository) {
-        super(policyRepository);
-        this.policyRepository = policyRepository;
-    }
+  public PolicyController(PolicyRepository policyRepository) {
+    super(policyRepository);
+    this.policyRepository = policyRepository;
+  }
 }

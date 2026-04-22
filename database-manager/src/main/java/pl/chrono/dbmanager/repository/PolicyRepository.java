@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 import pl.chrono.dbmanager.model.Policy;
 
 @Repository
-public interface PolicyRepository extends JpaRepository<Policy, Integer> {}
+public interface PolicyRepository extends JpaRepository<Policy, Integer> {
+}

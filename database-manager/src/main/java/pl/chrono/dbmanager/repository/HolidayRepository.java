@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 import pl.chrono.dbmanager.model.Holiday;
 
 @Repository
-public interface HolidayRepository extends JpaRepository<Holiday, Integer> {}
+public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
+}

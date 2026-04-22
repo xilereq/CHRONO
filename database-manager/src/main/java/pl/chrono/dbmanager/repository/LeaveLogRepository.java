@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 import pl.chrono.dbmanager.model.LeaveLog;
 
 @Repository
-public interface LeaveLogRepository extends JpaRepository<LeaveLog, Integer> {}
+public interface LeaveLogRepository extends JpaRepository<LeaveLog, Integer> {
+}

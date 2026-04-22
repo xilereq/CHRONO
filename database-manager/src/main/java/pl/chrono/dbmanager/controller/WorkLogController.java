@@ -9,10 +9,10 @@ import pl.chrono.dbmanager.repository.WorkLogRepository;
 @RequestMapping("/api/work_log")
 public class WorkLogController extends BaseController<WorkLog, Integer> {
 
-    private final WorkLogRepository workLogRepository;
+  private final WorkLogRepository workLogRepository;
 
-    public WorkLogController(WorkLogRepository workLogRepository) {
-        super(workLogRepository);
-        this.workLogRepository = workLogRepository;
-    }
+  public WorkLogController(WorkLogRepository workLogRepository) {
+    super(workLogRepository);
+    this.workLogRepository = workLogRepository;
+  }
 }
