@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sidebar, Topbar } from './components';
-import Dashboard from './pages/Dashboard';
+import { Grafik, Dashboard, MyRequests, RequestDetail } from './pages';
+import { Routes, Route } from 'react-router-dom';
 import './index.css';
 
 const App = () => {
@@ -9,7 +10,14 @@ const App = () => {
             <Sidebar />
             <div className="app-content">
                 <Topbar />
-                <Dashboard />
+                <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/my-requests" element={<MyRequests />} />
+                    <Route path="/my-requests/:id" element={<RequestDetail />} />
+                    <Route path="/raporty" element={<div style={{padding: '2rem'}}>Raporty (w budowie)</div>} />
+                    <Route path="/grafik" element={<Grafik />} />
+                    <Route path="/ustawienia" element={<div style={{padding: '2rem'}}>Ustawienia (w budowie)</div>} />
+                </Routes>
             </div>
         </div>
     );

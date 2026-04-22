@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 import './layout.css';
 
@@ -10,26 +11,26 @@ const Sidebar = () => {
                 <Clock size={32} />
             </div>
             <nav className="sidebar-nav">
-                <div className="sidebar-item active">
+                <NavLink to="/" end className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <LayoutGrid size={24} />
                     <span>Pulpit</span>
-                </div>
-                <div className="sidebar-item">
+                </NavLink>
+                <NavLink to="/my-requests" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <FileText size={24} />
-                    <span>Moje Wnioski</span>
-                </div>
-                <div className="sidebar-item">
+                    <span>My Requests</span>
+                </NavLink>
+                <NavLink to="/raporty" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <BarChart2 size={24} />
                     <span>Raporty</span>
-                </div>
-                <div className="sidebar-item">
+                </NavLink>
+                <NavLink to="/grafik" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <Calendar size={24} />
                     <span>Grafik</span>
-                </div>
-                <div className="sidebar-item mt-auto">
+                </NavLink>
+                <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
                     <Settings size={24} />
                     <span>Ustawienia</span>
-                </div>
+                </NavLink>
             </nav>
         </aside>
     );
