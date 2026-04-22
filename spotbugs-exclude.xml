@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Or>
+            <Annotation name="org.springframework.stereotype.Controller"/>
+            <Annotation name="org.springframework.web.bind.annotation.RestController"/>
+            <Annotation name="org.springframework.stereotype.Service"/>
+            <Annotation name="org.springframework.stereotype.Component"/>
+        </Or>
+    </Match>
+
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Field name="repository"/>
+    </Match>
+
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*\.dto\..*"/>
+    </Match>
+
+    <Match>
+        <Class name="~.*Test"/>
+    </Match>
+
+</FindBugsFilter>
