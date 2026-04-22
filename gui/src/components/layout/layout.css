@@ -1,0 +1,130 @@
+/* --- Układ główny (Layout) --- */
+.app-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* --- Pasek Boczny (Sidebar) --- */
+.sidebar {
+    width: 6rem;
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    color: #1d4ed8;
+    margin-bottom: 2rem;
+    padding: 0.5rem;
+    border: 2px solid #1d4ed8;
+    border-radius: 0.5rem;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    width: 100%;
+}
+
+.sidebar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.sidebar-item:hover {
+    color: #1d4ed8;
+}
+
+.sidebar-item.active {
+    color: #1d4ed8;
+    background: #eff6ff;
+    padding: 0.75rem 0;
+    border-right: 4px solid #1d4ed8;
+    font-weight: 500;
+}
+
+.sidebar-item.mt-auto {
+    margin-top: auto;
+}
+
+/* --- Pasek Górny (Topbar) --- */
+.topbar {
+    height: 4rem;
+    background: #1d4ed8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.user-profile {
+    background: #fff;
+    color: #1f2937;
+    padding: 0.375rem 1rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.user-icon {
+    background: #dbeafe;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    color: #1d4ed8;
+}
+
+.notification-bell {
+    position: relative;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+
+.notification-bell:hover {
+    color: #ef4444;
+}
+
+.notification-dot {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #ef4444;
+    border-radius: 9999px;
+}
+
