@@ -1,0 +1,90 @@
+/* --- Komponenty UI --- */
+.card {
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #f3f4f6;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    color: #1f2937;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    margin-top: 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+.btn {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.875rem;
+    border: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: #FFDE42;
+    color: #1f2937;
+}
+
+.btn-primary:hover {
+    background: #F1C40F;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #374151;
+}
+
+.btn-outline:hover {
+    background: #f9fafb;
+}
+
+.btn-large {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* --- Odznaki (Badge) --- */
+.badge-success-text {
+    color: #16a34a;
+    font-weight: 500;
+}
+
+.badge-dots {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    display: block;
+}
+
+.dot-yellow {
+    background-color: #FFDE42;
+}
+
+.dot-green {
+    background-color: #22c55e;
+}
+
+.dot-red {
+    background-color: #ef4444;
+}
