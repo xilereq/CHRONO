@@ -19,6 +19,7 @@
 		<module>user-manager</module>
 		<module>database-manager</module>
 		<module>workforce-api</module>
+        <module>application-manager</module>
 	</modules>
 
 	<properties>
