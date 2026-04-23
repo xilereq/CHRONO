@@ -15,6 +15,7 @@ import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,5 +68,58 @@ class ApplicationServiceTest {
     assertEquals(employeeId, result.getEmployeeId());
 
     verify(applicationRepository, times(1)).save(any(Application.class));
+  }
+
+  @Test
+  void changeStatus_ShouldUpdateStatusAndReviewer_WhenBothExist() {
+    Long applicationId = 1L;
+    Integer reviewerId = 2;
+    String newStatus = "APPROVED";
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.HOLIDAY_LEAVE);
+
+    User mockReviewer = new User();
+    mockReviewer.setUserId(reviewerId);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
+    when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
+
+    ApplicationDTO result = applicationService.changeStatus(applicationId, newStatus, reviewerId);
+
+    assertNotNull(result);
+    assertEquals(newStatus, result.getStatus());
+    verify(applicationRepository, times(1)).save(mockApplication);
+  }
+
+  @Test
+  void getUserApplications_ShouldReturnListOfDtos() {
+    Integer employeeId = 1;
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(employeeId);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(10L);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.SICK_LEAVE);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+
+    when(applicationRepository.findAllByEmployeeUserId(employeeId))
+      .thenReturn(List.of(mockApplication));
+
+    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(10L, result.getFirst().getId());
+    assertEquals("SICK_LEAVE", result.getFirst().getType());
   }
 }
