@@ -15,7 +15,7 @@ const Login = ({ onLoginSuccess }) => {
 
         try {
             await authService.login(email, password);
-            onLoginSuccess(); // Funkcja przekazana z App.js, by zaktualizować stan
+            onLoginSuccess();
         } catch (err) {
             setError(err.message || 'Wystąpił błąd podczas logowania.');
         } finally {

@@ -1,4 +1,3 @@
-// Domyślny adres Twojego backendu Spring Boot. Zmień port, jeśli używasz innego.
 const API_URL = 'http://localhost:8080/api/auth';
 
 export const authService = {
@@ -17,7 +16,6 @@ export const authService = {
 
         const data = await response.json();
 
-        // Zapisujemy tokeny oraz e-mail użytkownika w pamięci przeglądarki
         if (data.accessToken) {
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);
@@ -28,20 +26,17 @@ export const authService = {
     },
 
     logout: () => {
-        // Czyścimy pamięć przy wylogowywaniu
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userEmail');
-        window.location.reload(); // Odświeża stronę, co przeniesie nas na ekran logowania
+        window.location.reload();
     },
 
     isAuthenticated: () => {
-        // Sprawdzamy, czy użytkownik ma zapisany token dostępu
         return !!localStorage.getItem('accessToken');
     },
 
     getUserEmail: () => {
-        // Pobieramy e-mail zalogowanego użytkownika
         return localStorage.getItem('userEmail');
     }
 };

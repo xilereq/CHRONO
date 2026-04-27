@@ -25,7 +25,6 @@ public class AuthService {
   }
 
   public AuthResponse login(AuthRequest request) {
-    // To wywołanie rzuci wyjątek, jeśli hasło się nie zgadza
     authenticationManager.authenticate(
       new UsernamePasswordAuthenticationToken(
         request.getEmail(),
@@ -36,7 +35,6 @@ public class AuthService {
     UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
     String jwtToken = jwtService.generateToken(userDetails);
 
-    // Tutaj można wygenerować i zapisać do bazy refreshToken dla Usera (pominięte dla zwięzłości)
     String refreshToken = UUID.randomUUID().toString();
 
     return new AuthResponse(jwtToken, refreshToken);

@@ -21,7 +21,6 @@ const Topbar = ({ userEmail, onLogout }) => {
                     </div>
                 </div>
 
-                {/* Przycisk wylogowania */}
                 <button onClick={onLogout} className="logout-btn" title="Wyloguj się">
                     <LogOut size={18} />
                 </button>

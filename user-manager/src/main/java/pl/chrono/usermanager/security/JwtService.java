@@ -17,11 +17,11 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-  // Wygeneruj mocny klucz (np. 256-bitowy string Base64) i wrzuć do application.properties
+  // Trzeba wygenerować jakiś klucz i wrzucić go do application.properties
   @Value("${application.security.jwt.secret-key:twój_bardzo_długi_i_tajny_klucz_zapasowy_jesli_nie_ma_w_properties}")
   private String secretKey;
 
-  @Value("${application.security.jwt.expiration:86400000}") // Domyślnie 1 dzień w ms
+  @Value("${application.security.jwt.expiration:86400000}")
   private long jwtExpiration;
 
   public String extractUsername(String token) {
@@ -49,7 +49,7 @@ public class JwtService {
 
   public boolean isTokenValid(String token, UserDetails userDetails) {
     final String username = extractUsername(token);
-    return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
   }
 
   private boolean isTokenExpired(String token) {

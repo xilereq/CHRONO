@@ -26,7 +26,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Umożliwia użycie @PreAuthorize("hasRole('HR')") w kontrolerach
+@EnableMethodSecurity
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthFilter;
@@ -40,11 +40,11 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-      .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Konfiguracja CORS dla Reacta
-      .csrf(AbstractHttpConfigurer::disable) // Wyłączamy CSRF dla bezstanowego JWT
+      .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+      .csrf(AbstractHttpConfigurer::disable)
       .authorizeHttpRequests(auth -> auth
-        .requestMatchers("/api/auth/**").permitAll() // Logowanie jest publiczne
-        .anyRequest().authenticated() // Reszta wymaga tokena
+        .requestMatchers("/api/auth/**").permitAll()
+        .anyRequest().authenticated()
       )
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authenticationProvider(authenticationProvider())
@@ -55,7 +55,6 @@ public class SecurityConfig {
 
   @Bean
   public AuthenticationProvider authenticationProvider() {
-    // Poprawka: Przekazujemy userDetailsService bezpośrednio do konstruktora
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
     authProvider.setPasswordEncoder(passwordEncoder());
     return authProvider;
@@ -74,7 +73,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Adres Twojego frontendu
+    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
     configuration.setAllowCredentials(true);
