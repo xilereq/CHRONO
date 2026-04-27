@@ -1,9 +1,9 @@
 import React from 'react';
-import { Bell, User } from 'lucide-react';
+import { Bell, User, LogOut } from 'lucide-react';
 
 import './layout.css';
 
-const Topbar = () => {
+const Topbar = ({ userEmail, onLogout }) => {
     return (
         <header className="topbar">
             <h1></h1>
@@ -12,12 +12,19 @@ const Topbar = () => {
                     <div className="user-icon">
                         <User size={16} />
                     </div>
-                    Jan Kowalski (Pracownik)
+                    <span className="user-email" title={userEmail || 'Zalogowany'}>
+                        {userEmail || 'Zalogowany'}
+                    </span>
                     <div className="notification-bell">
                         <Bell size={18} />
                         <span className="notification-dot"></span>
                     </div>
                 </div>
+
+                {/* Przycisk wylogowania */}
+                <button onClick={onLogout} className="logout-btn" title="Wyloguj się">
+                    <LogOut size={18} />
+                </button>
             </div>
         </header>
     );
