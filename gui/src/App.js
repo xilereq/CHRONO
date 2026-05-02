@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
 import { Grafik, Dashboard, MyRequests, RequestDetail, Raporty} from './pages';
-import Login from './pages/Login';
+import Login from './pages/Login/Login';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/authService';
 import './index.css';

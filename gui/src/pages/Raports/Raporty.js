@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Card } from '../components';
+import { Card } from '../../components';
 import { Clock, CalendarOff, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import '../features/dashboard.css';
+import '../main.css';
 import './raporty.css';
 
 const MONTHS = [

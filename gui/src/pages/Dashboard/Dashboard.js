@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {TimeTracker, StatusCharts, QuickRequests, RecentRequests} from '../features';
+import {TimeTracker, StatusCharts, QuickRequests, RecentRequests} from '../../pages';
 
 const Dashboard = () => {
     return (

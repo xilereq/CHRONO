@@ -1,0 +1,122 @@
+.grafik-root {
+    padding: 1.5rem;
+    box-sizing: border-box;
+}
+
+.grafik-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.grafik-header-left {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.grafik-title {
+    font-weight: 700;
+}
+
+.grafik-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.grafik-weekday {
+    text-align: center;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.grafik-cell {
+    min-height: 4.5rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    background: #fff;
+    border: 1px solid #f3f4f6;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.grafik-cell--empty {
+    background: transparent;
+    cursor: default;
+    border: 1px solid transparent;
+}
+
+.grafik-cell-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.grafik-cell-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.day-number {
+    font-weight: 600;
+    color: #111827;
+}
+
+.day-number--today {
+    background: #2563eb;
+    color: #fff;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.4rem;
+    font-size: 0.95rem;
+}
+
+.day-events {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.event-badge {
+    background: #fde68a;
+    color: #92400e;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.event-line {
+    font-size: 0.85rem;
+    color: #374151;
+    margin-top: 0.35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.grafik-panel-wrap {
+    margin-top: 1rem;
+}
+
+.grafik-panel {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.grafik-panel--empty {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #6b7280;
+}
+
+.grafik-panel-title {
+    margin-top: 0;
+}

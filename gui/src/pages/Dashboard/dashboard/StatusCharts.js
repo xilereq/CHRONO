@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '../../../components';
 
-import '../../dashboard.css';
+import '../../main.css';
 
 const StatusCharts = () => {
     return (

@@ -1,6 +1,6 @@
 import React from 'react';
-import '../features/dashboard.css';
-import { RequestList } from '../components';
+import '../main.css';
+import { RequestList } from '../../components';
 
 const statusClass = () => 'status-badge';
 

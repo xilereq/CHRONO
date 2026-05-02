@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import '../features/dashboard.css';
+import '../main.css';
+import './Grafik.css';
 
 function generateMonth(year, month) {
     const first = new Date(year, month, 1);
@@ -47,11 +48,11 @@ const Grafik = () => {
     const formatKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     return (
-        <div style={{padding: '1.5rem'}}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
-                <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+        <div className="grafik-root">
+            <div className="grafik-header">
+                <div className="grafik-header-left">
                     <button className="btn" onClick={prevMonth}>◀</button>
-                    <div style={{fontWeight: 700}}>{monthName} {view.year}</div>
+                    <div className="grafik-title">{monthName} {view.year}</div>
                     <button className="btn" onClick={nextMonth}>▶</button>
                 </div>
                 <div>
@@ -59,20 +60,25 @@ const Grafik = () => {
                 </div>
             </div>
 
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.25rem'}}>
+            <div className="grafik-grid">
                 {['Ndz', 'Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob'].map(d => (
-                    <div key={d} style={{textAlign: 'center', fontWeight: 600, color: '#4b5563'}}>{d}</div>
+                    <div key={d} className="grafik-weekday">{d}</div>
                 ))}
 
                 {days.map((d, idx) => {
                     const key = d ? formatKey(d) : `empty-${idx}`;
                     const events = d ? (sampleEvents[key] || []) : [];
                     const isToday = d && d.toDateString() === today.toDateString();
+                    const cellClass = d ? `grafik-cell` : `grafik-cell grafik-cell--empty`;
                     return (
-                        <div key={key} style={{minHeight: '4.5rem', borderRadius: '0.5rem', padding: '0.5rem', background: d ? '#fff' : 'transparent', border: '1px solid #f3f4f6', cursor: d ? 'pointer' : 'default'}} onClick={() => d && setSelectedDate(d)}>
+                        <div
+                            key={key}
+                            className={cellClass}
+                            onClick={() => d && setSelectedDate(d)}
+                        >
                             {d && (
-                                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%'}}>
-                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <div className="grafik-cell-inner">
+                                    <div className="grafik-cell-top">
                                         <div className={`day-number ${isToday ? 'day-number--today' : ''}`}>{d.getDate()}</div>
                                         <div className="day-events">
                                             {events.length > 0 && (
@@ -91,10 +97,10 @@ const Grafik = () => {
                 })}
             </div>
 
-            <div style={{marginTop: '1rem'}}>
+            <div className="grafik-panel-wrap">
                 {selectedDate ? (
-                    <div style={{padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', background: '#fff'}}>
-                        <h3 style={{marginTop: 0}}>Wydarzenia — {selectedDate.toDateString()}</h3>
+                    <div className="grafik-panel">
+                        <h3 className="grafik-panel-title">Wydarzenia — {selectedDate.toDateString()}</h3>
                         { (sampleEvents[formatKey(selectedDate)] || []).length === 0 ? (
                             <div>Brak wydarzeń tego dnia.</div>
                         ) : (
@@ -106,7 +112,7 @@ const Grafik = () => {
                         )}
                     </div>
                 ) : (
-                    <div style={{padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', background: '#fff'}}>Wybierz dzień by zobaczyć wydarzenia</div>
+                    <div className="grafik-panel grafik-panel--empty">Wybierz dzień by zobaczyć wydarzenia</div>
                 )}
             </div>
         </div>
@@ -114,4 +120,3 @@ const Grafik = () => {
 }
 
 export default Grafik;
-

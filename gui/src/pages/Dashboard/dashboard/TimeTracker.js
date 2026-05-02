@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Coffee, ArrowRightSquare, Briefcase, Stethoscope } from 'lucide-react';
 import { Card, Button } from '../../../components';
 
-import '../../dashboard.css';
+import '../../main.css';
 
 const TimeTracker = () => {
     const [now, setNow] = useState(new Date());

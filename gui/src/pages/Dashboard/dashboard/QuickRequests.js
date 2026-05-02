@@ -2,7 +2,7 @@ import React from 'react';
 import { User, Clock } from 'lucide-react';
 import { Card, Button } from '../../../components';
 
-import '../../dashboard.css';
+import '../../main.css';
 
 export default function QuickRequests() {
     return (
