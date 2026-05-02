@@ -5,55 +5,74 @@ import './Login.css';
 const Login = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
-
+        if (!email || !password) {
+            setError('Wprowadź email i hasło.');
+            return;
+        }
+        setLoading(true);
         try {
             await authService.login(email, password);
             onLoginSuccess();
         } catch (err) {
-            setError(err.message || 'Wystąpił błąd podczas logowania.');
+            setError(err?.message || 'Błąd logowania. Sprawdź dane i spróbuj ponownie.');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="login-container">
-            <div className="login-card">
-                <h2>Logowanie do Chrono2</h2>
-                <p>Wprowadź swoje dane, aby kontynuować</p>
+        <div className="login-page">
+            <div className="login-card" role="main" aria-labelledby="login-title">
+                <div className="brand-wrap">
+                    <div className="brand-icon" aria-hidden="true">
+                        {/* prosty SVG zegara */}
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="9" stroke="#E6B800" strokeWidth="1.6" fill="none"/>
+                            <path d="M12 7.5V12l3 1.8" stroke="#E6B800" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
 
-                {error && <div className="login-error">{error}</div>}
+                <h1 id="login-title" className="login-title">Logowanie do Chrono2</h1>
+                <p className="login-subtitle">Wprowadź swoje dane, aby kontynuować</p>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Adres e-mail</label>
+                {error && <div className="login-error" role="alert">{error}</div>}
+
+                <form className="login-form" onSubmit={handleSubmit} noValidate>
+                    <label className="field">
+                        <span className="field-label">Adres e-mail</span>
                         <input
+                            className="field-input"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="np. pracownik@chrono.pl"
+                            autoComplete="username"
+                            placeholder="admin@chrono.pl"
                             required
                         />
-                    </div>
-                    <div className="form-group">
-                        <label>Hasło</label>
+                    </label>
+
+                    <label className="field">
+                        <span className="field-label">Hasło</span>
                         <input
+                            className="field-input"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Wpisz hasło"
+                            autoComplete="current-password"
+                            placeholder="●●●●●●●"
                             required
                         />
-                    </div>
-                    <button type="submit" className="login-button" disabled={isLoading}>
-                        {isLoading ? 'Logowanie...' : 'Zaloguj się'}
+                    </label>
+
+                    <button className="btn-primary" type="submit" disabled={loading}>
+                        {loading ? 'Logowanie...' : 'Zaloguj się'}
                     </button>
                 </form>
             </div>

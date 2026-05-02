@@ -1,27 +1,148 @@
-.login-container {
+.login-page {
+    min-height: 100vh;
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: #f4f7f6;
+    justify-content: center;
+    background: #f5f7f6; /* jasne tło */
+    padding: 2rem;
+    box-sizing: border-box;
 }
 
 .login-card {
-    background: white;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 400px;
+    max-width: 460px;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 2.25rem 2rem;
+    box-shadow: 0 10px 30px rgba(12, 24, 48, 0.08);
+    border: 1px solid rgba(0,0,0,0.04);
     text-align: center;
 }
 
-.login-card h2 { margin-top: 0; color: #333; }
-.login-card p { color: #666; margin-bottom: 20px; }
-.login-error { color: #d9534f; background: #f2dede; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
-.form-group { text-align: left; margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-.form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-.login-button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-.login-button:hover { background-color: #0056b3; }
-.login-button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
+/* logo circle */
+.brand-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: -48px; /* lekko nad kartą */
+    margin-bottom: 8px;
+    pointer-events: none;
+}
+.brand-icon {
+    width: 64px;
+    height: 64px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #F6D33C; /* żółty obwód */
+    box-shadow: 0 6px 18px rgba(6,22,40,0.06);
+}
+
+/* titling */
+.login-title {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+}
+.login-subtitle {
+    margin: 0 0 1.1rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+/* error */
+.login-error {
+    background: #fff2f2;
+    color: #9b1c1c;
+    padding: 0.55rem 0.8rem;
+    border-radius: 6px;
+    margin-bottom: 0.9rem;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+/* form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+}
+.field-label {
+    font-size: 0.85rem;
+    color: #374151;
+    margin-bottom: 0.35rem;
+}
+.field-input {
+    height: 40px;
+    padding: 0 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #dfe6ea;
+    background: #f8fafb;
+    font-size: 0.95rem;
+    color: #111827;
+    outline: none;
+    transition: box-shadow .12s, border-color .12s;
+}
+.field-input:focus {
+    border-color: #e6b800;
+    box-shadow: 0 0 0 4px rgba(230,184,0,0.08);
+    background: #fff;
+}
+
+.btn-primary {
+    display: block;
+    width: 100%;
+    height: 44px;
+    padding: 0 1rem;
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #F6D33C;
+    color: #111827;
+    font-weight: 700;
+    font-size: 0.98rem;
+    border-radius: 6px;
+    box-shadow: 0 6px 12px rgba(246,211,60,0.14);
+    cursor: pointer;
+    transition: background .12s ease, box-shadow .12s ease, transform .06s ease;
+    text-align: center;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: #F2C200;
+    box-shadow: 0 8px 18px rgba(242,194,0,0.18);
+    outline: none;
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+    background: #F6D33C;
+}
+.btn-primary:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+/* footer link */
+.login-footer {
+    margin-top: 0.9rem;
+}
+.link-muted {
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-decoration: underline;
+}
