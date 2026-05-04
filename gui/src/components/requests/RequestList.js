@@ -1,6 +1,7 @@
 import React from 'react';
 import './requests.css';
 import { RequestCard } from '../../components';
+import Button from '../ui/Button';
 
 const RequestList = ({ requests }) => {
     return (
@@ -63,12 +64,12 @@ const RequestList = ({ requests }) => {
             <div className="section-panel">
                 <div className="section-title">Wnioski</div>
                 <div className="submit-actions">
-                    <button className="big-yellow-btn">
+                    <Button className="big-yellow-btn" variant="primary">
                         👤 Złóż wniosek urlopowy
-                    </button>
-                    <button className="big-yellow-btn">
+                    </Button>
+                    <Button className="big-yellow-btn" variant="primary">
                         🕒 Złóż wniosek o nadgodziny
-                    </button>
+                    </Button>
                 </div>
             </div>
 

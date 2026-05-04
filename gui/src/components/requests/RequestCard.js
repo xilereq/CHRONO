@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Button from '../ui/Button';
 
 const RequestCard = ({ request }) => {
     const navigate = useNavigate();
@@ -20,22 +21,23 @@ const RequestCard = ({ request }) => {
             <td>
                 <div className="actions-cell">
                     {/* Przycisk Podglądu */}
-                    <button
+                    <Button
                         className="action-btn"
+                        variant="outline"
                         title="Podgląd"
                         onClick={() => navigate(`/my-requests/${request.id}`)}
                     >
                         👁️
-                    </button>
+                    </Button>
 
                     {/* Dodatkowe akcje na podstawie statusu */}
                     {request.status === 'Zatwierdzony' && (
-                        <button className="action-btn" title="Drukuj PDF">🖨️</button>
+                        <Button className="action-btn" variant="outline" title="Drukuj PDF">🖨️</Button>
                     )}
                     {request.status === 'Weryfikacja' && (
                         <>
-                            <button className="action-btn" title="Edytuj">📝</button>
-                            <button className="action-btn delete" title="Usuń">🗑️</button>
+                            <Button className="action-btn" variant="outline" title="Edytuj">📝</Button>
+                            <Button className="action-btn delete" variant="outline" title="Usuń">🗑️</Button>
                         </>
                     )}
                 </div>

@@ -60,41 +60,43 @@ const Grafik = () => {
                 </div>
             </div>
 
-            <div className="grafik-grid">
-                {['Ndz', 'Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob'].map(d => (
-                    <div key={d} className="grafik-weekday">{d}</div>
-                ))}
+            <div className="grafik-scroll">
+                <div className="grafik-grid">
+                    {['Ndz', 'Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob'].map(d => (
+                        <div key={d} className="grafik-weekday">{d}</div>
+                    ))}
 
-                {days.map((d, idx) => {
-                    const key = d ? formatKey(d) : `empty-${idx}`;
-                    const events = d ? (sampleEvents[key] || []) : [];
-                    const isToday = d && d.toDateString() === today.toDateString();
-                    const cellClass = d ? `grafik-cell` : `grafik-cell grafik-cell--empty`;
-                    return (
-                        <div
-                            key={key}
-                            className={cellClass}
-                            onClick={() => d && setSelectedDate(d)}
-                        >
-                            {d && (
-                                <div className="grafik-cell-inner">
-                                    <div className="grafik-cell-top">
-                                        <div className={`day-number ${isToday ? 'day-number--today' : ''}`}>{d.getDate()}</div>
-                                        <div className="day-events">
-                                            {events.length > 0 && (
-                                                <span className="event-badge">{events.length}</span>
-                                            )}
+                    {days.map((d, idx) => {
+                        const key = d ? formatKey(d) : `empty-${idx}`;
+                        const events = d ? (sampleEvents[key] || []) : [];
+                        const isToday = d && d.toDateString() === today.toDateString();
+                        const cellClass = d ? `grafik-cell` : `grafik-cell grafik-cell--empty`;
+                        return (
+                            <div
+                                key={key}
+                                className={cellClass}
+                                onClick={() => d && setSelectedDate(d)}
+                            >
+                                {d && (
+                                    <div className="grafik-cell-inner">
+                                        <div className="grafik-cell-top">
+                                            <div className={`day-number ${isToday ? 'day-number--today' : ''}`}>{d.getDate()}</div>
+                                            <div className="day-events">
+                                                {events.length > 0 && (
+                                                    <span className="event-badge">{events.length}</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="event-line">
+                                            {events.length > 0 ? `${events[0].time} — ${events[0].title}` : ''}
                                         </div>
                                     </div>
-
-                                    <div className="event-line">
-                                        {events.length > 0 ? `${events[0].time} — ${events[0].title}` : ''}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             <div className="grafik-panel-wrap">

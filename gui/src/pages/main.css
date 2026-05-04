@@ -40,10 +40,23 @@
 }
 
 .time-clock {
-    font-size: 5rem;
+    /* responsive scaling: pozwól tekstowi się zmniejszać przy węższych ekranach */
+    font-size: clamp(2.25rem, 8vw, 5rem);
     font-weight: 700;
     letter-spacing: -0.025em;
     line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dostosowujemy wysokość kontenera zegara do mniejszych ekranów */
+@media (max-width: 900px) {
+    .time-display { height: 11rem; padding: 1rem; }
+}
+@media (max-width: 600px) {
+    .time-display { height: 9rem; padding: 0.75rem; }
+    .time-header-text { font-size: 0.75rem; }
 }
 
 .time-header {

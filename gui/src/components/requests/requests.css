@@ -203,3 +203,86 @@
     height: 100%;
     overflow: auto;
 }
+
+/* Responsywność */
+@media (max-width: 900px) {
+    .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-select, .filter-input {
+        min-width: unset;
+        width: 100%;
+    }
+    .requests-table th, .requests-table td {
+        padding: 0.75rem 0.4rem;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .requests-container { padding: 0.5rem; }
+    .section-panel { padding: 0.9rem; }
+
+    /* Stosuj pojedynczą kolumnę listy i bardziej kompaktowe karty */
+    .requests-table { font-size: 0.85rem; }
+
+    /* Przyciski szybkich akcji - kolumnowo i pełna szerokość */
+    .submit-actions {
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .big-yellow-btn, .btn.btn-primary.big-yellow-btn {
+        height: 48px;
+        border-radius: 10px;
+        padding: 0 0.75rem;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+    /* Akcje na kartach - układać w pionie */
+    .actions-cell {
+        flex-direction: column;
+        gap: 0.4rem;
+        align-items: stretch;
+    }
+    .action-btn {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* Przyciski kompatybilne z Button component */
+.btn.big-yellow-btn, .big-yellow-btn {
+    /* zachowujemy wygląd dużego żółtego przycisku, ale używając klas z Button */
+    background: linear-gradient(180deg, #FFDE42 0%, #FFD23A 100%);
+    border: 1px solid rgba(0,0,0,0.06);
+    color: #111827;
+    height: 56px;
+    padding: 0 1rem;
+    border-radius: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    width: 100%;
+    justify-content: flex-start;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset;
+}
+
+/* Make action buttons consistent with ui Button variants */
+.btn.btn-outline.action-btn {
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    min-width: 40px;
+}
+
+/* small helper to stack filters + actions responsively */
+.responsive-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+@media (max-width: 600px) {
+    .responsive-row > * { flex: 1 1 100%; }
+}

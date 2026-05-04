@@ -120,3 +120,36 @@
 .grafik-panel-title {
     margin-top: 0;
 }
+
+.grafik-scroll {
+    overflow-x: visible;
+}
+
+@media (max-width: 768px) {
+    .grafik-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .grafik-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(96px, 1fr));
+        gap: 0.25rem;
+        width: max-content;
+    }
+
+    .grafik-cell {
+        min-width: 96px;
+    }
+
+    .grafik-weekday {
+        min-width: 96px;
+    }
+}
+
+@media (max-width: 420px) {
+    .grafik-grid {
+        grid-template-columns: repeat(7, minmax(80px, 1fr));
+    }
+    .grafik-cell, .grafik-weekday { min-width: 80px; }
+}
