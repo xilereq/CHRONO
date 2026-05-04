@@ -15,7 +15,11 @@
 	<description>time-manager</description>
 
 	<dependencies>
-
+        <dependency>
+            <groupId>pl.chrono</groupId>
+            <artifactId>database-manager</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 	</dependencies>
 
 </project>
