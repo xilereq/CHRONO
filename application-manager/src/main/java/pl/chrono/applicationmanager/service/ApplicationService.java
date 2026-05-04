@@ -1,5 +1,7 @@
 package pl.chrono.applicationmanager.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,9 +14,6 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class ApplicationService implements I_UserApplication {
@@ -24,9 +23,9 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
-  public ApplicationDTO createApplication(ApplicationDTO request, Integer employeeId) { // Zmiana na Integer
+  public ApplicationDTO createApplication(ApplicationDTO request, Integer employeeId) {
     User employee = userRepository.findById(employeeId)
-      .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
+        .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
 
     Application application = new Application();
     application.setEmployee(employee);
@@ -44,10 +43,11 @@ public class ApplicationService implements I_UserApplication {
   @Transactional
   public ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId) {
     Application application = applicationRepository.findById(applicationId)
-      .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
+        .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
 
     User reviewer = userRepository.findById(reviewerId)
-      .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: " + reviewerId));
+        .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: "
+            + reviewerId));
 
     application.setStatus(ApplicationStatus.valueOf(newStatus));
     application.setReviewer(reviewer);
@@ -59,9 +59,9 @@ public class ApplicationService implements I_UserApplication {
   @Override
   public List<ApplicationDTO> getUserApplications(Integer employeeId) {
     return applicationRepository.findAllByEmployeeUserId(employeeId)
-      .stream()
-      .map(this::mapToDTO)
-      .collect(Collectors.toList());
+        .stream()
+        .map(this::mapToDTO)
+        .collect(Collectors.toList());
   }
 
   private ApplicationDTO mapToDTO(Application entity) {

@@ -30,8 +30,9 @@ public class WorkLogService {
     }
 
     WorkLog workLog = new WorkLog();
-    workLog.setUser(userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found")));
-    workLog.setStartTime(java.time.LocalDateTime.now());
+    workLog.setUser(userRepository.findById(userId).orElseThrow(
+        () -> new IllegalArgumentException("User not found")));
+    workLog.setStartTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
     return mapToDto(saved);
   }
@@ -39,8 +40,8 @@ public class WorkLogService {
   @Transactional
   public WorkLogDto endWork(Integer userId) {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
-      .orElseThrow(() -> new NoActiveWorkException(userId));
-    workLog.setEndTime(java.time.LocalDateTime.now());
+        .orElseThrow(() -> new NoActiveWorkException(userId));
+    workLog.setEndTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
     return mapToDto(saved);
   }
@@ -53,10 +54,10 @@ public class WorkLogService {
   @Transactional(readOnly = true)
   public String getActiveWorkTime(Integer userId) {
     int duration = timeData.findActiveWorkLog(userId)
-      .map(workLog -> Duration.between(workLog.getStartTime(), LocalDateTime.now()).getSeconds())
-      .orElse(0L).intValue();
+        .map(workLog -> Duration.between(workLog.getStartTime(), LocalDateTime.now()).getSeconds())
+        .orElse(0L).intValue();
     int hours = duration / 3600;
-    int minutes = (duration % 3600) / 60;
+    int minutes = duration % 3600 / 60;
     int seconds = duration % 60;
     return String.format("%02d:%02d:%02d", hours, minutes, seconds);
   }

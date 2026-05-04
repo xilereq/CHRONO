@@ -1,14 +1,13 @@
 package pl.chrono.dbmanager.adapter;
 
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import pl.chrono.dbmanager.model.WorkLog;
-import pl.chrono.dbmanager.repository.WorkLogRepository;
-import pl.chrono.dbmanager.ports.I_TimeData;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import pl.chrono.dbmanager.model.WorkLog;
+import pl.chrono.dbmanager.ports.I_TimeData;
+import pl.chrono.dbmanager.repository.WorkLogRepository;
 
 @Component
 @RequiredArgsConstructor

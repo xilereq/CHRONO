@@ -1,9 +1,18 @@
 package pl.chrono.applicationmanager;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.applicationmanager.dto.ApplicationDTO;
 import pl.chrono.applicationmanager.service.ApplicationService;
@@ -13,14 +22,6 @@ import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceTest {
@@ -113,7 +114,7 @@ class ApplicationServiceTest {
     mockApplication.setStatus(ApplicationStatus.PENDING);
 
     when(applicationRepository.findAllByEmployeeUserId(employeeId))
-      .thenReturn(List.of(mockApplication));
+        .thenReturn(List.of(mockApplication));
 
     List<ApplicationDTO> result = applicationService.getUserApplications(employeeId);
 

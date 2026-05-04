@@ -25,8 +25,8 @@ public abstract class BaseController<T, K> {
   @GetMapping("/{id}")
   public ResponseEntity<T> getById(@PathVariable K id) {
     return repository.findById(id)
-      .map(ResponseEntity::ok)
-      .orElse(ResponseEntity.notFound().build());
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
   }
 
   @PostMapping

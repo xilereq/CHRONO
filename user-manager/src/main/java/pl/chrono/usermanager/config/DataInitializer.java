@@ -1,5 +1,6 @@
 package pl.chrono.usermanager.config;
 
+import java.util.Set;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -8,8 +9,6 @@ import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.repository.RoleRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
-
-import java.util.Set;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -67,10 +66,10 @@ public class DataInitializer implements CommandLineRunner {
 
   private Role createRoleIfNotFound(String roleName) {
     return roleRepository.findByName(roleName)
-      .orElseGet(() -> {
-        Role newRole = new Role();
-        newRole.setName(roleName);
-        return roleRepository.save(newRole);
-      });
+        .orElseGet(() -> {
+          Role newRole = new Role();
+          newRole.setName(roleName);
+          return roleRepository.save(newRole);
+        });
   }
 }
