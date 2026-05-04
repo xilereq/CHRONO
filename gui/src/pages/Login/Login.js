@@ -39,7 +39,7 @@ const Login = ({ onLoginSuccess }) => {
                     </div>
                 </div>
 
-                <h1 id="login-title" className="login-title">Logowanie do Chrono2</h1>
+                <h1 id="login-title" className="login-title">Logowanie do Chrono</h1>
                 <p className="login-subtitle">Wprowadź swoje dane, aby kontynuować</p>
 
                 {error && <div className="login-error" role="alert">{error}</div>}

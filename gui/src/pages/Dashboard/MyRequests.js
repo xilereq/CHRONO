@@ -1,6 +1,6 @@
 import React from 'react';
 import '../main.css';
-import { RequestList } from '../../components';
+import { RequestList, Button } from '../../components';
 
 const statusClass = () => 'status-badge';
 
@@ -10,7 +10,11 @@ const MyRequests = () => {
             <h2 className="dashboard-title">Moje wnioski</h2>
             <div className="requests-container">
                 {/* Render RequestList with empty data to initialize helper files */}
-                <RequestList requests={[]} statusClass={statusClass} />
+                <RequestList
+                    requests={[]}
+                    statusClass={statusClass}
+                    ButtonComponent={Button}
+                />
             </div>
         </div>
     );

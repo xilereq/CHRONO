@@ -26,9 +26,6 @@ const TimeTracker = () => {
 
             <div className="time-actions-grid">
                 <Button variant="outline"><Coffee size={18} /> PRZERWA</Button>
-                <Button variant="outline"><ArrowRightSquare size={18} /> WYJŚCIE PRYWATNE</Button>
-                <Button variant="outline"><Briefcase size={18} /> DELEGACJA</Button>
-                <Button variant="outline"><Stethoscope size={18} /> BADANIA LEKARSKIE</Button>
             </div>
         </Card>
     );
