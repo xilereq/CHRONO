@@ -31,4 +31,9 @@ public class WorkLogController {
   public ResponseEntity<WorkLogDto> endWork(@PathVariable Integer userId) {
     return ResponseEntity.ok(workLogService.endWork(userId));
   }
+
+  @GetMapping("/active-time/{userId}")
+  public ResponseEntity<String> getActiveDuration(@PathVariable Integer userId) {
+    return ResponseEntity.ok(workLogService.getActiveWorkTime(userId));
+  }
 }
