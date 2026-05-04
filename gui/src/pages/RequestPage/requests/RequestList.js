@@ -1,7 +1,7 @@
 import React from 'react';
 import './requests.css';
-import { RequestCard } from '../../components';
-import Button from '../ui/Button';
+import { RequestCard } from '../../../components';
+import Button from '../../../components/ui/Button';
 
 const RequestList = ({ requests }) => {
     return (
