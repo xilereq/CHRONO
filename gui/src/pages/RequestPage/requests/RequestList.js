@@ -1,32 +1,68 @@
-import React from 'react';
+// src/pages/RequestPage/requests/RequestList.js
+import React, { useState, useEffect } from 'react';
 import './requests.css';
-import { RequestCard } from '../../../components';
+import RequestCard from './RequestCard';
+import RequestForm from './RequestForm';
 import Button from '../../../components/ui/Button';
+import { applicationService } from '../../../services/applicationService';
 
-const RequestList = ({ requests }) => {
+const RequestList = () => {
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const userId = 1;
+
+    const fetchRequests = async () => {
+        setLoading(true);
+        try {
+            const data = await applicationService.getUserApplications(userId);
+            setRequests(data);
+        } catch (error) {
+            console.error("Błąd podczas ładowania wniosków:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRequests();
+    }, [userId]);
+
     return (
         <div className="requests-container">
-
             <div className="section-panel filters-bar">
                 <select className="filter-select">
                     <option value="">Status</option>
-                    <option value="Zatwierdzony">Zatwierdzony</option>
-                    <option value="Weryfikacja">Weryfikacja</option>
-                    <option value="Odrzucony">Odrzucony</option>
+                    <option value="APPROVED">Zatwierdzony</option>
+                    <option value="PENDING">Weryfikacja</option>
+                    <option value="REJECTED">Odrzucony</option>
                 </select>
                 <select className="filter-select">
                     <option value="">Typ</option>
                     <option value="Urlop wypoczynkowy">Urlop wypoczynkowy</option>
                     <option value="Nadgodziny">Nadgodziny</option>
-                    <option value="Urlop na żądanie">Urlop na żądanie</option>
                 </select>
-                <input type="date" className="filter-input" placeholder="Data zgłoszenia..." />
+                <input type="date" className="filter-input" />
             </div>
 
+            {/* Dynamiczny formularz składania wniosku */}
+            {showForm && (
+                <RequestForm
+                    onCancel={() => setShowForm(false)}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        fetchRequests();
+                    }}
+                />
+            )}
+
+            {/* Lista wniosków[cite: 2] */}
             <div className="section-panel">
                 <div className="section-title">Lista moich wniosków</div>
 
-                {!requests || requests.length === 0 ? (
+                {loading ? (
+                    <div className="empty">Ładowanie danych z serwera...</div>
+                ) : !requests || requests.length === 0 ? (
                     <div className="empty">Brak wniosków w wybranym okresie.</div>
                 ) : (
                     <div className="requests-table-container">
@@ -49,30 +85,29 @@ const RequestList = ({ requests }) => {
                             </tbody>
                         </table>
 
-                        {/* Paginacja na dole */}
                         <div className="pagination">
                             <span className="page-active">1</span>
                             <span>2</span>
                             <span>3</span>
-                            <span>...</span>
-                            <span>›</span>
                         </div>
                     </div>
                 )}
             </div>
 
-            <div className="section-panel">
-                <div className="section-title">Wnioski</div>
-                <div className="submit-actions">
-                    <Button className="big-yellow-btn" variant="primary">
-                        👤 Złóż wniosek urlopowy
-                    </Button>
-                    <Button className="big-yellow-btn" variant="primary">
-                        🕒 Złóż wniosek o nadgodziny
-                    </Button>
+            {!showForm && (
+                <div className="section-panel">
+                    <div className="section-title">Nowy wniosek</div>
+                    <div className="submit-actions" style={{ display: 'flex', gap: '10px', flexDirection: 'row' }}>
+                        <Button
+                            className="big-yellow-btn"
+                            variant="primary"
+                            onClick={() => setShowForm(true)}
+                        >
+                            ➕ ZŁÓŻ NOWY WNIOSEK
+                        </Button>
+                    </div>
                 </div>
-            </div>
-
+            )}
         </div>
     );
 };

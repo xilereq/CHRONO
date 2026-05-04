@@ -7,39 +7,26 @@ const RequestCard = ({ request }) => {
 
     return (
         <tr>
-            <td style={{ fontWeight: 600, color: '#111827' }}>{request.title}</td>
-            <td>{request.period || request.date}</td>
-            <td>{request.duration || '-'}</td>
-            <td>{request.submittedDate || request.date}</td>
+            <td style={{ fontWeight: 600, color: '#111827' }}>{request.title || request.type}</td>
+            <td>{request.startDate} - {request.endDate}</td>
+            <td>{request.daysCount || '-'}</td>
+            <td>{request.createdAt || '-'}</td>
             <td>
                 <div className="status-cell">
                     <span className={`status-dot ${request.status}`}></span>
                     {request.status}
                 </div>
             </td>
-            <td>{request.approver || '-'}</td>
+            <td>{request.reviewerName || '-'}</td>
             <td>
                 <div className="actions-cell">
-                    {/* Przycisk Podglądu */}
                     <Button
                         className="action-btn"
                         variant="outline"
-                        title="Podgląd"
                         onClick={() => navigate(`/my-requests/${request.id}`)}
                     >
                         👁️
                     </Button>
-
-                    {/* Dodatkowe akcje na podstawie statusu */}
-                    {request.status === 'Zatwierdzony' && (
-                        <Button className="action-btn" variant="outline" title="Drukuj PDF">🖨️</Button>
-                    )}
-                    {request.status === 'Weryfikacja' && (
-                        <>
-                            <Button className="action-btn" variant="outline" title="Edytuj">📝</Button>
-                            <Button className="action-btn delete" variant="outline" title="Usuń">🗑️</Button>
-                        </>
-                    )}
                 </div>
             </td>
         </tr>
