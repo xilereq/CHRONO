@@ -1,8 +1,8 @@
+// src/pages/RequestPage/requests/RequestForm.js
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { applicationService } from '../../../services/applicationService';
 import Button from '../../../components/ui/Button';
-
 import './requests.css';
 
 const RequestForm = ({ onCancel, onSuccess }) => {
@@ -11,7 +11,7 @@ const RequestForm = ({ onCancel, onSuccess }) => {
 
     const [formData, setFormData] = useState({
         title: '',
-        type: 'Urlop wypoczynkowy',
+        type: 'HOLIDAY_LEAVE',
         startDate: '',
         endDate: '',
         reason: ''
@@ -37,7 +37,7 @@ const RequestForm = ({ onCancel, onSuccess }) => {
             alert('Wniosek został wysłany pomyślnie!');
             if (onSuccess) onSuccess();
         } catch (err) {
-            setError(err.message || 'Wystąpił błąd.');
+            setError(err.message || 'Wystąpił błąd podczas wysyłania wniosku.');
         } finally {
             setLoading(false);
         }
@@ -70,9 +70,9 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                             value={formData.type}
                             onChange={handleChange}
                         >
-                            <option value="Urlop wypoczynkowy">Urlop wypoczynkowy</option>
-                            <option value="Urlop na żądanie">Urlop na żądanie</option>
-                            <option value="Nadgodziny">Odbiór nadgodzin</option>
+                            <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
+                            <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
+                            <option value="OVERTIME">Odbiór nadgodzin</option>
                         </select>
                     </label>
 
@@ -122,7 +122,7 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                         {loading ? 'Wysyłanie...' : (
                             <>
                                 <PlusCircle size={18} />
-                                Wyślij
+                                <span>Wyślij</span>
                             </>
                         )}
                     </Button>

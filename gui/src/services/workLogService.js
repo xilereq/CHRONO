@@ -19,6 +19,11 @@ export const workLogService = {
         if (!response.ok) throw new Error('Błąd podczas rozpoczynania pracy');
         return response.json();
     },
+    getActiveTime: async (userId) => {
+        const response = await fetch(`${API_URL}/active-time/${userId}`, { headers: getHeaders() });
+        if (!response.ok) throw new Error('Błąd pobierania czasu pracy');
+        return response.text();
+    },
     endWork: async (userId) => {
         const response = await fetch(`${API_URL}/end/${userId}`, {
             method: 'POST',
