@@ -33,4 +33,9 @@ public class TimeDataAdapter implements I_TimeData {
   public List<WorkLog> findActiveWorkLogsBefore(LocalDateTime threshold) {
     return workLogRepository.findByEndTimeIsNullAndStartTimeBefore(threshold);
   }
+
+  @Override
+  public List<WorkLog> findUserWorkLogsAfter(Integer userId, LocalDateTime threshold) {
+    return workLogRepository.findByUser_UserIdAndStartTimeAfter(userId, threshold);
+  }
 }

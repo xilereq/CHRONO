@@ -13,4 +13,6 @@ public interface I_TimeData {
   Optional<WorkLog> findActiveWorkLog(Integer userId);
 
   List<WorkLog> findActiveWorkLogsBefore(LocalDateTime threshold);
+
+  List<WorkLog> findUserWorkLogsAfter(Integer userId, LocalDateTime threshold);
 }

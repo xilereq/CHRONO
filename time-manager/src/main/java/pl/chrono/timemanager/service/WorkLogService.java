@@ -1,6 +1,8 @@
 package pl.chrono.timemanager.service;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +13,7 @@ import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.WorkLogDto;
+import pl.chrono.timemanager.dto.WorkStats;
 import pl.chrono.timemanager.exception.NoActiveWorkException;
 import pl.chrono.timemanager.exception.WorkStartedException;
 
@@ -80,4 +83,51 @@ public class WorkLogService {
     dto.setEndTime(workLog.getEndTime());
     return dto;
   }
+
+  private boolean isWorkDay(LocalDate date) {
+    DayOfWeek day = date.getDayOfWeek();
+    return day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY;
+  }
+
+  public WorkStats getMonthlyStats(Integer userId) {
+    var user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    LocalDate today = LocalDate.now();
+    LocalDate firstDay = today.withDayOfMonth(1);
+    LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
+
+    int remainingHours = 0;
+    int totalMonthlyHours = 0;
+    LocalDate cur = firstDay;
+
+    while (!cur.isAfter(lastDay)) {
+      if (isWorkDay(cur)) {
+        totalMonthlyHours += 8;
+        if (!cur.isBefore(today)) {
+          remainingHours += 8;
+        }
+      }
+        cur = cur.plusDays(1);
+    }
+
+    LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
+    long totalSecondsWorked = timeData.findUserWorkLogsAfter(userId, startOfMonth)
+        .stream()
+        .filter(workLog -> workLog.getEndTime() != null
+            && workLog.getEndTime().isBefore(today.atStartOfDay()))
+        .mapToLong(workLog -> Duration.between(workLog.getStartTime(), workLog.getEndTime()).getSeconds())
+        .sum();
+
+    int totalHoursWorked = (int) (totalSecondsWorked / 3600);
+
+
+    return new WorkStats(
+        totalHoursWorked,
+        remainingHours,
+        totalMonthlyHours
+    );
+
+  }
 }
+
