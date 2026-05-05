@@ -17,7 +17,7 @@ const Sidebar = () => {
                 </NavLink>
                 <NavLink to="/requests" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <FileText size={24} />
-                    <span>My Requests</span>
+                    <span>Requests</span>
                 </NavLink>
                 <NavLink to="/raporty" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <BarChart2 size={24} />
