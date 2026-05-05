@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../main.css';
-import './Grafik.css';
+import './workSchedule.css';
 
 function generateMonth(year, month) {
     const first = new Date(year, month, 1);
@@ -25,7 +25,7 @@ const sampleEvents = {
     '2026-04-12': [{ id: 2, title: 'Wizyta u klienta', time: '09:00' }],
 };
 
-const Grafik = () => {
+const WorkSchedule = () => {
     const today = new Date();
     const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() });
     const [selectedDate, setSelectedDate] = useState(null);
@@ -121,4 +121,4 @@ const Grafik = () => {
     );
 }
 
-export default Grafik;
+export default WorkSchedule;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../../components';
 import { Clock, CalendarOff, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../main.css';
-import './raporty.css';
+import './reports.css';
 
 const MONTHS = [
     'Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec',
@@ -123,7 +123,7 @@ const BarChart = ({ data }) => {
 };
 
 /* ---------- Main page ---------- */
-const Raporty = () => {
+const Reports = () => {
     const [month, setMonth] = useState(3);
     const [year, setYear]   = useState(2026);
     const [period, setPeriod] = useState('Tygodnie');
@@ -268,4 +268,4 @@ const Raporty = () => {
     );
 };
 
-export default Raporty;
+export default Reports;
