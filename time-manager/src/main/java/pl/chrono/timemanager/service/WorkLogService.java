@@ -90,9 +90,6 @@ public class WorkLogService {
   }
 
   public WorkStats getMonthlyStats(Integer userId) {
-    var user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
     LocalDate today = LocalDate.now();
     LocalDate firstDay = today.withDayOfMonth(1);
     LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
