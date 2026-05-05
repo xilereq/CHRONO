@@ -14,6 +14,7 @@ import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.WorkLogDto;
 import pl.chrono.timemanager.dto.WorkStats;
+import pl.chrono.timemanager.exception.LeaveStartedException;
 import pl.chrono.timemanager.exception.NoActiveWorkException;
 import pl.chrono.timemanager.exception.WorkStartedException;
 
@@ -44,6 +45,9 @@ public class WorkLogService {
   public WorkLogDto endWork(Integer userId) {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
         .orElseThrow(() -> new NoActiveWorkException(userId));
+    if (timeData.isUserOnLeave(userId)) {
+      throw new LeaveStartedException(userId);
+    }
     workLog.setEndTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
     return mapToDto(saved);
@@ -70,6 +74,13 @@ public class WorkLogService {
   public void closeTooLongWorkLogs() {
     LocalDateTime threshold = LocalDateTime.now().minusHours(maxWorkHours);
     timeData.findActiveWorkLogsBefore(threshold).forEach(workLog -> {
+      LocalDateTime closeTime = workLog.getStartTime().plusHours(maxWorkHours);
+      workLog.getLeaveLogs().stream()
+          .filter(leaveLog -> leaveLog.getEndTime() == null || leaveLog.getEndTime().isAfter(closeTime))
+          .forEach(leaveLog -> {
+            leaveLog.setEndTime(closeTime);
+            timeData.saveLeaveLog(leaveLog);
+          });
       workLog.setEndTime(workLog.getStartTime().plusHours(maxWorkHours));
       timeData.saveWorkLog(workLog);
     });

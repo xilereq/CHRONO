@@ -5,14 +5,17 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.WorkLogRepository;
+import pl.chrono.dbmanager.repository.LeaveLogRepository;
 
 @Component
 @RequiredArgsConstructor
 public class TimeDataAdapter implements I_TimeData {
   private final WorkLogRepository workLogRepository;
+  private final LeaveLogRepository leaveLogRepository;
 
   @Override
   public boolean isUserWorking(Integer userId) {
@@ -37,5 +40,20 @@ public class TimeDataAdapter implements I_TimeData {
   @Override
   public List<WorkLog> findUserWorkLogsAfter(Integer userId, LocalDateTime threshold) {
     return workLogRepository.findByUser_UserIdAndStartTimeAfter(userId, threshold);
+  }
+
+  @Override
+  public boolean isUserOnLeave(Integer userId) {
+    return leaveLogRepository.existsByUser_UserIdAndEndTimeIsNull(userId);
+  }
+
+  @Override
+  public LeaveLog saveLeaveLog(LeaveLog leaveLog) {
+    return leaveLogRepository.save(leaveLog);
+  }
+
+  @Override
+  public Optional<LeaveLog> findActiveLeaveLog(Integer userId) {
+    return leaveLogRepository.findByUser_UserIdAndEndTimeIsNull(userId);
   }
 }

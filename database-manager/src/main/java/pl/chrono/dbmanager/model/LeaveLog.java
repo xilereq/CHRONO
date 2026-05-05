@@ -2,6 +2,8 @@ package pl.chrono.dbmanager.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -11,6 +13,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
+import pl.chrono.dbmanager.model.enums.LeaveType;
 
 @Entity
 @Table(name = "leave_log")
@@ -26,15 +29,15 @@ public class LeaveLog {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @ManyToOne
+  @JoinColumn(name = "work_log_id")
+  private WorkLog workLog;
+
   private LocalDateTime startTime;
   private LocalDateTime endTime;
 
-  @Column(length = 15)
-  private String status;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "leave_type", length = 20, nullable = false)
+  private LeaveType type;
 
-  @Column(length = 15)
-  private String type;
-
-  @Column(columnDefinition = "TEXT")
-  private String description;
 }
