@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Coffee, Square } from 'lucide-react';
+import { Clock, Coffee ,AlarmClockMinus, Badge } from 'lucide-react';
 import { Card, Button } from '../../../components';
 import '../../main.css';
 import './dashboard.css';
@@ -33,8 +33,6 @@ const TimeTracker = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [startTime, setStartTime] = useState(null);
 
-    const userId = 1;
-
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(timer);
@@ -43,12 +41,12 @@ const TimeTracker = () => {
     useEffect(() => {
         const fetchStatus = async () => {
             try {
-                const status = await workLogService.getStatus(userId);
+                const status = await workLogService.getStatus();
                 setIsWorking(status);
 
                 if (status) {
                     try {
-                        const timeStr = await workLogService.getActiveTime(userId);
+                        const timeStr = await workLogService.getActiveTime();
                         const workedMs = parseDurationToMs(timeStr);
                         const calculatedStartTime = new Date(Date.now() - workedMs);
                         setStartTime(calculatedStartTime);
@@ -65,7 +63,7 @@ const TimeTracker = () => {
             }
         };
         fetchStatus();
-    }, [userId]);
+    }, []);
 
     const handleToggleWork = async () => {
         if (isLoading) return;
@@ -73,12 +71,12 @@ const TimeTracker = () => {
         setIsLoading(true);
         try {
             if (isWorking) {
-                await workLogService.endWork(userId);
+                await workLogService.endWork();
                 setIsWorking(false);
                 setStartTime(null);
                 alert("Zakończono czas pracy");
             } else {
-                await workLogService.startWork(userId);
+                await workLogService.startWork();
                 const nowStart = new Date();
                 setIsWorking(true);
                 setStartTime(nowStart);
@@ -112,7 +110,7 @@ const TimeTracker = () => {
                 }}
             >
                 <div className="time-header">
-                    {isWorking ? <Square size={20} /> : <Clock size={20} />}
+                    {isLoading ? <Badge size={20}/> : (isWorking ? <AlarmClockMinus size={20}/> :  <Clock size={20} />)}
                     <span className="time-header-text">
                         {isLoading ? "ŁADOWANIE..." : (isWorking ? "ZAKOŃCZ PRACĘ" : "ROZPOCZNIJ PRACĘ")}
                     </span>

@@ -31,11 +31,11 @@
 }
 
 .time-header-text {
-  font-weight: 600;
+    font-size: 1.25rem;
 }
 
 .time-clock {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   margin-top: 0.5rem;
 }
 
