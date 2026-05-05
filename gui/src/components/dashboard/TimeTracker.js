@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Coffee ,AlarmClockMinus, Badge } from 'lucide-react';
-import { Card, Button } from '../../../components';
-import '../../main.css';
+import { Card, Button } from '../index';
+import '../../pages/main.css';
 import './dashboard.css';
-import { workLogService } from '../../../services/workLogService';
+import { workLogService } from '../../services/workLogService';
 
 const formatDuration = (ms) => {
     if (!ms || ms < 0) return '00:00:00';

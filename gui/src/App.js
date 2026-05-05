@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
-import { Grafik, Dashboard, MyRequests, RequestDetail, Raporty} from './pages';
+import { Grafik, Dashboard, Requests, RequestDetail, Raporty} from './pages';
 import Login from './pages/Login/Login';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/authService';
@@ -52,8 +52,8 @@ const App = () => {
 
                         <Routes>
                             <Route path="/" element={<Dashboard />} />
-                            <Route path="/my-requests" element={<MyRequests />} />
-                            <Route path="/my-requests/:id" element={<RequestDetail />} />
+                            <Route path="/requests" element={<Requests />} />
+                            <Route path="/requests/:id" element={<RequestDetail />} />
                             <Route path="/raporty" element={<Raporty/>} />
                             <Route path="/grafik" element={<Grafik />} />
                             <Route path="/ustawienia" element={<div style={{padding: '2rem'}}>Ustawienia (w budowie)</div>} />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../../../components/ui/Button';
+import Button from '../ui/Button';
+import { Search } from 'lucide-react';
 
 const RequestCard = ({ request }) => {
     const navigate = useNavigate();
@@ -25,7 +26,7 @@ const RequestCard = ({ request }) => {
                         variant="outline"
                         onClick={() => navigate(`/my-requests/${request.id}`)}
                     >
-                        👁️
+                        <Search size={20} />
                     </Button>
                 </div>
             </td>

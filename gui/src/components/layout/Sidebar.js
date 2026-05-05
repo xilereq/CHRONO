@@ -15,7 +15,7 @@ const Sidebar = () => {
                     <LayoutGrid size={24} />
                     <span>Pulpit</span>
                 </NavLink>
-                <NavLink to="/my-requests" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                <NavLink to="/requests" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <FileText size={24} />
                     <span>My Requests</span>
                 </NavLink>

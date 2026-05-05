@@ -6,7 +6,12 @@ export { default as Badge } from './ui/Badge';
 export { default as Button } from './ui/Button';
 export { default as Card } from './ui/Card';
 
-//export { default as RequestForm } from './requests/RequestForm';
-export { default as RequestList } from '../pages/RequestPage/requests/RequestList';
-export { default as RequestCard } from '../pages/RequestPage/requests/RequestCard';
+export { default as RequestForm } from './requests/RequestForm';
+export { default as RequestList } from './requests/RequestList';
+export { default as RequestCard } from './requests/RequestCard';
+
+export { default as QuickRequests } from './dashboard/QuickRequests'
+export {default as RecentRequests} from './dashboard/RecentRequests'
+export { default as TimeTracker } from './dashboard/TimeTracker';
+export { default as StatusCharts } from './dashboard/StatusCharts';
 

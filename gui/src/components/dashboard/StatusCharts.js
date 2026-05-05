@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../../components';
-import { workLogService } from '../../../services/workLogService';
-import '../../main.css';
+import { Card } from '../index';
+import { workLogService } from '../../services/workLogService';
+import '../../pages/main.css';
 
 const formatHours = (seconds) => {
     const h = Math.floor(seconds / 3600);

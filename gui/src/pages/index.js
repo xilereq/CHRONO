@@ -1,10 +1,10 @@
 export {default as Dashboard} from './Dashboard/Dashboard';
-export {default as Grafik} from './Grafik/Grafik';
-export {default as MyRequests} from './RequestPage/MyRequests';
-export {default as RequestDetail} from './RequestPage/RequestDetail';
-export {default as Raporty} from './Raports/Raporty';
-export {default as QuickRequests} from './Dashboard/dashboard/QuickRequests';
-export {default as RecentRequests} from './Dashboard/dashboard/RecentRequests';
-export {default as StatusCharts} from './Dashboard/dashboard/StatusCharts';
-export {default as TimeTracker} from './Dashboard/dashboard/TimeTracker';
+
+export {default as Grafik} from './workSchedule/workSchedule';
+
+export {default as Requests} from './Requests/Requests';
+export {default as RequestDetail} from './Requests/RequestDetail';
+
+export {default as Raporty} from './Reports/Reports';
+
 

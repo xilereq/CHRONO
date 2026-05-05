@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Badge } from '../../../components';
-import { applicationService } from '../../../services/applicationService';
-import '../../main.css';
+import { Card, Badge } from '../index';
+import { applicationService } from '../../services/applicationService';
+import '../../pages/main.css';
 
 const translateType = (type) => {
     switch (type) {

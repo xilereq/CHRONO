@@ -1,8 +1,7 @@
-// src/pages/RequestPage/requests/RequestForm.js
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { applicationService } from '../../../services/applicationService';
-import Button from '../../../components/ui/Button';
+import { applicationService } from '../../services/applicationService';
+import { Button } from '../../components';
 import './requests.css';
 
 const RequestForm = ({ onCancel, onSuccess }) => {

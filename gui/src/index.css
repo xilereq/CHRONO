@@ -23,3 +23,13 @@ body {
     border: 0;
 }
 
+.page-container {
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.page-title-no-margin {
+    margin-top: 0;
+}

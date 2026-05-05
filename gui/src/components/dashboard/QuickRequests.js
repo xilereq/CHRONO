@@ -1,8 +1,8 @@
 import React from 'react';
 import { User, Clock } from 'lucide-react';
-import { Card, Button } from '../../../components';
+import { Card, Button } from '../index';
 
-import '../../main.css';
+import '../../pages/main.css';
 
 export default function QuickRequests() {
     return (
