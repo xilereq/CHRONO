@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Badge } from '../index';
-import { applicationService } from '../../services/applicationService';
+import { applicationService } from '../../services';
 import '../../pages/main.css';
 
 const translateType = (type) => {

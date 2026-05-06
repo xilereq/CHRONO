@@ -3,7 +3,7 @@ import { Sidebar, Topbar } from './components';
 import { Grafik, Dashboard, Requests, RequestDetail, Raporty} from './pages';
 import Login from './pages/Login/Login';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { authService } from './services/authService';
+import { authService } from './services';
 import './index.css';
 
 const App = () => {

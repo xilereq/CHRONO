@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../index';
-import { workLogService } from '../../services/workLogService';
+import { workLogService } from '../../services';
 import '../../pages/main.css';
 
 const formatHours = (seconds) => {

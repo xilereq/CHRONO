@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { applicationService } from '../../services/applicationService';
+import { applicationService } from '../../services';
 import { Button } from '../../components';
 import './requests.css';
 

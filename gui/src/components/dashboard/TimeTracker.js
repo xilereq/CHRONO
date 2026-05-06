@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Coffee ,AlarmClockMinus, Badge } from 'lucide-react';
-import { Card, Button } from '../index';
+import { Clock, Coffee, Square, Hospital, CircleEllipsis, UserLock, Microchip } from 'lucide-react';
+import { Card, Button } from '../../components';
 import '../../pages/main.css';
 import './dashboard.css';
-import { workLogService } from '../../services/workLogService';
+import { workLogService, leaveLogService } from '../../services';
 
 const formatDuration = (ms) => {
     if (!ms || ms < 0) return '00:00:00';
@@ -19,19 +19,19 @@ const parseDurationToMs = (timeString) => {
     if (!timeString || typeof timeString !== 'string') return 0;
     const parts = timeString.split(':');
     if (parts.length !== 3) return 0;
-
     const hours = parseInt(parts[0], 10);
     const minutes = parseInt(parts[1], 10);
     const seconds = parseInt(parts[2], 10);
-
     return ((hours * 3600) + (minutes * 60) + seconds) * 1000;
 };
 
 const TimeTracker = () => {
     const [now, setNow] = useState(new Date());
     const [isWorking, setIsWorking] = useState(false);
+    const [isOnBreak, setIsOnBreak] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [startTime, setStartTime] = useState(null);
+    const [showBreakSelector, setShowBreakSelector] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000);
@@ -41,10 +41,15 @@ const TimeTracker = () => {
     useEffect(() => {
         const fetchStatus = async () => {
             try {
-                const status = await workLogService.getStatus();
-                setIsWorking(status);
+                const [workStatus, breakStatus] = await Promise.all([
+                    workLogService.getStatus(),
+                    leaveLogService.getStatus()
+                ]);
 
-                if (status) {
+                setIsWorking(workStatus);
+                setIsOnBreak(breakStatus);
+
+                if (workStatus) {
                     try {
                         const timeStr = await workLogService.getActiveTime();
                         const workedMs = parseDurationToMs(timeStr);
@@ -67,10 +72,14 @@ const TimeTracker = () => {
 
     const handleToggleWork = async () => {
         if (isLoading) return;
-
         setIsLoading(true);
+        setShowBreakSelector(false);
         try {
             if (isWorking) {
+                if (isOnBreak) {
+                    await leaveLogService.endLeave();
+                    setIsOnBreak(false);
+                }
                 await workLogService.endWork();
                 setIsWorking(false);
                 setStartTime(null);
@@ -89,6 +98,39 @@ const TimeTracker = () => {
         }
     };
 
+    const handleToggleBreak = async () => {
+        if (isLoading || !isWorking) return;
+
+        if (isOnBreak) {
+            setIsLoading(true);
+            try {
+                await leaveLogService.endLeave();
+                setIsOnBreak(false);
+            } catch (error) {
+                console.error(error);
+                alert("Błąd podczas kończenia przerwy.");
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            setShowBreakSelector(!showBreakSelector);
+        }
+    };
+
+    const startSpecificBreak = async (leaveType) => {
+        setIsLoading(true);
+        setShowBreakSelector(false);
+        try {
+            await leaveLogService.startLeave(leaveType);
+            setIsOnBreak(true);
+        } catch (error) {
+            console.error(error);
+            alert("Błąd podczas rozpoczynania przerwy.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const timeString = now.toLocaleTimeString('pl-PL', {
         hour: '2-digit',
         minute: '2-digit',
@@ -100,31 +142,77 @@ const TimeTracker = () => {
     return (
         <Card>
             <button
-                className={`time-display ${isLoading ? 'loading' : ''} ${isWorking ? 'working' : 'stopped'}`}
+                className={`time-display time-display-btn ${isLoading ? 'loading' : ''} ${isWorking ? 'working' : 'stopped'}`}
                 onClick={handleToggleWork}
                 disabled={isLoading}
-                style={{
-                    width: '100%',
-                    border: 'none',
-                    cursor: isLoading ? 'wait' : 'pointer'
-                }}
             >
                 <div className="time-header">
-                    {isLoading ? <Badge size={20}/> : (isWorking ? <AlarmClockMinus size={20}/> :  <Clock size={20} />)}
+                    {isWorking ? <Square size={20} /> : <Clock size={20} />}
                     <span className="time-header-text">
                         {isLoading ? "ŁADOWANIE..." : (isWorking ? "ZAKOŃCZ PRACĘ" : "ROZPOCZNIJ PRACĘ")}
                     </span>
                 </div>
 
                 <div className="time-clock">
-                    {isWorking ? elapsedString : timeString}
+                    {isOnBreak ? "W TRAKCIE PRZERWY" : (isWorking ? elapsedString : timeString)}
                 </div>
             </button>
 
-            <div className="time-actions-grid" style={{ marginTop: '1rem' }}>
-                <Button variant="outline" disabled={!isWorking}>
-                    <Coffee size={18} /> PRZERWA
+            <div className="time-actions-wrapper">
+                <Button
+                    className={`btn-break-toggle ${isOnBreak ? 'btn-break-active' : ''}`}
+                    variant={isOnBreak ? "primary" : "outline"}
+                    disabled={!isWorking || isLoading}
+                    onClick={handleToggleBreak}
+                >
+                    <Coffee size={18} />
+                    {isOnBreak ? "ZAKOŃCZ PRZERWĘ" : "PRZERWA"}
                 </Button>
+
+                {showBreakSelector && !isOnBreak && (
+                    <div className="break-selector-panel">
+                        <div className="break-selector-title">
+                            Wybierz rodzaj przerwy:
+                        </div>
+                        <div className="break-selector-grid">
+                            <Button
+                                variant="outline"
+                                className="btn-break-type"
+                                onClick={() => startSpecificBreak('LUNCH')}
+                            >
+                                <Coffee size={16}/> LUNCH
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="btn-break-type"
+                                onClick={() => startSpecificBreak('PRIVATE_LEAVE')}
+                            >
+                                <UserLock size={16}/> PRIVATE_LEAVE
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="btn-break-type"
+                                onClick={() => startSpecificBreak('MEDICAL')}
+                            >
+                                <Hospital size={16}/> MEDICAL
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="btn-break-type"
+                                onClick={() => startSpecificBreak('TECHNICAL')}
+                            >
+                                <Microchip size={16}/> TECHNICAL
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="btn-break-type full-width"
+                                onClick={() => startSpecificBreak('OTHER')}
+                            >
+                                <CircleEllipsis size={16}/> OTHER
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </Card>
     );

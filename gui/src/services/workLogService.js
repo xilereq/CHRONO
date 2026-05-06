@@ -5,7 +5,7 @@ const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
 });
 
-export const workLogService = {
+const workLogService = {
     getStatus: async () => {
         const response = await fetch(`${API_URL}/status`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Błąd pobierania statusu pracy');
@@ -38,3 +38,5 @@ export const workLogService = {
         return response.json();
     }
 };
+
+export default workLogService;

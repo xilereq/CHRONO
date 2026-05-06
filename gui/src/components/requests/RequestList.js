@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RequestCard, RequestForm, Button } from '../../components';
-import { applicationService } from '../../services/applicationService';
+import { applicationService } from '../../services';
 
 const RequestList = () => {
     const [requests, setRequests] = useState([]);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { applicationService } from '../../services/applicationService';
-import './ApprovalList.css'; // Importujemy nowy plik CSS
+import { applicationService } from '../../services';
+import './ApprovalList.css';
 
 const ApprovalList = () => {
     const [pendingRequests, setPendingRequests] = useState([]);

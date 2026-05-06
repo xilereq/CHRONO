@@ -5,7 +5,7 @@ const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
 });
 
-export const applicationService = {
+const applicationService = {
     // Pobiera wszystkie wnioski danego pracownika (GET /employee/{id})
     getUserApplications: async (employeeId) => {
         const response = await fetch(`${API_URL}/employee/${employeeId}`, {
@@ -37,3 +37,5 @@ export const applicationService = {
         return response.json();
     }
 };
+
+export default applicationService;
