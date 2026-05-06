@@ -31,9 +31,9 @@ const StatusCharts = () => {
         return <Card title="TWÓJ STATUS">Ładowanie statystyk...</Card>;
     }
 
-    const workedHours = Math.floor(stats.workedSeconds / 3600);
-    const plannedHours = Math.floor(stats.plannedSeconds / 3600);
-    const progressPercent = Math.min((stats.workedSeconds / stats.plannedSeconds) * 100, 100);
+    const workedHours = Math.floor(stats.totalWorkTime);
+    const plannedHours = Math.floor(stats.totalMonthlyHours);
+    const progressPercent = Math.min((stats.totalWorkTime / stats.totalMonthlyHours) * 100, 100);
 
     return (
         <Card title="TWÓJ STATUS">
