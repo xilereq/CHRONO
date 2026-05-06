@@ -241,3 +241,93 @@
     text-overflow: ellipsis;
     max-width: 100%;
 }
+
+/* --- RequestDetail specific styles (moved from inline styles) --- */
+.page-loading {
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.page-empty {
+    padding: 2rem;
+    color: #1f2937;
+}
+
+.accent-link {
+    color: #F59E0B;
+}
+
+.request-card {
+    max-width: 800px;
+}
+
+.request-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+.request-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 0.75rem;
+}
+
+.request-label {
+    color: #6b7280;
+}
+
+.request-value {
+    font-weight: 600;
+}
+
+.request-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.request-reason-box {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    min-height: 60px;
+}
+
+.placeholder-muted {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.reject-label {
+    color: #991b1b;
+}
+
+.reject-box {
+    background: #fef2f2;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.request-actions {
+    margin-top: 2.5rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4b5563;
+    text-decoration: none;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}

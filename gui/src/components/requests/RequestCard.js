@@ -6,16 +6,34 @@ import { Search } from 'lucide-react';
 const RequestCard = ({ request }) => {
     const navigate = useNavigate();
 
+    const translateType = (type) => {
+        switch (type) {
+            case 'HOLIDAY_LEAVE': return 'Urlop wypoczynkowy';
+            case 'SICK_LEAVE': return 'Zwolnienie lekarskie';
+            case 'OVERTIME': return 'Odbiór nadgodzin';
+            default: return type || 'Inny';
+        }
+    };
+
+    const translateStatus = (status) => {
+        switch (status) {
+            case 'APPROVED': return 'Zatwierdzony';
+            case 'PENDING': return 'Oczekujący';
+            case 'REJECTED': return 'Odrzucony';
+            default: return status;
+        }
+    };
+
     return (
         <tr>
-            <td style={{ fontWeight: 600, color: '#111827' }}>{request.title || request.type}</td>
+            <td style={{ fontWeight: 600, color: '#111827' }}>{translateType(request.type)}</td>
             <td>{request.startDate} - {request.endDate}</td>
             <td>{request.daysCount || '-'}</td>
             <td>{request.createdAt || '-'}</td>
             <td>
                 <div className="status-cell">
-                    <span className={`status-dot ${request.status}`}></span>
-                    {request.status}
+                    <span className={`status-dot ${translateStatus(request.status)}`}></span>
+                    {translateStatus(request.status)}
                 </div>
             </td>
             <td>{request.reviewerName || '-'}</td>
@@ -24,7 +42,7 @@ const RequestCard = ({ request }) => {
                     <Button
                         className="action-btn"
                         variant="outline"
-                        onClick={() => navigate(`/my-requests/${request.id}`)}
+                        onClick={() => navigate(`/requests/${request.id}`)}
                     >
                         <Search size={20} />
                     </Button>

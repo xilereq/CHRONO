@@ -80,9 +80,9 @@ const RequestList = () => {
                                 <th>Typ Wniosku</th>
                                 <th>Okres / Data</th>
                                 <th>Liczba Dni/Godz.</th>
-                                <th>Data Z enia</th>
+                                <th>Data Zlenia</th>
                                 <th>Status</th>
-                                <th>Zatwierdzaj cy</th>
+                                <th>Zatwierdzający</th>
                                 <th>Akcje</th>
                             </tr>
                             </thead>

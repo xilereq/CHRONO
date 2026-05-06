@@ -27,8 +27,8 @@ const applicationService = {
     },
 
     // Zmienia status (PATCH /{id}/status) - przydatne dla panelu managera
-    changeStatus: async (applicationId, newStatus, reviewerId) => {
-        const url = `${API_URL}/${applicationId}/status?newStatus=${newStatus}&reviewerId=${reviewerId}`;
+    changeStatus: async (applicationId, newStatus, reviewerId, decisionReason) => {
+        const url = `${API_URL}/${applicationId}/status?newStatus=${newStatus}&reviewerId=${reviewerId}&decisionReason=${decisionReason}`;
         const response = await fetch(url, {
             method: 'PATCH',
             headers: getHeaders()
