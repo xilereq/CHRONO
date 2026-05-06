@@ -35,12 +35,12 @@ const ApprovalList = () => {
     };
 
     const submitAction = async () => {
-        // Usunięto wymóg podawania powodu (walidację)
         setProcessingId(activeAction.id);
+        const reason = actionInputRef.current ? actionInputRef.current.value : actionReason;
         try {
             await applicationService.changeStatus(activeAction.id, activeAction.type, reviewerId, actionReason);
             setActiveAction({ id: null, type: null });
-            setActionReason('');
+            setActionReason(reason);
             fetchPendingRequests();
         } catch (error) {
             alert("Nie udało się zmienić statusu wniosku.");
