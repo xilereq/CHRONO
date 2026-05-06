@@ -16,8 +16,8 @@ const authService = {
 
         const data = await response.json();
 
-        if (data.accessToken) {
-            localStorage.setItem('accessToken', data.accessToken);
+        if (data.token) {
+            localStorage.setItem('accessToken', data.token);
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('userEmail', email);
         }

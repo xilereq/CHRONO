@@ -16,12 +16,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-  // Trzeba wygenerować jakiś klucz i wrzucić go do application.properties
-  @Value("${application.security.jwt.secret-key:twój_bardzo_długi_i_tajny" +
-      "_klucz_zapasowy_jesli_nie_ma_w_properties}")
+  @Value("${application.security.jwt.secret-key}")
   private String secretKey;
 
-  @Value("${application.security.jwt.expiration:86400000}")
+  @Value("${application.security.jwt.expiration}")
   private long jwtExpiration;
 
   public String extractUsername(String token) {

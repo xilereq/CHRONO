@@ -2,6 +2,7 @@ package pl.chrono.usermanager.config;
 
 import java.util.Set;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,19 +17,23 @@ public class DataInitializer implements CommandLineRunner {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JdbcTemplate jdbcTemplate;
 
   public DataInitializer(UserRepository userRepository,
                          RoleRepository roleRepository,
-                         PasswordEncoder passwordEncoder) {
+                         PasswordEncoder passwordEncoder,
+                         JdbcTemplate jdbcTemplate) {
     this.userRepository = userRepository;
     this.roleRepository = roleRepository;
     this.passwordEncoder = passwordEncoder;
+    this.jdbcTemplate = jdbcTemplate;
   }
 
   @Override
   @Transactional
   public void run(String... args) throws Exception {
-    // 1. Inicjalizacja Ról
+
+    jdbcTemplate.execute("UPDATE users SET force_password_change = false WHERE force_password_change IS NULL");
     Role roleEmployee = createRoleIfNotFound("ROLE_EMPLOYEE");
     Role roleManager = createRoleIfNotFound("ROLE_MANAGER");
     Role roleHr = createRoleIfNotFound("ROLE_HR");
@@ -40,18 +45,21 @@ public class DataInitializer implements CommandLineRunner {
       admin.setEmail("admin@chrono.pl");
       admin.setPasswordHash(passwordEncoder.encode("admin123"));
       admin.setRoles(Set.of(roleAdmin, roleEmployee));
+      admin.setForcePasswordChange(false);
       userRepository.save(admin);
 
       User hrUser = new User();
       hrUser.setEmail("hr@chrono.pl");
       hrUser.setPasswordHash(passwordEncoder.encode("hr123"));
       hrUser.setRoles(Set.of(roleHr, roleEmployee));
+      hrUser.setForcePasswordChange(false);
       userRepository.save(hrUser);
 
       User manager = new User();
       manager.setEmail("kierownik@chrono.pl");
       manager.setPasswordHash(passwordEncoder.encode("manager123"));
       manager.setRoles(Set.of(roleManager, roleEmployee));
+      manager.setForcePasswordChange(false);
       userRepository.save(manager);
 
       User employee = new User();
@@ -60,6 +68,7 @@ public class DataInitializer implements CommandLineRunner {
       employee.setRoles(Set.of(roleEmployee));
       employee.setManager(manager);
       employee.setOvertimeBalance(0);
+      employee.setForcePasswordChange(false);
       userRepository.save(employee);
     }
   }
