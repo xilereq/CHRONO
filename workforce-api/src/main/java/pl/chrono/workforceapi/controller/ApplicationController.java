@@ -27,7 +27,7 @@ public class ApplicationController {
       @RequestBody ApplicationDTO request) {
 
     ApplicationDTO createdApplication = applicationService.createApplication(request, employeeId);
-    return ResponseEntity.ok(createdApplication); // Zwracamy status 200 OK i utworzony wniosek
+    return ResponseEntity.ok(createdApplication);
   }
 
   // GET http://localhost:8080/api/applications/employee/5
@@ -44,10 +44,11 @@ public class ApplicationController {
   public ResponseEntity<ApplicationDTO> changeStatus(
       @PathVariable Long applicationId,
       @RequestParam String newStatus,
-      @RequestParam Integer reviewerId) {
+      @RequestParam Integer reviewerId,
+      @RequestParam String decisionReason) {
 
     ApplicationDTO updatedApplication = applicationService.changeStatus(
-        applicationId, newStatus, reviewerId);
+        applicationId, newStatus, reviewerId, decisionReason);
     return ResponseEntity.ok(updatedApplication);
   }
 }
