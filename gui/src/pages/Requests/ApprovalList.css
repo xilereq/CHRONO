@@ -1,0 +1,83 @@
+/* ApprovalList.css */
+
+.submit-actions-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* Style dla rozwijanego panelu z powodem */
+.action-panel-td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.action-panel-td.approved {
+    background-color: #f0fdf4;
+}
+
+.action-panel-td.rejected {
+    background-color: #fef2f2;
+}
+
+.action-panel-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.action-panel-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.action-panel-label.approved {
+    color: #16a34a;
+}
+
+.action-panel-label.rejected {
+    color: #991b1b;
+}
+
+.action-panel-input {
+    width: 300px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+}
+
+.action-panel-btn-confirm {
+    padding: 0 1rem;
+    height: 36px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: white;
+}
+
+.action-panel-btn-confirm.approved {
+    background-color: #16a34a;
+}
+
+.action-panel-btn-confirm.rejected {
+    background-color: #ef4444;
+}
+
+.action-panel-btn-confirm:disabled,
+.action-panel-btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-panel-btn-cancel {
+    padding: 0 1rem;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    background-color: transparent;
+    border: 1px solid #d1d5db;
+    color: #374151;
+}
