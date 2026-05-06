@@ -13,5 +13,6 @@ public class ApplicationDTO {
   private LocalDate startDate;
   private LocalDate endDate;
   private String reason;
+  private String decisionReason;
   private Integer employeeId;
 }

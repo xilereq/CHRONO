@@ -50,4 +50,7 @@ public class Application {
 
   @Column(length = 500)
   private String reason;
+
+  @Column(name = "decision_reason")
+  private String decisionReason;
 }

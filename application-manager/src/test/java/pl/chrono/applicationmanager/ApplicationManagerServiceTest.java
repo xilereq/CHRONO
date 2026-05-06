@@ -76,6 +76,7 @@ class ApplicationServiceTest {
     Long applicationId = 1L;
     Integer reviewerId = 2;
     String newStatus = "APPROVED";
+    String decisionReason = "Valid reason";
 
     Application mockApplication = new Application();
     mockApplication.setId(applicationId);
@@ -93,10 +94,11 @@ class ApplicationServiceTest {
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
     when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
 
-    ApplicationDTO result = applicationService.changeStatus(applicationId, newStatus, reviewerId);
+    ApplicationDTO result = applicationService.changeStatus(applicationId, newStatus, reviewerId, decisionReason);
 
     assertNotNull(result);
     assertEquals(newStatus, result.getStatus());
+    assertEquals(decisionReason, result.getDecisionReason());
     verify(applicationRepository, times(1)).save(mockApplication);
   }
 

@@ -41,7 +41,7 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
-  public ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId) {
+  public ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
     Application application = applicationRepository.findById(applicationId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
 
@@ -51,6 +51,8 @@ public class ApplicationService implements I_UserApplication {
 
     application.setStatus(ApplicationStatus.valueOf(newStatus));
     application.setReviewer(reviewer);
+
+    application.setDecisionReason(decisionReason);
 
     Application updatedApplication = applicationRepository.save(application);
     return mapToDTO(updatedApplication);
@@ -72,6 +74,7 @@ public class ApplicationService implements I_UserApplication {
     dto.setStartDate(entity.getStartDate());
     dto.setEndDate(entity.getEndDate());
     dto.setReason(entity.getReason());
+    dto.setDecisionReason(entity.getDecisionReason());
     dto.setEmployeeId(entity.getEmployee().getUserId());
     return dto;
   }
