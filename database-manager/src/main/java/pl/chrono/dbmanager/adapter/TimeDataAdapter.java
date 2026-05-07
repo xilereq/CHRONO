@@ -56,4 +56,9 @@ public class TimeDataAdapter implements I_TimeData {
   public Optional<LeaveLog> findActiveLeaveLog(Integer userId) {
     return leaveLogRepository.findByUser_UserIdAndEndTimeIsNull(userId);
   }
+
+  @Override
+  public List<WorkLog> findUnsettledWorkLogs() {
+    return workLogRepository.findByEndTimeIsNotNullAndSettledFalse();
+  }
 }

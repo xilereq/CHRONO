@@ -34,4 +34,7 @@ public class WorkLog {
 
   @OneToMany(mappedBy = "workLog", orphanRemoval = true, cascade = CascadeType.ALL)
   private java.util.List<LeaveLog> leaveLogs = new ArrayList<>();
+
+  @Column(name = "is_settled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+  private boolean settled;
 }

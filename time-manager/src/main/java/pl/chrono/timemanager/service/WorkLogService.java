@@ -5,8 +5,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.WorkLog;
@@ -23,9 +21,6 @@ import pl.chrono.timemanager.exception.WorkStartedException;
 public class WorkLogService {
   private final I_TimeData timeData;
   private final UserRepository userRepository;
-
-  @Value("${chrono.max-work-hours:12}")
-  private int maxWorkHours;
 
   @Transactional
   public WorkLogDto startWork(Integer userId) {
@@ -67,23 +62,6 @@ public class WorkLogService {
     int minutes = duration % 3600 / 60;
     int seconds = duration % 60;
     return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-  }
-
-  @Scheduled(fixedRate = 300000)
-  @Transactional
-  public void closeTooLongWorkLogs() {
-    LocalDateTime threshold = LocalDateTime.now().minusHours(maxWorkHours);
-    timeData.findActiveWorkLogsBefore(threshold).forEach(workLog -> {
-      LocalDateTime closeTime = workLog.getStartTime().plusHours(maxWorkHours);
-      workLog.getLeaveLogs().stream()
-          .filter(leaveLog -> leaveLog.getEndTime() == null || leaveLog.getEndTime().isAfter(closeTime))
-          .forEach(leaveLog -> {
-            leaveLog.setEndTime(closeTime);
-            timeData.saveLeaveLog(leaveLog);
-          });
-      workLog.setEndTime(workLog.getStartTime().plusHours(maxWorkHours));
-      timeData.saveWorkLog(workLog);
-    });
   }
 
   private WorkLogDto mapToDto(WorkLog workLog) {
@@ -129,11 +107,16 @@ public class WorkLogService {
 
     int totalHoursWorked = (int) (totalSecondsWorked / 3600);
 
+    int overtimeSeconds = userRepository.findById(userId)
+        .map(user -> user.getOvertimeBalance() != null ? user.getOvertimeBalance() : 0)
+        .orElse(0);
+
 
     return new WorkStats(
         totalHoursWorked,
         remainingHours,
-        totalMonthlyHours
+        totalMonthlyHours,
+        overtimeSeconds
     );
 
   }

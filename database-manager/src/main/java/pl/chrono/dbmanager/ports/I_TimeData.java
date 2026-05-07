@@ -22,4 +22,6 @@ public interface I_TimeData {
   LeaveLog saveLeaveLog(LeaveLog leaveLog);
 
   Optional<LeaveLog> findActiveLeaveLog(Integer userId);
+
+  List<WorkLog> findUnsettledWorkLogs();
 }
