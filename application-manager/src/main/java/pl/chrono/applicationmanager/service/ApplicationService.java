@@ -1,5 +1,6 @@
 package pl.chrono.applicationmanager.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.usermanager.audit.LogActivity;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,7 @@ public class ApplicationService implements I_UserApplication {
     application.setEndDate(request.getEndDate());
     application.setReason(request.getReason());
     application.setStatus(ApplicationStatus.PENDING);
+    application.setCreationDateTime(LocalDateTime.now());
 
     Application savedApplication = applicationRepository.save(application);
     return mapToDTO(savedApplication);
@@ -41,9 +44,21 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
+  @LogActivity(action = "zmiana")
   public ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
     Application application = applicationRepository.findById(applicationId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
+
+    if (application.getStatus() != ApplicationStatus.PENDING) {
+      throw new IllegalStateException("Wniosek został już rozpatrzony (status: "
+          + application.getStatus() + ") i nie można zmienić jego statusu.");
+    }
+
+    User employee = application.getEmployee();
+
+    if (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId)) {
+      throw new SecurityException("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.");
+    }
 
     User reviewer = userRepository.findById(reviewerId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: "
@@ -51,8 +66,8 @@ public class ApplicationService implements I_UserApplication {
 
     application.setStatus(ApplicationStatus.valueOf(newStatus));
     application.setReviewer(reviewer);
-
     application.setDecisionReason(decisionReason);
+    application.setDecisionDateTime(LocalDateTime.now());
 
     Application updatedApplication = applicationRepository.save(application);
     return mapToDTO(updatedApplication);
@@ -61,6 +76,14 @@ public class ApplicationService implements I_UserApplication {
   @Override
   public List<ApplicationDTO> getUserApplications(Integer employeeId) {
     return applicationRepository.findAllByEmployeeUserId(employeeId)
+        .stream()
+        .map(this::mapToDTO)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<ApplicationDTO> getPendingApplicationsForManager(Integer managerId) {
+    return applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, managerId)
         .stream()
         .map(this::mapToDTO)
         .collect(Collectors.toList());
@@ -76,6 +99,13 @@ public class ApplicationService implements I_UserApplication {
     dto.setReason(entity.getReason());
     dto.setDecisionReason(entity.getDecisionReason());
     dto.setEmployeeId(entity.getEmployee().getUserId());
+    dto.setCreationDateTime(entity.getCreationDateTime());
+    dto.setDecisionDateTime(entity.getDecisionDateTime());
+
+    if (entity.getReviewer() != null) {
+      dto.setReviewerId(entity.getReviewer().getUserId());
+    }
+
     return dto;
   }
 }

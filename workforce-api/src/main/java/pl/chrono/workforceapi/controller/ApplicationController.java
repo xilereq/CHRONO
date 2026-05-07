@@ -3,6 +3,7 @@ package pl.chrono.workforceapi.controller;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +21,8 @@ import pl.chrono.applicationmanager.dto.ApplicationDTO;
 public class ApplicationController {
   private final I_UserApplication applicationService;
 
-  // POST http://localhost:8080/api/applications/employee/5
   @PostMapping("/employee/{employeeId}")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
   public ResponseEntity<ApplicationDTO> createApplication(
       @PathVariable Integer employeeId,
       @RequestBody ApplicationDTO request) {
@@ -30,8 +31,8 @@ public class ApplicationController {
     return ResponseEntity.ok(createdApplication);
   }
 
-  // GET http://localhost:8080/api/applications/employee/5
   @GetMapping("/employee/{employeeId}")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
   public ResponseEntity<List<ApplicationDTO>> getUserApplications(
       @PathVariable Integer employeeId) {
 
@@ -39,8 +40,8 @@ public class ApplicationController {
     return ResponseEntity.ok(applications);
   }
 
-  // PATCH http://localhost:8080/api/applications/12/status?newStatus=APPROVED&reviewerId=3
   @PatchMapping("/{applicationId}/status")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   public ResponseEntity<ApplicationDTO> changeStatus(
       @PathVariable Long applicationId,
       @RequestParam String newStatus,
@@ -50,5 +51,14 @@ public class ApplicationController {
     ApplicationDTO updatedApplication = applicationService.changeStatus(
         applicationId, newStatus, reviewerId, decisionReason);
     return ResponseEntity.ok(updatedApplication);
+  }
+
+  @GetMapping("/manager/{managerId}/pending")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<List<ApplicationDTO>> getPendingApplicationsForManager(
+      @PathVariable Integer managerId) {
+
+    List<ApplicationDTO> pendingApplications = applicationService.getPendingApplicationsForManager(managerId);
+    return ResponseEntity.ok(pendingApplications);
   }
 }
