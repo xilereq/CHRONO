@@ -10,6 +10,7 @@ import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.repository.RoleRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.usermanager.audit.LogActivity;
 import pl.chrono.usermanager.dto.request.AuthRequest;
 import pl.chrono.usermanager.dto.request.ChangePasswordRequest;
 import pl.chrono.usermanager.dto.request.RegisterRequest;
@@ -54,6 +55,7 @@ public class AuthService {
   }
 
   @Transactional
+  @LogActivity(action = "REGISTER_NEW_USER")
   public RegisterResponse registerNewUser(RegisterRequest request) {
     if(userRepository.findByEmail(request.email()).isPresent()) {
       throw new IllegalArgumentException("Użytkownik o podanym adresie email już istnieje.");
