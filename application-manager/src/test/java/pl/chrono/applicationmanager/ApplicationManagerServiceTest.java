@@ -110,6 +110,7 @@ class ApplicationServiceTest {
   @Test
   void getUserApplications_ShouldReturnListOfDtos() {
     Integer employeeId = 1;
+    Integer requesterId = 1;
 
     User mockEmployee = new User();
     mockEmployee.setUserId(employeeId);
@@ -123,7 +124,7 @@ class ApplicationServiceTest {
     when(applicationRepository.findAllByEmployeeUserId(employeeId))
         .thenReturn(List.of(mockApplication));
 
-    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId);
+    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
 
     assertNotNull(result);
     assertEquals(1, result.size());

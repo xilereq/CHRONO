@@ -8,7 +8,7 @@ public interface I_UserApplication {
 
   ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason);
 
-  List<ApplicationDTO> getUserApplications(Integer employeeId);
+  List<ApplicationDTO> getUserApplications(Integer employeeId, Integer requesterId);
 
   List<ApplicationDTO> getPendingApplicationsForManager(Integer managerId);
 }

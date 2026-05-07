@@ -74,7 +74,24 @@ public class ApplicationService implements I_UserApplication {
   }
 
   @Override
-  public List<ApplicationDTO> getUserApplications(Integer employeeId) {
+  public List<ApplicationDTO> getUserApplications(Integer employeeId, Integer requesterId) {
+    if (!employeeId.equals(requesterId)) {
+      User employee = userRepository.findById(employeeId)
+          .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
+      User requester = userRepository.findById(requesterId)
+          .orElseThrow(() -> new RuntimeException("Nie znaleziono użytkownika żądającego o ID: " + requesterId));
+
+      boolean hasGlobalAccess = requester.getRoles().stream()
+          .anyMatch(role -> role.getName().equals("ROLE_HR") || role.getName().equals("ROLE_ADMIN"));
+
+      boolean isDirectManager = employee.getManager() != null
+          && employee.getManager().getUserId().equals(requesterId);
+
+      if (!hasGlobalAccess && !isDirectManager) {
+        throw new SecurityException("Brak uprawnień. Możesz przeglądać tylko swoje wnioski lub wnioski swoich podwładnych.");
+      }
+    }
+
     return applicationRepository.findAllByEmployeeUserId(employeeId)
         .stream()
         .map(this::mapToDTO)
