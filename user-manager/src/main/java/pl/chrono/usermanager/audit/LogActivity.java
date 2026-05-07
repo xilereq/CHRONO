@@ -9,4 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LogActivity {
   String action() default "UNKNOWN_ACTION";
+  String details() default "UNKNOWN_DETAILS";
 }

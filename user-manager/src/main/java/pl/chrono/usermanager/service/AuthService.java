@@ -55,7 +55,7 @@ public class AuthService {
   }
 
   @Transactional
-  @LogActivity(action = "REGISTER_NEW_USER")
+  @LogActivity(action = "REGISTER_NEW_USER", details = "Successful register")
   public RegisterResponse registerNewUser(RegisterRequest request) {
     if(userRepository.findByEmail(request.email()).isPresent()) {
       throw new IllegalArgumentException("Użytkownik o podanym adresie email już istnieje.");

@@ -26,6 +26,7 @@ public class AuditAspect {
     OperationLog auditLog = new OperationLog();
 
     auditLog.setAction(logActivity.action());
+    auditLog.setDetails(logActivity.details());
 
     String currentUser = "SYSTEM";
     if (SecurityContextHolder.getContext().getAuthentication() != null) {
@@ -33,9 +34,6 @@ public class AuditAspect {
     }
     auditLog.setUserEmail(currentUser);
 
-    MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-    String methodName = signature.getDeclaringType().getSimpleName() + "." + signature.getName();
-    auditLog.setDetails("Called: " + methodName);
 
     auditLog.setTimestamp(LocalDateTime.now());
 
