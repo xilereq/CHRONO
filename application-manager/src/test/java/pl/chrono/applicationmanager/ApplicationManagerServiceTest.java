@@ -3,8 +3,10 @@ package pl.chrono.applicationmanager;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,6 +20,7 @@ import pl.chrono.applicationmanager.dto.ApplicationDTO;
 import pl.chrono.applicationmanager.service.ApplicationService;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
+import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
@@ -156,5 +159,132 @@ class ApplicationServiceTest {
     assertEquals("PENDING", result.getFirst().getStatus());
 
     verify(applicationRepository, times(1)).findPendingByManagerId(ApplicationStatus.PENDING, managerId);
+  }
+
+  @Test
+  void createApplication_ShouldThrowException_WhenUserDoesNotExist() {
+    Integer employeeId = 999;
+    ApplicationDTO requestDto = new ApplicationDTO();
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.empty());
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        applicationService.createApplication(requestDto, employeeId)
+    );
+    assertEquals("Nie znaleziono pracownika o ID: 999", exception.getMessage());
+  }
+
+  @Test
+  void changeStatus_ShouldThrowException_WhenApplicationNotPending() {
+    Long applicationId = 1L;
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.APPROVED);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+        applicationService.changeStatus(applicationId, "REJECTED", 2, "Reason")
+    );
+    assertNotNull(exception.getMessage());
+  }
+
+  @Test
+  void changeStatus_ShouldThrowException_WhenEmployeeHasNoManager() {
+    Long applicationId = 1L;
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setManager(null);
+    mockApplication.setEmployee(mockEmployee);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+
+    SecurityException exception = assertThrows(SecurityException.class, () ->
+        applicationService.changeStatus(applicationId, "APPROVED", 2, "Reason")
+    );
+    assertEquals("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.", exception.getMessage());
+  }
+
+  @Test
+  void changeStatus_ShouldThrowException_WhenReviewerIsNotDirectManager() {
+    Long applicationId = 1L;
+    Integer actualManagerId = 3;
+    Integer fakeReviewerId = 2;
+
+    User actualManager = new User();
+    actualManager.setUserId(actualManagerId);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setManager(actualManager);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+    mockApplication.setEmployee(mockEmployee);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+
+    SecurityException exception = assertThrows(SecurityException.class, () ->
+        applicationService.changeStatus(applicationId, "APPROVED", fakeReviewerId, "Reason")
+    );
+    assertNotNull(exception.getMessage());
+  }
+
+  @Test
+  void getUserApplications_ShouldThrowException_WhenRequesterHasNoAccess() {
+    Integer employeeId = 1;
+    Integer requesterId = 2;
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(employeeId);
+    mockEmployee.setManager(null);
+
+    User mockRequester = new User();
+    mockRequester.setUserId(requesterId);
+    mockRequester.setRoles(Set.of());
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockEmployee));
+    when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
+
+    SecurityException exception = assertThrows(SecurityException.class, () ->
+        applicationService.getUserApplications(employeeId, requesterId)
+    );
+    assertNotNull(exception.getMessage());
+  }
+
+  @Test
+  void getUserApplications_ShouldReturnDtos_WhenRequesterIsHR() {
+    Integer employeeId = 1;
+    Integer requesterId = 2;
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(employeeId);
+
+    Role hrRole = new Role();
+    hrRole.setName("ROLE_HR");
+
+    User mockRequester = new User();
+    mockRequester.setUserId(requesterId);
+    mockRequester.setRoles(Set.of(hrRole));
+
+    Application mockApplication = new Application();
+    mockApplication.setId(10L);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.SICK_LEAVE);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockEmployee));
+    when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
+    when(applicationRepository.findAllByEmployeeUserId(employeeId)).thenReturn(List.of(mockApplication));
+
+    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
   }
 }
