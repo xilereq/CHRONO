@@ -1,6 +1,7 @@
 package pl.chrono.applicationmanager.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,4 +16,7 @@ public class ApplicationDTO {
   private String reason;
   private String decisionReason;
   private Integer employeeId;
+  private Integer reviewerId;
+  private LocalDateTime creationDateTime;
+  private LocalDateTime decisionDateTime;
 }

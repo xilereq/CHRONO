@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
@@ -53,4 +54,10 @@ public class Application {
 
   @Column(name = "decision_reason")
   private String decisionReason;
+
+  @Column(name = "creation_date_time", updatable = false)
+  private LocalDateTime creationDateTime;
+
+  @Column(name = "decision_date_time")
+  private LocalDateTime decisionDateTime;
 }

@@ -56,6 +56,7 @@ class ApplicationServiceTest {
     savedApplication.setStartDate(requestDto.getStartDate());
     savedApplication.setEndDate(requestDto.getEndDate());
     savedApplication.setReason(requestDto.getReason());
+    savedApplication.setCreationDateTime(java.time.LocalDateTime.now());
 
     when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockUser));
     when(applicationRepository.save(any(Application.class))).thenReturn(savedApplication);
@@ -67,6 +68,7 @@ class ApplicationServiceTest {
     assertEquals("HOLIDAY_LEAVE", result.getType());
     assertEquals("PENDING", result.getStatus());
     assertEquals(employeeId, result.getEmployeeId());
+    assertNotNull(result.getCreationDateTime());
 
     verify(applicationRepository, times(1)).save(any(Application.class));
   }
@@ -78,17 +80,18 @@ class ApplicationServiceTest {
     String newStatus = "APPROVED";
     String decisionReason = "Valid reason";
 
-    Application mockApplication = new Application();
-    mockApplication.setId(applicationId);
-    mockApplication.setStatus(ApplicationStatus.PENDING);
+    User mockReviewer = new User();
+    mockReviewer.setUserId(reviewerId);
 
     User mockEmployee = new User();
     mockEmployee.setUserId(1);
+    mockEmployee.setManager(mockReviewer);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
     mockApplication.setEmployee(mockEmployee);
     mockApplication.setType(ApplicationType.HOLIDAY_LEAVE);
-
-    User mockReviewer = new User();
-    mockReviewer.setUserId(reviewerId);
 
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
@@ -99,6 +102,8 @@ class ApplicationServiceTest {
     assertNotNull(result);
     assertEquals(newStatus, result.getStatus());
     assertEquals(decisionReason, result.getDecisionReason());
+    assertEquals(reviewerId, result.getReviewerId());
+    assertNotNull(result.getDecisionDateTime());
     verify(applicationRepository, times(1)).save(mockApplication);
   }
 
@@ -124,5 +129,31 @@ class ApplicationServiceTest {
     assertEquals(1, result.size());
     assertEquals(10L, result.getFirst().getId());
     assertEquals("SICK_LEAVE", result.getFirst().getType());
+  }
+
+  @Test
+  void getPendingApplicationsForManager_ShouldReturnListOfDtos() {
+    Integer managerId = 2;
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(20L);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.HOLIDAY_LEAVE);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+
+    when(applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, managerId))
+        .thenReturn(List.of(mockApplication));
+
+    List<ApplicationDTO> result = applicationService.getPendingApplicationsForManager(managerId);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(20L, result.getFirst().getId());
+    assertEquals("PENDING", result.getFirst().getStatus());
+
+    verify(applicationRepository, times(1)).findPendingByManagerId(ApplicationStatus.PENDING, managerId);
   }
 }
