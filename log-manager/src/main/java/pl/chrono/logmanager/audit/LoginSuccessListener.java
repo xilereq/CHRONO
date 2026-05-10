@@ -1,4 +1,4 @@
-package pl.chrono.usermanager.audit;
+package pl.chrono.logmanager.audit;
 
 import java.time.LocalDateTime;
 import org.springframework.context.ApplicationListener;

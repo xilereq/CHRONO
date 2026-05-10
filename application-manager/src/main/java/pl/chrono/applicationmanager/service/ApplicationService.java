@@ -14,7 +14,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
-import pl.chrono.usermanager.audit.LogActivity;
+import pl.chrono.logmanager.audit.LogActivity;
 
 @Service
 @RequiredArgsConstructor

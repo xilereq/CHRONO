@@ -1,4 +1,4 @@
-package pl.chrono.usermanager.audit;
+package pl.chrono.logmanager.audit;
 
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;

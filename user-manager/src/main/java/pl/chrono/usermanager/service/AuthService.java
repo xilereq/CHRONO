@@ -10,7 +10,7 @@ import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.repository.RoleRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
-import pl.chrono.usermanager.audit.LogActivity;
+import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.usermanager.dto.request.AuthRequest;
 import pl.chrono.usermanager.dto.request.ChangePasswordRequest;
 import pl.chrono.usermanager.dto.request.RegisterRequest;

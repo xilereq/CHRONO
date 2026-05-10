@@ -20,7 +20,8 @@
 		<module>database-manager</module>
 		<module>workforce-api</module>
         <module>application-manager</module>
-	</modules>
+        <module>log-manager</module>
+    </modules>
 
 	<properties>
 		<java.version>25</java.version>

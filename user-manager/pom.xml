@@ -45,7 +45,12 @@
         <dependency>
             <groupId>pl.chrono</groupId>
             <artifactId>database-manager</artifactId>
-            <version>${project.version}</version>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>pl.chrono</groupId>
+            <artifactId>log-manager</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
