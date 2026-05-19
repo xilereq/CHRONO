@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
-import { Grafik, Dashboard, Requests, RequestDetail, Raporty} from './pages';
-import Login from './pages/Login/Login';
+import { Grafik, Dashboard, Requests, RequestDetail, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset } from './pages';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services';
 import './index.css';
@@ -42,6 +41,8 @@ const App = () => {
             {!isAuthenticated ? (
                 <Routes>
                     <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordRequest />} />
+                    <Route path="/reset-password" element={<ForgotPasswordReset />} />
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             ) : (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../../services';
+import { Link } from 'react-router-dom';
 import './Login.css';
 
 const Login = ({ onLoginSuccess }) => {
@@ -75,6 +76,9 @@ const Login = ({ onLoginSuccess }) => {
                         {loading ? 'Logowanie...' : 'Zaloguj się'}
                     </button>
                 </form>
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    <Link to="/forgot-password" className="login-forgot-link">Zapomniałem hasła</Link>
+                </div>
             </div>
         </div>
     );

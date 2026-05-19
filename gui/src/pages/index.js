@@ -8,4 +8,8 @@ export {default as ApprovalList} from './Requests/ApprovalList';
 
 export {default as Raporty} from './Reports/Reports';
 
+export {default as Login} from './Login/Login';
+export {default as ForgotPasswordRequest} from './Login/ForgotPasswordRequest';
+export {default as ForgotPasswordReset} from './Login/ForgotPasswordReset';
+
 

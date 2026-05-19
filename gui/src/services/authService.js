@@ -39,6 +39,40 @@ const authService = {
     getUserEmail: () => {
         return localStorage.getItem('userEmail');
     }
+,
+
+    requestPasswordReset: async (email) => {
+        const response = await fetch(`${API_URL}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Nie udało się wysłać instrukcji resetu.');
+        }
+
+        return await response.json().catch(() => ({}));
+    },
+
+    resetPassword: async (token, password) => {
+        const response = await fetch(`${API_URL}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password }),
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Nie udało się zresetować hasła.');
+        }
+
+        return await response.json().catch(() => ({}));
+    }
 };
 
 export default authService;
+
+
+
