@@ -7,6 +7,7 @@ export {default as RequestDetail} from './Requests/RequestDetail';
 export {default as ApprovalList} from './Requests/ApprovalList';
 
 export {default as Raporty} from './Reports/Reports';
+export {default as Policies} from './Policies/Policies';
 
 export {default as Login} from './Login/Login';
 export {default as ForgotPasswordRequest} from './Login/ForgotPasswordRequest';

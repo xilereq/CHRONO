@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { authService } from '../../services';
 
 import './layout.css';
 
@@ -27,6 +28,11 @@ const Sidebar = () => {
                     <Calendar size={24} />
                     <span>Grafik</span>
                 </NavLink>
+                <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                    <Settings size={24} />
+                    <span>Polityki</span>
+                </NavLink>
+
                 <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
                     <Settings size={24} />
                     <span>Ustawienia</span>

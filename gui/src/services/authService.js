@@ -20,6 +20,10 @@ const authService = {
             localStorage.setItem('accessToken', data.token);
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('userEmail', email);
+            // if backend returns roles, store them as well
+            if (data.roles) {
+                try { localStorage.setItem('userRoles', JSON.stringify(data.roles)); } catch(e) {}
+            }
         }
 
         return data;
@@ -29,6 +33,7 @@ const authService = {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userEmail');
+        localStorage.removeItem('userRoles');
         window.location.reload();
     },
 
@@ -38,8 +43,41 @@ const authService = {
 
     getUserEmail: () => {
         return localStorage.getItem('userEmail');
-    }
-,
+    },
+
+    // Roles helpers - roles are stored in localStorage as JSON array under 'userRoles'
+    getUserRoles: () => {
+        try {
+            const raw = localStorage.getItem('userRoles');
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    },
+
+    hasRole: (role) => {
+        const roles = authService.getUserRoles();
+        return roles.includes(role);
+    },
+
+    hasAnyRole: (checkRoles) => {
+        const roles = authService.getUserRoles();
+        return checkRoles.some(r => roles.includes(r));
+    },
+
+    setUserRoles: (roles) => {
+        if (!roles) {
+            localStorage.removeItem('userRoles');
+            return;
+        }
+        try {
+            localStorage.setItem('userRoles', JSON.stringify(roles));
+        } catch (e) {
+            // ignore
+        }
+    },
 
     requestPasswordReset: async (email) => {
         const response = await fetch(`${API_URL}/forgot-password`, {
@@ -73,6 +111,3 @@ const authService = {
 };
 
 export default authService;
-
-
-
