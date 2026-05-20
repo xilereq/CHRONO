@@ -7,10 +7,19 @@ public class PolicyException extends TimeManagerException {
   public PolicyException(String errorCode, String message, HttpStatus status) {
     super(errorCode, message, status);
   }
+
   public static class NotFound extends PolicyException {
     public NotFound(Integer policyId) {
-      super("POLICY_NOT_FOUND",
-          "Policy with ID " + policyId + " does not exist!", HttpStatus.NOT_FOUND);
+      super(
+          ErrorCodes.POLICY_NOT_FOUND, "Policy with ID " + policyId + " does not exist!",
+          HttpStatus.NOT_FOUND
+      );
+    }
+  }
+
+  public static class InvalidDate extends PolicyException {
+    public InvalidDate(String code, String message) {
+      super(code, message, HttpStatus.BAD_REQUEST);
     }
   }
 }
