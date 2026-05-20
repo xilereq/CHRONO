@@ -7,9 +7,9 @@ import pl.chrono.dbmanager.model.UsersPolicy;
 
 @Repository
 public interface UsersPolicyRepository extends JpaRepository<UsersPolicy, Integer> {
-  Optional<UsersPolicy> findByUserIdAndValidToIsNull(Integer userId);
+  Optional<UsersPolicy> findByUser_UserIdAndValidToIsNull(Integer userId);
 
   default Optional<UsersPolicy> findActiveByUserId(Integer userId) {
-    return findByUserIdAndValidToIsNull(userId);
+    return findByUser_UserIdAndValidToIsNull(userId);
   }
 }
