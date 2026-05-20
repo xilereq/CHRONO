@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -19,11 +20,11 @@ public class HolidayPolicy {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer holidayPolicyId;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "holiday_id", nullable = false)
   private Holiday holiday;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "policy_id", nullable = false)
   private Policy policy;
 }

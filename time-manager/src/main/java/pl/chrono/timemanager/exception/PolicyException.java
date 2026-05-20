@@ -22,4 +22,10 @@ public class PolicyException extends TimeManagerException {
       super(code, message, HttpStatus.BAD_REQUEST);
     }
   }
+
+  public static class AlreadyAssigned extends PolicyException {
+    public AlreadyAssigned(String code, String message) {
+      super(code, message, HttpStatus.CONFLICT);
+    }
+  }
 }

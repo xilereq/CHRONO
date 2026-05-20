@@ -5,15 +5,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users_policy")
+@Table(name = "users_policy", indexes =
+    {@Index(name = "idx_user_range", columnList =
+    "user_id, " + "validFrom, validTo")})
 @Getter
 @Setter
 public class UsersPolicy {
@@ -30,7 +33,7 @@ public class UsersPolicy {
   private Policy policy;
 
   @Column(nullable = false)
-  private LocalDateTime validFrom;
+  private LocalDate validFrom;
 
-  private LocalDateTime validTo;
+  private LocalDate validTo;
 }

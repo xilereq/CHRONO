@@ -28,7 +28,4 @@ public class Holiday {
   private boolean occursYearly;
 
   private LocalDate date;
-
-  @OneToMany(mappedBy = "holiday")
-  private List<HolidayPolicy> holidayPolicies;
 }
