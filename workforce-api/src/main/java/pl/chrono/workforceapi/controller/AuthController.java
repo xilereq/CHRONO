@@ -14,6 +14,8 @@ import pl.chrono.usermanager.dto.request.TokenRequest;
 import pl.chrono.usermanager.dto.response.AuthResponse;
 import pl.chrono.usermanager.dto.response.RegisterResponse;
 import pl.chrono.usermanager.service.AuthService;
+import pl.chrono.usermanager.dto.request.PasswordResetRequest;
+import pl.chrono.usermanager.dto.request.PasswordResetConfirmRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,7 +39,7 @@ public class AuthController {
 
   @PostMapping("/register")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request){
+  public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
     return ResponseEntity.ok(authService.registerNewUser(request));
   }
 
@@ -45,6 +47,18 @@ public class AuthController {
   public ResponseEntity<RegisterResponse> changePassword(@RequestBody ChangePasswordRequest request, Authentication authentication){
     String userEmail = authentication.getName();
     authService.changeFirstPassword(userEmail, request);
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/forgot-password")
+  public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequest request) {
+    authService.requestPasswordRest(request.email());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<?> resetPassword(@RequestBody PasswordResetConfirmRequest request) {
+    authService.ressetPassword(request.token(), request.password());
     return ResponseEntity.ok().build();
   }
 }
