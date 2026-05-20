@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pl.chrono.timemanager.dto.LeaveLogDto;
+import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.service.LeaveLogService;
 import pl.chrono.usermanager.service.AuthService;
-import pl.chrono.workforceapi.dto.request.LeaveStartRequest;
+import pl.chrono.timemanager.dto.request.LeaveStartRequest;
 
 @RestController
 @RequestMapping("/api/leave-log")

@@ -1,4 +1,4 @@
-package pl.chrono.timemanager.dto;
+package pl.chrono.timemanager.dto.response;
 
 import java.time.LocalDateTime;
 import lombok.Getter;

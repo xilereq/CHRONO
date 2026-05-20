@@ -8,14 +8,16 @@ import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.enums.LeaveType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
-import pl.chrono.timemanager.dto.LeaveLogDto;
+import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.exception.WorkException;
+import pl.chrono.timemanager.mapper.LeaveLogMapper;
 
 @Service
 @RequiredArgsConstructor
 public class LeaveLogService {
   private final I_TimeData timeData;
   private final UserRepository userRepository;
+  private final LeaveLogMapper leaveLogMapper;
 
   @Transactional
   public LeaveLogDto startLeave(Integer userId, LeaveType type) {
@@ -33,7 +35,7 @@ public class LeaveLogService {
     leaveLog.setType(type);
     leaveLog.setWorkLog(activeWorkLog);
     LeaveLog saved = timeData.saveLeaveLog(leaveLog);
-    return mapToDto(saved);
+    return leaveLogMapper.toDto(saved);
   }
 
   @Transactional
@@ -42,7 +44,7 @@ public class LeaveLogService {
         .orElseThrow(() -> new WorkException.NoActiveLeave(userId));
     leaveLog.setEndTime(LocalDateTime.now());
     LeaveLog saved = timeData.saveLeaveLog(leaveLog);
-    return mapToDto(saved);
+    return leaveLogMapper.toDto(saved);
   }
 
   @Transactional(readOnly = true)
@@ -50,16 +52,4 @@ public class LeaveLogService {
     return timeData.isUserOnLeave(userId);
   }
 
-  private LeaveLogDto mapToDto(LeaveLog leaveLog) {
-    LeaveLogDto dto = new LeaveLogDto();
-    dto.setLeaveLogId(leaveLog.getLeaveLogId());
-    dto.setUserId(leaveLog.getUser().getUserId());
-    dto.setStartTime(leaveLog.getStartTime());
-    dto.setEndTime(leaveLog.getEndTime());
-    dto.setLeaveType(leaveLog.getType());
-    if (leaveLog.getWorkLog() != null) {
-      dto.setWorkLog(leaveLog.getWorkLog().getWorkLogId());
-    }
-    return dto;
-  }
 }

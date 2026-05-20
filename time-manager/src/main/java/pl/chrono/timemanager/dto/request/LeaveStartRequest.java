@@ -1,4 +1,4 @@
-package pl.chrono.workforceapi.dto.request;
+package pl.chrono.timemanager.dto.request;
 
 import pl.chrono.dbmanager.model.enums.LeaveType;
 

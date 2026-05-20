@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pl.chrono.timemanager.dto.WorkLogDto;
-import pl.chrono.timemanager.dto.WorkStats;
+import pl.chrono.timemanager.dto.response.WorkLogDto;
+import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.service.WorkLogService;
 import pl.chrono.usermanager.service.AuthService;
 

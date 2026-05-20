@@ -10,15 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
-import pl.chrono.timemanager.dto.WorkLogDto;
-import pl.chrono.timemanager.dto.WorkStats;
+import pl.chrono.timemanager.dto.response.WorkLogDto;
+import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.exception.WorkException;
+import pl.chrono.timemanager.mapper.WorkLogMapper;
 
 @Service
 @RequiredArgsConstructor
 public class WorkLogService {
   private final I_TimeData timeData;
   private final UserRepository userRepository;
+  private final WorkLogMapper workLogMapper;
 
   @Transactional
   public WorkLogDto startWork(Integer userId) {
@@ -31,7 +33,7 @@ public class WorkLogService {
         () -> new IllegalArgumentException("User not found")));
     workLog.setStartTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
-    return mapToDto(saved);
+    return workLogMapper.toDto(saved);
   }
 
   @Transactional
@@ -43,7 +45,7 @@ public class WorkLogService {
     }
     workLog.setEndTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
-    return mapToDto(saved);
+    return workLogMapper.toDto(saved);
   }
 
   @Transactional(readOnly = true)
@@ -62,14 +64,6 @@ public class WorkLogService {
     return String.format("%02d:%02d:%02d", hours, minutes, seconds);
   }
 
-  private WorkLogDto mapToDto(WorkLog workLog) {
-    WorkLogDto dto = new WorkLogDto();
-    dto.setWorkLogId(workLog.getWorkLogId());
-    dto.setUserId(workLog.getUser().getUserId());
-    dto.setStartTime(workLog.getStartTime());
-    dto.setEndTime(workLog.getEndTime());
-    return dto;
-  }
 
   private boolean isWorkDay(LocalDate date) {
     DayOfWeek day = date.getDayOfWeek();
