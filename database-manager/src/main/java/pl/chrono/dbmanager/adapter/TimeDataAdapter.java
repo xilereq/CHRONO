@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.WorkLogRepository;
 import pl.chrono.dbmanager.repository.LeaveLogRepository;
+import pl.chrono.dbmanager.repository.WorkLogRepository;
 
 @Component
 @RequiredArgsConstructor
