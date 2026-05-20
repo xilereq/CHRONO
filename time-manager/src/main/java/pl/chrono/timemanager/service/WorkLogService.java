@@ -12,9 +12,7 @@ import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.WorkLogDto;
 import pl.chrono.timemanager.dto.WorkStats;
-import pl.chrono.timemanager.exception.LeaveStartedException;
-import pl.chrono.timemanager.exception.NoActiveWorkException;
-import pl.chrono.timemanager.exception.WorkStartedException;
+import pl.chrono.timemanager.exception.TimeException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +23,7 @@ public class WorkLogService {
   @Transactional
   public WorkLogDto startWork(Integer userId) {
     if (isUserWorking(userId)) {
-      throw new WorkStartedException(userId);
+      throw new TimeException.WorkStarted(userId);
     }
 
     WorkLog workLog = new WorkLog();
@@ -39,9 +37,9 @@ public class WorkLogService {
   @Transactional
   public WorkLogDto endWork(Integer userId) {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
-        .orElseThrow(() -> new NoActiveWorkException(userId));
+        .orElseThrow(() -> new TimeException.NoActiveWork(userId));
     if (timeData.isUserOnLeave(userId)) {
-      throw new LeaveStartedException(userId);
+      throw new TimeException.LeaveStarted(userId);
     }
     workLog.setEndTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
