@@ -9,7 +9,7 @@ import pl.chrono.dbmanager.model.enums.LeaveType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.LeaveLogDto;
-import pl.chrono.timemanager.exception.TimeException;
+import pl.chrono.timemanager.exception.WorkException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +20,10 @@ public class LeaveLogService {
   @Transactional
   public LeaveLogDto startLeave(Integer userId, LeaveType type) {
     var activeWorkLog = timeData.findActiveWorkLog(userId)
-        .orElseThrow(() -> new TimeException.NoActiveWork(userId));
+        .orElseThrow(() -> new WorkException.NoActiveWork(userId));
 
     if (isUserOnLeave(userId)) {
-      throw new TimeException.LeaveStarted(userId);
+      throw new WorkException.LeaveStarted(userId);
     }
 
     LeaveLog leaveLog = new LeaveLog();
@@ -39,7 +39,7 @@ public class LeaveLogService {
   @Transactional
   public LeaveLogDto endLeave(Integer userId) {
     LeaveLog leaveLog = timeData.findActiveLeaveLog(userId)
-        .orElseThrow(() -> new TimeException.NoActiveLeave(userId));
+        .orElseThrow(() -> new WorkException.NoActiveLeave(userId));
     leaveLog.setEndTime(LocalDateTime.now());
     LeaveLog saved = timeData.saveLeaveLog(leaveLog);
     return mapToDto(saved);

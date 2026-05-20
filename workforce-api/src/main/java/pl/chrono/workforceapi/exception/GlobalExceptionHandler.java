@@ -7,19 +7,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import pl.chrono.timemanager.exception.TimeException;
+import pl.chrono.timemanager.exception.TimeManagerException;
 
 @RestControllerAdvice
 @SuppressWarnings("unused")
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(TimeException.class)
-  public ResponseEntity<Object> handleTimeException(TimeException ex) {
+  @ExceptionHandler(TimeManagerException.class)
+  public ResponseEntity<Object> handleTimeManagerException(TimeManagerException ex) {
     Map<String, Object> body = new HashMap<>();
     body.put("code", ex.getErrorCode());
     body.put("message", ex.getMessage());
     body.put("timestamp", LocalDateTime.now());
-    return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    return new ResponseEntity<>(body, ex.getStatus());
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
