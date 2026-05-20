@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings } from 'lucide-react';
+import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings, Shield } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { authService } from '../../services';
 
@@ -24,12 +24,8 @@ const Sidebar = () => {
                     <BarChart2 size={24} />
                     <span>Raporty</span>
                 </NavLink>
-                <NavLink to="/grafik" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
-                    <Calendar size={24} />
-                    <span>Grafik</span>
-                </NavLink>
                 <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
-                    <Settings size={24} />
+                    <Shield size={24} />
                     <span>Polityki</span>
                 </NavLink>
 
