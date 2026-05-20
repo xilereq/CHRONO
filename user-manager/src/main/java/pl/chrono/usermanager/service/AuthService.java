@@ -1,5 +1,6 @@
 package pl.chrono.usermanager.service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +99,34 @@ public class AuthService {
     return userRepository.findByEmail(email)
         .map(User::getUserId)
         .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono użytkownika dla podanego tokena"));
+  }
+
+  @Transactional
+  public void requestPasswordRest(String email){
+    userRepository.findByEmail(email).ifPresent(user -> {
+      String token = UUID.randomUUID().toString();
+      user.setResetToken(token);
+      user.setResetTokenExpiration(LocalDateTime.now().plusMinutes(15));
+      userRepository.save(user);
+
+      //To w przyszłości będzie trzeba podmienić na wywołanie logiki wysyłania maili do użytkownika
+      System.out.println("LINK DO RESETU HASŁA: http://localhost:3000/reset-password?token=" + token);
+    });
+  }
+
+  @Transactional
+  public void ressetPassword(String token, String newPassword) {
+    User user = userRepository.findByResetToken(token)
+        .orElseThrow(() -> new IllegalArgumentException("Nieprawidłowy lub wygasły token."));
+    if(user.getResetTokenExpiration().isBefore(LocalDateTime.now())){
+      throw new IllegalArgumentException("Token do resetu hasła wygasł.");
+    }
+
+    user.setPasswordHash(passwordEncoder.encode(newPassword));
+    user.setResetToken(null);
+    user.setResetTokenExpiration(null);
+    user.setForcePasswordChange(false);
+    userRepository.save(user);
   }
 }
 
