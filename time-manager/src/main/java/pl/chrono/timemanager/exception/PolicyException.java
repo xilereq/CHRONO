@@ -24,8 +24,9 @@ public class PolicyException extends TimeManagerException {
   }
 
   public static class AlreadyAssigned extends PolicyException {
-    public AlreadyAssigned(String code, String message) {
-      super(code, message, HttpStatus.CONFLICT);
+    public AlreadyAssigned() {
+      super(ErrorCodes.POLICY_ALREADY_ASSIGNED,
+          "This policy has been already assigned to this user.", HttpStatus.CONFLICT);
     }
   }
 }

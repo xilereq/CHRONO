@@ -1,6 +1,7 @@
 package pl.chrono.timemanager.service;
 
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +14,6 @@ import pl.chrono.dbmanager.repository.UsersPolicyRepository;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.exception.ErrorCodes;
 import pl.chrono.timemanager.exception.PolicyException;
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +26,7 @@ public class PolicyManagementService {
   public void assignPolicyToUser(Integer userId, AssignPolicyRequest request) {
     if (request.startDate().isBefore(LocalDate.now())) {
       throw new PolicyException.InvalidDate(
-          ErrorCodes.PAST_START_DATE,
-          "Start date cannot be in the past");
+          ErrorCodes.PAST_START_DATE,"Start date cannot be in the past");
     }
 
     Policy newPolicy = policyRepository.findById(request.policyId())
@@ -35,8 +34,7 @@ public class PolicyManagementService {
 
     usersPolicyRepository.findActiveByUserId(userId).ifPresent(oldPolicy -> {
       if (oldPolicy.getPolicy().getPolicyId().equals(request.policyId())) {
-        throw new PolicyException.AlreadyAssigned(ErrorCodes.POLICY_ALREADY_ASSIGNED,
-            "This policy has been already assigned to this user.");
+        throw new PolicyException.AlreadyAssigned();
       }
       if (request.startDate().isBefore(oldPolicy.getValidFrom())) {
         throw new PolicyException.InvalidDate(ErrorCodes.START_DATE_CONFLICT,
