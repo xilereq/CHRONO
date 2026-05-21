@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
-import { Grafik, Dashboard, Requests, RequestDetail, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Policies } from './pages';
+import { Grafik, Dashboard, Requests, RequestDetail, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Policies, Settings} from './pages';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services';
 import './index.css';
@@ -58,7 +58,7 @@ const App = () => {
                             <Route path="/raporty" element={<Raporty/>} />
                             <Route path="/grafik" element={<Grafik />} />
                             <Route path="/policies" element={<Policies />} />
-                            <Route path="/ustawienia" element={<div style={{padding: '2rem'}}>Ustawienia (w budowie)</div>} />
+                            <Route path="/ustawienia" element={<Settings />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </div>

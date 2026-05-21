@@ -13,4 +13,6 @@ export {default as Login} from './Login/Login';
 export {default as ForgotPasswordRequest} from './Login/ForgotPasswordRequest';
 export {default as ForgotPasswordReset} from './Login/ForgotPasswordReset';
 
+export {default as Settings} from './Settings/Settings';
+
 
