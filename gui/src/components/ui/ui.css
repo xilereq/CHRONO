@@ -1,16 +1,16 @@
 /* --- Komponenty UI --- */
 .card {
-    background: #fff;
+    background: var(--bg-card);
     border-radius: 0.75rem;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
 }
 
 .card-title {
-    color: #1f2937;
+    color: var(--text-main);
     font-weight: 700;
     margin-bottom: 1.5rem;
     margin-top: 0;
@@ -27,7 +27,6 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-
     transition: background-color 0.2s;
     width: 100%;
     cursor: pointer;
@@ -37,7 +36,7 @@
 }
 
 .btn-primary {
-    background: #FFDE42;
+    background: var(--primary-color);
     color: #1f2937;
 }
 
@@ -47,17 +46,12 @@
 
 .btn-outline {
     background: transparent;
-    border: 1px solid #d1d5db;
-    color: #374151;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
 }
 
 .btn-outline:hover {
-    background: #f9fafb;
-}
-
-.btn-large {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    background: var(--bg-main);
 }
 
 /* --- Odznaki (Badge) --- */
@@ -80,7 +74,7 @@
 }
 
 .dot-yellow {
-    background-color: #FFDE42;
+    background-color: var(--primary-color);
 }
 
 .dot-green {

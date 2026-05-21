@@ -1,15 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+    --bg-main: #f3f4f6;
+    --bg-card: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --primary-color: #FFDE42;
+    --border-color: #e5e7eb;
+}
+
+[data-theme="dark"] {
+    --bg-main: #111827;
+    --bg-card: #1f2937;
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --primary-color: #eab308;
+    --border-color: #374151;
+}
+
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6;
-    color: #1f2937;
+    background-color: var(--bg-main);
+    color: var(--text-main);
 }
 
-.text-muted {
-    color: #6b7280;
-}
 
 .visually-hidden {
     position: absolute !important;

@@ -14,16 +14,16 @@
 }
 
 .section-panel {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
 }
 
 .full-width-list {
-    background: #fff;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 0.5rem;
     overflow: auto;
@@ -58,14 +58,14 @@
 .section-title {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #374151;
+    color: var(--text-main);
     margin-bottom: 1.2rem;
     text-transform: uppercase;
 }
 
 .empty {
     padding: 1rem;
-    color: #6b7280;
+    color: var(--text-muted);
     text-align: center;
 }
 
@@ -85,7 +85,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: linear-gradient(180deg, #FFDE42 0%, #FFD23A 100%);
+    background: linear-gradient(180deg, var(--primary-color) 0%, #FFD23A 100%);
     border: 1px solid rgba(0,0,0,0.06);
     color: #111827;
     height: 56px;
@@ -124,12 +124,13 @@
 .btn-cancel-custom {
     padding: 0 1.25rem;
     height: 40px;
+    color: var(--text-muted);
 }
 
 .btn.btn-outline.action-btn,
 .action-btn {
     background: none;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 0.4rem 0.6rem;
     min-width: 40px;
@@ -137,11 +138,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #6b7280;
+    color: var(--text-muted);
     font-size: 1rem;
 }
 
-.action-btn:hover { background: #f3f4f6; color: #111827; }
+.action-btn:hover { background: var(--bg-main); color: var(--text-main); }
 .action-btn.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
 
 /* =========================================
@@ -187,10 +188,10 @@
 .filter-select,
 .filter-input {
     padding: 0.6rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    color: #374151;
-    background: #fff;
+    color: var(--text-main);
+    background: var(--bg-card);
     min-width: 160px;
     font-size: 0.9rem;
 }
@@ -201,7 +202,7 @@
 .requests-table-container {
     width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* Płynne przewijanie na iOS */
+    -webkit-overflow-scrolling: touch;
 }
 
 .requests-table {
@@ -212,22 +213,22 @@
 
 .requests-table th {
     padding: 1rem 0.5rem;
-    border-bottom: 2px solid #f3f4f6;
-    color: #111827;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-main);
     font-weight: 600;
     font-size: 0.85rem;
 }
 
 .requests-table td {
     padding: 1rem 0.5rem;
-    border-bottom: 1px solid #f3f4f6;
-    color: #4b5563;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-muted);
     font-size: 0.9rem;
     vertical-align: middle;
 }
 
 .requests-table tbody tr:hover {
-    background-color: #f9fafb;
+    background-color: var(--bg-main);
 }
 
 .status-cell {
@@ -267,13 +268,13 @@
     padding: 0.4rem 0.8rem;
     border-radius: 4px;
     cursor: pointer;
-    color: #4b5563;
+    color: var(--text-muted);
     font-size: 0.9rem;
     font-weight: 500;
 }
 
-.pagination span:hover { background: #f3f4f6; }
-.pagination span.page-active { background: #FDE047; color: #111827; }
+.pagination span:hover { background: var(--bg-main); }
+.pagination span.page-active { background: var(--primary-color); color: #111827; }
 
 /* =========================================
    7. ANIMACJE (ANIMATIONS)
@@ -310,7 +311,6 @@
     .section-panel { padding: 0.9rem; }
     .requests-table { font-size: 0.85rem; }
 
-    /* Poprawa siatki formularzy na telefonie */
     .request-form-grid {
         grid-template-columns: 1fr;
     }
@@ -325,7 +325,6 @@
         flex: 1 1 100%;
     }
 
-    /* Poprawa wielkości przycisków */
     .submit-actions,
     .form-actions-group {
         flex-direction: column;
@@ -347,7 +346,6 @@
         width: 100%;
     }
 
-    /* Komórka akcji w tabeli */
     .actions-cell {
         flex-direction: column;
         gap: 0.4rem;

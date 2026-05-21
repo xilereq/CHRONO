@@ -8,7 +8,7 @@
 .dashboard-title {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #4b5563;
+    color: var(--text-main);
     margin-bottom: 1.5rem;
     margin-top: 0;
 }
@@ -26,7 +26,7 @@
 }
 
 .time-display {
-    background: #FFDE42;
+    background: var(--primary-color);
     color: #1f2937;
     border-radius: 0.75rem;
     padding: 1.5rem;
@@ -40,7 +40,6 @@
 }
 
 .time-clock {
-    /* responsive scaling: pozwól tekstowi się zmniejszać przy węższych ekranach */
     font-size: clamp(2.25rem, 8vw, 5rem);
     font-weight: 700;
     letter-spacing: -0.025em;
@@ -50,7 +49,6 @@
     text-overflow: ellipsis;
 }
 
-/* Dostosowujemy wysokość kontenera zegara do mniejszych ekranów */
 @media (max-width: 900px) {
     .time-display { height: 11rem; padding: 1rem; }
 }
@@ -78,7 +76,6 @@
     gap: 0.75rem;
 }
 
-/* --- Wykresy (StatusCharts) --- */
 .charts-container {
     display: flex;
     justify-content: space-around;
@@ -88,7 +85,7 @@
 }
 
 .chart-wrapper {
-    flex: 1 1 220px; /* pozwala się kurczyć/rosnąć, minimalna szer. 220px */
+    flex: 1 1 220px;
     max-width: 300px;
     display: flex;
     flex-direction: column;
@@ -98,7 +95,7 @@
 .chart-title {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #4b5563;
+    color: var(--text-main);
     margin-bottom: 1rem;
 }
 
@@ -121,7 +118,7 @@
 
 .chart-legend {
     font-size: 0.75rem;
-    color: #4b5563;
+    color: var(--text-muted);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -138,14 +135,12 @@
     height: 0.75rem;
 }
 
-/* --- Szybkie akcje (QuickRequests) --- */
 .quick-requests-list {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-/* --- Tabela (RecentRequests) --- */
 .table-container {
     overflow-x: auto;
 }
@@ -154,30 +149,29 @@
     width: 100%;
     font-size: 0.875rem;
     text-align: left;
-    color: #4b5563;
+    color: var(--text-main);
     border-collapse: collapse;
 }
 
 .requests-table th {
     font-size: 0.75rem;
-    color: #374151;
+    color: var(--text-main);
     font-weight: 700;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
     padding: 0.75rem 0;
 }
 
 .requests-table td {
     padding: 0.75rem 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .requests-table tr:last-child td {
     border-bottom: none;
 }
 
-/* --- Kolory pomocnicze (do wykresów SVG) --- */
 .text-blue-300 {
-    color: #FFDE42;
+    color: var(--primary-color);
 }
 
 .text-blue-600 {
@@ -189,7 +183,7 @@
 }
 
 .bg-blue-300 {
-    background-color: #FFDE42;
+    background-color: var(--primary-color);
 }
 
 .bg-blue-600 {
@@ -202,13 +196,13 @@
 
 .day-number {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-main);
     padding: 0.25rem 0.35rem;
     border-radius: 0.25rem;
 }
 
 .day-number--today {
-    background: #FFDE42;
+    background: var(--primary-color);
     color: #111827;
 }
 
@@ -226,7 +220,7 @@
     height: 1.25rem;
     padding: 0 0.25rem;
     border-radius: 0.375rem;
-    background: #FFDE42;
+    background: var(--primary-color);
     color: #111827;
     font-size: 0.75rem;
     font-weight: 700;
@@ -235,22 +229,21 @@
 .event-line {
     margin-top: 0.35rem;
     font-size: 0.72rem;
-    color: #6b7280;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
 }
 
-/* --- RequestDetail specific styles (moved from inline styles) --- */
 .page-loading {
     padding: 2rem;
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .page-empty {
     padding: 2rem;
-    color: #1f2937;
+    color: var(--text-main);
 }
 
 .accent-link {
@@ -266,18 +259,18 @@
     flex-direction: column;
     gap: 1.25rem;
     font-size: 0.95rem;
-    color: #374151;
+    color: var(--text-main);
 }
 
 .request-row {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.75rem;
 }
 
 .request-label {
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .request-value {
@@ -292,10 +285,10 @@
 }
 
 .request-reason-box {
-    background: #f9fafb;
+    background: var(--bg-main);
     padding: 1rem;
     border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     min-height: 60px;
 }
 
@@ -324,10 +317,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    color: #4b5563;
+    color: var(--text-main);
     text-decoration: none;
     font-weight: 500;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
 }

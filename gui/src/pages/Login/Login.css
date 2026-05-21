@@ -3,7 +3,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f7f6; /* jasne tło */
+    background: var(--bg-main);
     padding: 2rem;
     box-sizing: border-box;
 }
@@ -11,48 +11,45 @@
 .login-card {
     width: 100%;
     max-width: 460px;
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 8px;
     padding: 2.25rem 2rem;
     box-shadow: 0 10px 30px rgba(12, 24, 48, 0.08);
-    border: 1px solid rgba(0,0,0,0.04);
+    border: 1px solid var(--border-color);
     text-align: center;
 }
 
-/* logo circle */
 .brand-wrap {
     display: flex;
     justify-content: center;
-    margin-top: -48px; /* lekko nad kartą */
+    margin-top: -48px;
     margin-bottom: 8px;
     pointer-events: none;
 }
 .brand-icon {
     width: 64px;
     height: 64px;
-    background: #fff;
+    background: var(--bg-card);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 3px solid #F6D33C; /* żółty obwód */
+    border: 3px solid var(--primary-color);
     box-shadow: 0 6px 18px rgba(6,22,40,0.06);
 }
 
-/* titling */
 .login-title {
     margin: 0.5rem 0 0.25rem;
     font-size: 1.125rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--text-main);
 }
 .login-subtitle {
     margin: 0 0 1.1rem;
     font-size: 0.9rem;
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
-/* error */
 .login-error {
     background: #fff2f2;
     color: #9b1c1c;
@@ -63,7 +60,6 @@
     text-align: center;
 }
 
-/* form */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -79,24 +75,24 @@
 }
 .field-label {
     font-size: 0.85rem;
-    color: #374151;
+    color: var(--text-main);
     margin-bottom: 0.35rem;
 }
 .field-input {
     height: 40px;
     padding: 0 0.75rem;
     border-radius: 6px;
-    border: 1px solid #dfe6ea;
-    background: #f8fafb;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main);
     font-size: 0.95rem;
-    color: #111827;
+    color: var(--text-main);
     outline: none;
     transition: box-shadow .12s, border-color .12s;
 }
 .field-input:focus {
-    border-color: #e6b800;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(230,184,0,0.08);
-    background: #fff;
+    background: var(--bg-card);
 }
 
 .btn-primary {
@@ -105,7 +101,7 @@
     height: 44px;
     padding: 0 1rem;
     border: 1px solid rgba(0,0,0,0.06);
-    background: #F6D33C;
+    background: var(--primary-color);
     color: #111827;
     font-weight: 700;
     font-size: 0.98rem;
@@ -131,18 +127,28 @@
     opacity: 0.65;
     cursor: not-allowed;
     box-shadow: none;
-    background: #F6D33C;
+    background: var(--primary-color);
 }
 .btn-primary:not(:disabled):active {
     transform: translateY(1px);
 }
 
-/* footer link */
 .login-footer {
     margin-top: 0.9rem;
 }
 .link-muted {
-    color: #6b7280;
+    color: var(--text-muted);
     font-size: 0.85rem;
     text-decoration: underline;
+}
+
+.login-forgot-link {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.login-forgot-link:hover {
+    color: var(--primary-color);
 }

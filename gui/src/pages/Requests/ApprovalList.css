@@ -1,14 +1,11 @@
-/* ApprovalList.css */
-
 .submit-actions-row {
     display: flex;
     gap: 8px;
 }
 
-/* Style dla rozwijanego panelu z powodem */
 .action-panel-td {
     padding: 10px 15px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .action-panel-td.approved {
@@ -44,7 +41,9 @@
     height: 36px;
     padding: 0 10px;
     border-radius: 6px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
 }
 
 .action-panel-btn-confirm {
@@ -78,6 +77,6 @@
     cursor: pointer;
     font-weight: 500;
     background-color: transparent;
-    border: 1px solid #d1d5db;
-    color: #374151;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
 }

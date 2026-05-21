@@ -1,12 +1,10 @@
-/* Layout Główny - Rozciągnięcie i usunięcie max-width */
 .policies-page-wrapper {
     display: flex;
     gap: 2rem;
     width: 100%;
-    color: #1f2937;
+    color: var(--text-main);
 }
 
-/* --- Panel Lewy (Sidebar) --- */
 .policies-sidebar {
     width: 260px;
     flex-shrink: 0;
@@ -16,8 +14,8 @@
 }
 
 .policies-user-card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.25rem 1rem;
     display: flex;
@@ -29,25 +27,25 @@
 .user-avatar {
     width: 42px;
     height: 42px;
-    background: #f3f4f6;
+    background: var(--bg-main);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    color: #111827;
+    color: var(--text-main);
     font-size: 0.95rem;
 }
 
 .user-name {
     font-weight: 600;
     font-size: 0.95rem;
-    color: #111827;
+    color: var(--text-main);
 }
 
 .user-role {
     font-size: 0.8rem;
-    color: #6b7280;
+    color: var(--text-muted);
     margin-top: 0.1rem;
 }
 
@@ -65,7 +63,7 @@
     border-radius: 8px;
     background: transparent;
     border: none;
-    color: #111827;
+    color: var(--text-main);
     font-weight: 500;
     font-size: 0.95rem;
     cursor: pointer;
@@ -74,26 +72,25 @@
 }
 
 .policies-nav-item:hover {
-    background: #f9fafb;
+    background: var(--bg-main);
 }
 
 .policies-nav-item.active {
-    background: #d4a32a; /* Złoty / Musztardowy */
-    color: #fff;
+    background: var(--primary-color);
+    color: #111827;
     box-shadow: 0 4px 10px rgba(212, 163, 42, 0.25);
 }
 
-/* --- Panel Prawy (Treść) - Główna karta --- */
 .policies-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    background: #fff; /* Zamknięcie w białe "pudełko" */
+    background: var(--bg-card);
     border-radius: 12px;
     padding: 2rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
 }
 
 .policies-header {
@@ -101,13 +98,12 @@
     font-weight: 700;
     margin-top: 0;
     margin-bottom: 0.5rem;
-    color: #111827;
+    color: var(--text-main);
 }
 
-/* Poszczególne Sekcje (Szare pudełka wewnątrz głównej karty) */
 .policy-section {
-    background: #f8fafc;
-    border: 1px solid #f3f4f6;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5rem;
     display: flex;
@@ -129,12 +125,12 @@
     font-size: 1.05rem;
     font-weight: 600;
     margin: 0;
-    color: #111827;
+    color: var(--text-main);
 }
 
 .section-subtitle {
     font-size: 0.85rem;
-    color: #6b7280;
+    color: var(--text-muted);
     margin: 0.25rem 0 0 0;
 }
 
@@ -142,7 +138,6 @@
     margin-bottom: 0.75rem;
 }
 
-/* Akcje w nagłówkach sekcji (Wybór roku, dodawanie) */
 .section-actions {
     display: flex;
     align-items: center;
@@ -160,20 +155,19 @@
 
 .form-select {
     padding: 0.4rem 0.75rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: #fff;
+    background: var(--bg-card);
     font-size: 0.85rem;
-    color: #111827;
+    color: var(--text-main);
     outline: none;
     min-width: 100px;
 }
 
-/* Przyciski operacyjne */
 .btn-text {
     background: transparent;
     border: none;
-    color: #d4a32a;
+    color: var(--primary-color);
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
@@ -183,17 +177,17 @@
 }
 
 .btn-text.history-btn {
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .cancel-btn {
-    color: #4b5563 !important;
+    color: var(--text-main) !important;
 }
 
 .btn-outline-rounded {
     background: transparent;
-    border: 1px solid #d4a32a;
-    color: #d4a32a;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
     padding: 0.4rem 1.25rem;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -202,9 +196,9 @@
 }
 
 .btn-gray-outline {
-    background: #fff;
-    border: 1px solid #d1d5db;
-    color: #6b7280;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -212,7 +206,6 @@
     cursor: pointer;
 }
 
-/* Formularze i Inputy */
 .hours-config {
     display: flex;
     flex-direction: column;
@@ -222,7 +215,7 @@
 .form-label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--text-main);
     margin: 0;
 }
 
@@ -237,16 +230,16 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.9rem;
-    color: #111827;
+    color: var(--text-main);
 }
 
 .form-input {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: #fff;
+    background: var(--bg-card);
     font-size: 0.9rem;
-    color: #111827;
+    color: var(--text-main);
     outline: none;
 }
 
@@ -267,12 +260,11 @@
     gap: 0.4rem;
 }
 
-/* --- Stopka --- */
 .policies-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--border-color);
     padding-top: 1.5rem;
     margin-top: 0.5rem;
 }
@@ -284,8 +276,8 @@
 }
 
 .btn-yellow {
-    background: #d4a32a;
-    color: #fff;
+    background: var(--primary-color);
+    color: #111827;
     border: none;
     padding: 0.6rem 1.5rem;
     border-radius: 8px;
@@ -300,7 +292,6 @@
     background: #c39626;
 }
 
-/* Responsywność */
 @media (max-width: 900px) {
     .policies-page-wrapper {
         flex-direction: column;
