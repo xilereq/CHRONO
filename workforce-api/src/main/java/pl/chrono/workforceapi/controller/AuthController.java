@@ -52,13 +52,13 @@ public class AuthController {
 
   @PostMapping("/forgot-password")
   public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequest request) {
-    authService.requestPasswordRest(request.email());
+    authService.requestPasswordReset(request.email());
     return ResponseEntity.ok().build();
   }
 
   @PostMapping("/reset-password")
   public ResponseEntity<?> resetPassword(@RequestBody PasswordResetConfirmRequest request) {
-    authService.ressetPassword(request.token(), request.password());
+    authService.resetPassword(request.token(), request.password());
     return ResponseEntity.ok().build();
   }
 }

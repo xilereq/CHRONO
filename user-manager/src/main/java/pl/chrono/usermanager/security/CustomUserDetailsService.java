@@ -7,20 +7,21 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import pl.chrono.dbmanager.model.User;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.dbmanager.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-  private final UserRepository userRepository;
+  private final I_UserData userData;
 
-  public CustomUserDetailsService(UserRepository userRepository) {
-    this.userRepository = userRepository;
+  public CustomUserDetailsService(I_UserData userData) {
+    this.userData = userData;
   }
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    User user = userRepository.findByEmail(email)
+    User user = userData.findByEmail(email)
         .orElseThrow(() -> new UsernameNotFoundException("Nie znaleziono użytkownika: " + email));
 
     var authorities = user.getRoles().stream()
