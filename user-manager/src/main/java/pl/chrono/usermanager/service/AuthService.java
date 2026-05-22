@@ -113,7 +113,7 @@ public class AuthService {
   }
 
   @Transactional
-  @LogActivity(action = "PASSWORD_RESET", details = "User changed theirs password")
+  @LogActivity(action = "PASSWORD_RESET", details = "User reseted theirs password")
   public void resetPassword(String token, String newPassword) {
     User user = userData.findByResetToken(token)
         .orElseThrow(() -> new IllegalArgumentException("Nieprawidłowy lub wygasły token."));
@@ -125,6 +125,24 @@ public class AuthService {
     user.setResetToken(null);
     user.setResetTokenExpiration(null);
     user.setForcePasswordChange(false);
+    userData.save(user);
+  }
+
+  @Transactional
+  @LogActivity(action = "PASSWORD_CHANGE", details = "User changed theirs password")
+  public void changePassword(String email, ChangePasswordRequest request) {
+    User user = userData.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono użytkownika."));
+
+    if(passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
+      throw new IllegalArgumentException("Podane aktualne hasło jest niepoprawne.");
+    }
+
+    if(passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+      throw new IllegalArgumentException("Nowe hasło nie może być takie samo jak obecne.");
+    }
+
+    user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
     userData.save(user);
   }
 }

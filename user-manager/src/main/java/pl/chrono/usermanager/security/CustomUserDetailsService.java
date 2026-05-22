@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.ports.I_UserData;
-import pl.chrono.dbmanager.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

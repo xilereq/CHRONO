@@ -16,6 +16,7 @@ import pl.chrono.usermanager.dto.response.RegisterResponse;
 import pl.chrono.usermanager.service.AuthService;
 import pl.chrono.usermanager.dto.request.PasswordResetRequest;
 import pl.chrono.usermanager.dto.request.PasswordResetConfirmRequest;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,8 +44,8 @@ public class AuthController {
     return ResponseEntity.ok(authService.registerNewUser(request));
   }
 
-  @PostMapping("/change-password")
-  public ResponseEntity<RegisterResponse> changePassword(@RequestBody ChangePasswordRequest request, Authentication authentication){
+  @PostMapping("/change-first-password")
+  public ResponseEntity<RegisterResponse> changeFirstPassword(@RequestBody ChangePasswordRequest request, Authentication authentication){
     String userEmail = authentication.getName();
     authService.changeFirstPassword(userEmail, request);
     return ResponseEntity.ok().build();
@@ -59,6 +60,16 @@ public class AuthController {
   @PostMapping("/reset-password")
   public ResponseEntity<?> resetPassword(@RequestBody PasswordResetConfirmRequest request) {
     authService.resetPassword(request.token(), request.password());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/change-password")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request, Principal principal){
+    String userEmail = principal.getName();
+
+    authService.changePassword(userEmail, request);
+
     return ResponseEntity.ok().build();
   }
 }
