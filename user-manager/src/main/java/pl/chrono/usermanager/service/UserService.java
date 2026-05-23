@@ -20,7 +20,7 @@ public class UserService implements I_UserService {
   public List<UserDto> getSubordinatesForManager(Integer managerID){
     return userData.getSubordinatesForManager(managerID)
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
         .collect(Collectors.toList());
   }
 

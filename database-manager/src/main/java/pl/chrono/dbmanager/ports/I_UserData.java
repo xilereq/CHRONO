@@ -11,6 +11,10 @@ public interface I_UserData {
 
   Optional<User> findByEmail(String email);
 
+  Optional<User> findByName(String name);
+
+  Optional<User> findBySurname(String surname);
+
   Optional<User> findByResetToken(String resetToken);
   User save(User user);
 

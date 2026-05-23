@@ -10,6 +10,8 @@ import pl.chrono.dbmanager.model.User;
 public interface UserRepository extends JpaRepository<User, Integer> {
   Optional<User> findByEmail(String email);
   Optional<User> findByResetToken(String resetToken);
+  Optional<User> findByName(String name);
+  Optional<User> findBySurname(String surname);
 
   List<User> findAllByManager_UserId(Integer managerId);
 }

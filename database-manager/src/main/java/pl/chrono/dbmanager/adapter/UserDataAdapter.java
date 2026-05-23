@@ -33,6 +33,16 @@ public class UserDataAdapter implements I_UserData {
   }
 
   @Override
+  public Optional<User> findByName(String name){
+    return userRepository.findByName(name);
+  }
+
+  @Override
+  public Optional<User> findBySurname(String surname){
+    return userRepository.findBySurname(surname);
+  }
+
+  @Override
   public User save(User user) {
     return userRepository.save(user);
   }
