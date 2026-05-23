@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
-import { Grafik, Dashboard, Requests, RequestDetail, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Policies, Settings} from './pages';
+import { Grafik, Dashboard, Requests, RequestDetail, Policies, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Settings } from './pages';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services';
 import './index.css';
