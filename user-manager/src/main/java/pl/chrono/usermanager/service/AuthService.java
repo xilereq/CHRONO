@@ -68,6 +68,8 @@ public class AuthService {
 
     User newUser = new User();
     newUser.setEmail(request.email());
+    newUser.setName(request.name());
+    newUser.setSurname(request.surname());
     newUser.setPasswordHash(passwordEncoder.encode(tempPassword));
     newUser.getRoles().add(role);
     newUser.setForcePasswordChange(true);

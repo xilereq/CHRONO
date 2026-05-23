@@ -33,6 +33,12 @@ public class User implements UserDetails {
   @Column(name = "user_id")
   private Integer userId;
 
+  @Column(nullable = false, length = 100)
+  private String name;
+
+  @Column(nullable = false, length = 100)
+  private String surname;
+
   @Column(nullable = false, unique = true, length = 100)
   private String email;
 
