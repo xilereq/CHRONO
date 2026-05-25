@@ -5,6 +5,12 @@ import { authService } from '../../services';
 
 import './layout.css';
 
+const isAdmin = () => {
+    return true
+};
+
+
+
 const Sidebar = () => {
     return (
         <aside className="sidebar">
@@ -24,10 +30,12 @@ const Sidebar = () => {
                     <BarChart2 size={24} />
                     <span>Raporty</span>
                 </NavLink>
+                {isAdmin() && (
                 <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <Shield size={24} />
                     <span style={{ textAlign: 'center' }}>Panel Administratora</span>
                 </NavLink>
+                    )}
 
                 <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
                     <Settings size={24} />

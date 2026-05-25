@@ -20,9 +20,8 @@ const authService = {
             localStorage.setItem('accessToken', data.token);
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('userEmail', email);
-            // if backend returns roles, store them as well
-            if (data.roles) {
-                try { localStorage.setItem('userRoles', JSON.stringify(data.roles)); } catch(e) {}
+            if (data.role) {
+                try { localStorage.setItem('userRoles', JSON.stringify([data.role])); } catch(e) {}
             }
         }
 
