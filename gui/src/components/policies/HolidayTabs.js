@@ -4,7 +4,7 @@ import policiesService from "../../services/policiesService";
 
 const HolidayTabs = () => {
     const [globalHolidays, setGlobalHolidays] = useState([]);
-    const [newHoliday, setNewHoliday] = useState({ name: '', date: '' });
+    const [newHoliday, setNewHoliday] = useState({ name: '', date: '', occursYearly: true });
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -30,7 +30,7 @@ const HolidayTabs = () => {
         try {
             await policiesService.createGlobalHoliday(newHoliday);
             alert("Święto zostało dodane!");
-            setNewHoliday({ name: '', date: '' });
+            setNewHoliday({ name: '', date: '', occursYearly: true });
             await loadGlobalHolidays();
         } catch (err) {
             alert("Wystąpił błąd: " + err.message);
@@ -57,8 +57,7 @@ const HolidayTabs = () => {
                 <h2 className="section-title">Sekcja 1: Dodaj nowy dzień wolny</h2>
                 <p className="section-subtitle mb-3">Dni ustawowo wolne dla całej organizacji.</p>
 
-                {/* UŻYWAMY TWOJEJ KLASY grid-2-col ZAMIAST INLINE STYLÓW */}
-                <div className="grid-2-col" style={{ marginTop: '20px' }}>
+                <div className="grid-3-col" style={{ marginTop: '20px' }}>
                     <label className="form-group">
                         <span className="form-label">Nazwa święta</span>
                         <input
@@ -71,6 +70,15 @@ const HolidayTabs = () => {
                         <input
                             type="date" className="form-input"
                             value={newHoliday.date} onChange={(e) => setNewHoliday({...newHoliday, date: e.target.value})}
+                        />
+                    </label>
+                    <label className="form-group">
+                        <span >Czy coroczne?</span>
+                        <input
+                            type="checkbox"
+                            className="form-input"
+                            checked={newHoliday.occursYearly}
+                            onChange={(e) => setNewHoliday({...newHoliday, occursYearly: e.target.checked})}
                         />
                     </label>
                 </div>

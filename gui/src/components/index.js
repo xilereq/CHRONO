@@ -18,4 +18,4 @@ export { default as StatusCharts } from './dashboard/StatusCharts';
 export { default as HolidayTabs } from './policies/HolidayTabs';
 export { default as PoliciesSidebar } from './policies/PoliciesSidebar';
 export { default as PolicyFormTab } from './policies/PolicyFormTab';
-
+export { default as UserFormTab } from './policies/UserFormTab';

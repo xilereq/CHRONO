@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, FileText, Clock, CreditCard, Settings, Calendar, ChevronDown } from 'lucide-react';
+ import React, { useState, useEffect } from 'react';
+import { User, FileText, Clock, CreditCard, UserPlus, Calendar, ChevronDown } from 'lucide-react';
 import { userService } from '../../services';
 
 const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
@@ -103,6 +103,13 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                     onClick={() => setActiveTab('holidays')}
                 >
                     <Calendar size={18} /> Święta globalne
+                </button>
+
+                <button
+                    className={`policies-nav-item ${activeTab === 'users' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('users')}
+                >
+                    <UserPlus size={18} /> Użytkownicy
                 </button>
 
             </nav>

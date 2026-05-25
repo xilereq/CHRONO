@@ -12,6 +12,18 @@ const usersService = {
         });
         if (!response.ok) throw new Error('Nie udało się pobrać listy podwładnych');
         return response.json();
+    },
+    createUser: async (userData) => {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(userData)
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Błąd podczas tworzenia użytkownika');
+        }
+        return response.json();
     }
 };
 

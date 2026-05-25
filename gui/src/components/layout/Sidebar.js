@@ -18,7 +18,7 @@ const Sidebar = () => {
                 </NavLink>
                 <NavLink to="/requests" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <FileText size={24} />
-                    <span>Requests</span>
+                    <span>Wnioski</span>
                 </NavLink>
                 <NavLink to="/raporty" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <BarChart2 size={24} />
@@ -26,7 +26,7 @@ const Sidebar = () => {
                 </NavLink>
                 <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <Shield size={24} />
-                    <span>Polityki</span>
+                    <span style={{ textAlign: 'center' }}>Panel Administratora</span>
                 </NavLink>
 
                 <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
