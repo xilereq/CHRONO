@@ -44,40 +44,6 @@ const authService = {
         return localStorage.getItem('userEmail');
     },
 
-    // Roles helpers - roles are stored in localStorage as JSON array under 'userRoles'
-    getUserRoles: () => {
-        try {
-            const raw = localStorage.getItem('userRoles');
-            if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (e) {
-            return [];
-        }
-    },
-
-    hasRole: (role) => {
-        const roles = authService.getUserRoles();
-        return roles.includes(role);
-    },
-
-    hasAnyRole: (checkRoles) => {
-        const roles = authService.getUserRoles();
-        return checkRoles.some(r => roles.includes(r));
-    },
-
-    setUserRoles: (roles) => {
-        if (!roles) {
-            localStorage.removeItem('userRoles');
-            return;
-        }
-        try {
-            localStorage.setItem('userRoles', JSON.stringify(roles));
-        } catch (e) {
-            // ignore
-        }
-    },
-
     requestPasswordReset: async (email) => {
         const response = await fetch(`${API_URL}/forgot-password`, {
             method: 'POST',
@@ -106,6 +72,14 @@ const authService = {
         }
 
         return await response.json().catch(() => ({}));
+    },
+
+    register: async (userData) => {
+        const response = await fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData),
+        });
     }
 };
 

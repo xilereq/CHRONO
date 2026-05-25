@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { userService } from '../../services';
+import { authService } from '../../services';
 
 const UserFormTab = () => {
     const [formData, setFormData] = useState({
@@ -26,7 +26,7 @@ const UserFormTab = () => {
         setLoading(true);
 
         try {
-            await userService.createUser(formData);
+            await authService.register(formData);
             setMessage(`Użytkownik ${formData.firstName} ${formData.lastName} został pomyślnie dodany.`);
             setFormData({ firstName: '', lastName: '', email: '', password: '', role: 'USER' });
         } catch (err) {
