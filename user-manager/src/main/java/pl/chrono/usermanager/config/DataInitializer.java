@@ -43,27 +43,35 @@ public class DataInitializer implements CommandLineRunner {
 
       User admin = new User();
       admin.setEmail("admin@chrono.pl");
+      admin.setName("test");
+      admin.setSurname("test");
       admin.setPasswordHash(passwordEncoder.encode("admin123"));
-      admin.setRoles(Set.of(roleAdmin, roleEmployee));
+      admin.setRoles(Set.of(roleAdmin));
       admin.setForcePasswordChange(false);
       userRepository.save(admin);
 
       User hrUser = new User();
       hrUser.setEmail("hr@chrono.pl");
+      hrUser.setName("test");
+      hrUser.setSurname("test");
       hrUser.setPasswordHash(passwordEncoder.encode("hr123"));
-      hrUser.setRoles(Set.of(roleHr, roleEmployee));
+      hrUser.setRoles(Set.of(roleHr));
       hrUser.setForcePasswordChange(false);
       userRepository.save(hrUser);
 
       User manager = new User();
       manager.setEmail("kierownik@chrono.pl");
+      manager.setName("test");
+      manager.setSurname("test");
       manager.setPasswordHash(passwordEncoder.encode("manager123"));
-      manager.setRoles(Set.of(roleManager, roleEmployee));
+      manager.setRoles(Set.of(roleManager));
       manager.setForcePasswordChange(false);
       userRepository.save(manager);
 
       User employee = new User();
       employee.setEmail("pracownik@chrono.pl");
+      employee.setName("test");
+      employee.setSurname("test");
       employee.setPasswordHash(passwordEncoder.encode("user123"));
       employee.setRoles(Set.of(roleEmployee));
       employee.setManager(manager);

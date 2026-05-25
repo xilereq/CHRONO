@@ -9,6 +9,8 @@ public interface I_UserData {
 
   List<User> getSubordinatesForManager(Integer managerId);
 
+  List<User> findByRoles_Name(String role);
+
   Optional<User> findByEmail(String email);
 
   Optional<User> findByName(String name);

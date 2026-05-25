@@ -23,6 +23,11 @@ public class UserDataAdapter implements I_UserData {
   }
 
   @Override
+  public List<User> findByRoles_Name(String role){
+    return userRepository.findByRoles_Name(role);
+  }
+
+  @Override
   public Optional<User> findByEmail(String email) {
     return userRepository.findByEmail(email);
   }

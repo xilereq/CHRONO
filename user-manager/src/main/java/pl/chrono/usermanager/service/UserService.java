@@ -24,4 +24,40 @@ public class UserService implements I_UserService {
         .collect(Collectors.toList());
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<UserDto> getAllManagers(){
+    return userData.findByRoles_Name("ROLE_MANAGER")
+        .stream()
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<UserDto> getAllEmployees(){
+    return userData.findByRoles_Name("ROLE_EMPLOYEE")
+        .stream()
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<UserDto> getAllAdmins(){
+    return userData.findByRoles_Name("ROLE_ADMIN")
+        .stream()
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<UserDto> getAllHrs(){
+    return userData.findByRoles_Name("ROLE_HR")
+        .stream()
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .collect(Collectors.toList());
+  }
+
 }
