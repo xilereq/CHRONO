@@ -11,6 +11,8 @@ public interface I_UserData {
 
   List<User> findByRoles_Name(String role);
 
+  List<User> findAll();
+
   Optional<User> findByEmail(String email);
 
   Optional<User> findByName(String name);

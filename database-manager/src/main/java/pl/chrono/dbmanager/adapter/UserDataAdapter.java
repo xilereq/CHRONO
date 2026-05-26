@@ -28,6 +28,11 @@ public class UserDataAdapter implements I_UserData {
   }
 
   @Override
+  public List<User> findAll(){
+    return userRepository.findAll();
+  };
+
+  @Override
   public Optional<User> findByEmail(String email) {
     return userRepository.findByEmail(email);
   }
@@ -56,5 +61,7 @@ public class UserDataAdapter implements I_UserData {
   public Optional<Role> findRoleByName(String roleName) {
     return roleRepository.findByName(roleName);
   }
+
+
 
 }

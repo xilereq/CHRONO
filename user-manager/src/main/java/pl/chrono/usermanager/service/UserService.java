@@ -60,4 +60,13 @@ public class UserService implements I_UserService {
         .collect(Collectors.toList());
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<UserDto> getAllUsers(){
+    return  userData.findAll()
+        .stream()
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .collect(Collectors.toList());
+  }
+
 }

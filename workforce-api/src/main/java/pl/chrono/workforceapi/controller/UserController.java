@@ -85,4 +85,13 @@ public class UserController extends BaseController{
     return ResponseEntity.ok(Map.of("role", role));
   }
 
+  @GetMapping("/users")
+  @PreAuthorize("hasAnyRole('ADMIN')")
+  public ResponseEntity<List<UserDto>> getAllUsers(){
+
+    List<UserDto> users = userService.getAllUsers();
+
+    return ResponseEntity.ok(users);
+  }
+
 }

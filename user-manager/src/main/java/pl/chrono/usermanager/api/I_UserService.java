@@ -14,4 +14,6 @@ public interface I_UserService {
   List<UserDto> getAllAdmins();
 
   List<UserDto> getAllHrs();
+
+  List<UserDto> getAllUsers();
 }
