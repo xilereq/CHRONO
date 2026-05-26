@@ -90,6 +90,7 @@ const UserFormTab = () => {
                             value={formData.roleName} onChange={handleChange}
                         >
                             <option value="ROLE_EMPLOYEE">Pracownik</option>
+                            <option value="ROLE_HR">HR</option>
                             <option value="ROLE_MANAGER">Kierownik</option>
                             <option value="ROLE_ADMIN">Administrator</option>
                         </select>

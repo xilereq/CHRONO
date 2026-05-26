@@ -24,7 +24,12 @@ const userService = {
         return response.json();
     },
 
-    // --- NOWE ENDPOINTY DO FILTRÓW ---
+    getMyRole: async () => {
+        const response = await fetch(`${API_URL}/my-role`, { headers: getHeaders() });
+        if (!response.ok) throw new Error('Błąd pobierania roli');
+        return response.json();
+    },
+
     getAllUsers: async () => {
         const response = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Błąd pobierania użytkowników');

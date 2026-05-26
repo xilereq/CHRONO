@@ -38,6 +38,18 @@ const TimeTracker = () => {
         return () => clearInterval(timer);
     }, []);
 
+    // Nowa funkcja pobierająca zsynchronizowany czas z serwera (bez czasu spędzonego na przerwie)
+    const syncActiveTime = async () => {
+        try {
+            const timeStr = await workLogService.getActiveTime();
+            const workedMs = parseDurationToMs(timeStr);
+            const calculatedStartTime = new Date(Date.now() - workedMs);
+            setStartTime(calculatedStartTime);
+        } catch {
+            setStartTime(new Date());
+        }
+    };
+
     useEffect(() => {
         const fetchStatus = async () => {
             try {
@@ -50,14 +62,7 @@ const TimeTracker = () => {
                 setIsOnBreak(breakStatus);
 
                 if (workStatus) {
-                    try {
-                        const timeStr = await workLogService.getActiveTime();
-                        const workedMs = parseDurationToMs(timeStr);
-                        const calculatedStartTime = new Date(Date.now() - workedMs);
-                        setStartTime(calculatedStartTime);
-                    } catch {
-                        setStartTime(new Date());
-                    }
+                    await syncActiveTime();
                 } else {
                     setStartTime(null);
                 }
@@ -106,6 +111,11 @@ const TimeTracker = () => {
             try {
                 await leaveLogService.endLeave();
                 setIsOnBreak(false);
+
+                // POPRAWKA: Po powrocie z przerwy synchronizujemy czas z backendem.
+                // Dzięki temu "startTime" przesunie się do przodu, wymuszając na stoperze pominięcie przerwy.
+                await syncActiveTime();
+
             } catch (error) {
                 console.error(error);
                 alert("Błąd podczas kończenia przerwy.");
