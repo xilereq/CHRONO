@@ -20,8 +20,8 @@ const authService = {
             localStorage.setItem('accessToken', data.token);
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('userEmail', email);
-            if (data.role) {
-                try { localStorage.setItem('userRoles', JSON.stringify([data.role])); } catch(e) {}
+            if (data.roleName) {
+                try { localStorage.setItem('userRoles', JSON.stringify([data.roleName])); } catch(e) {}
             }
         }
 
@@ -75,11 +75,23 @@ const authService = {
     },
 
     register: async (userData) => {
+        const token = localStorage.getItem('accessToken');
+
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(userData),
         });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Nie udało się zarejestrować użytkownika. Upewnij się, że masz uprawnienia Administratora.');
+        }
+
+        return await response.json().catch(() => ({}));
     }
 };
 

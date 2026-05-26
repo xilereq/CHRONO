@@ -13,16 +13,12 @@ const usersService = {
         if (!response.ok) throw new Error('Nie udało się pobrać listy podwładnych');
         return response.json();
     },
-    createUser: async (userData) => {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(userData)
+
+    getMyRole: async () => {
+        const response = await fetch(`${API_URL}/my-role`, {
+            headers: getHeaders()
         });
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(errText || 'Błąd podczas tworzenia użytkownika');
-        }
+        if (!response.ok) throw new Error('Nie udało się pobrać twojej roli');
         return response.json();
     }
 };

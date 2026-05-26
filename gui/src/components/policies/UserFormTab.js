@@ -3,11 +3,10 @@ import { authService } from '../../services';
 
 const UserFormTab = () => {
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
+        name: '',
+        surname: '',
         email: '',
-        password: '',
-        role: 'USER'
+        roleName: "ROLE_EMPLOYEE"
     });
 
     const [loading, setLoading] = useState(false);
@@ -25,10 +24,16 @@ const UserFormTab = () => {
         setMessage('');
         setLoading(true);
 
+        console.log(formData);
+        console.log(formData.roleName);
+
         try {
-            await authService.register(formData);
-            setMessage(`Użytkownik ${formData.firstName} ${formData.lastName} został pomyślnie dodany.`);
-            setFormData({ firstName: '', lastName: '', email: '', password: '', role: 'USER' });
+            const response = await authService.register(formData);
+            const generatedPassword = response.temporaryPassword || '[Brak danych o haśle]';
+
+            setMessage(`Użytkownik ${formData.name} ${formData.surname} został pomyślnie dodany. Tymczasowe hasło: ${generatedPassword}`);
+
+            setFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE' });
         } catch (err) {
             setError(err.message || 'Wystąpił błąd podczas dodawania użytkownika.');
         } finally {
@@ -51,7 +56,8 @@ const UserFormTab = () => {
                 )}
                 {message && (
                     <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>
-                        {message}
+                        {/* Dodano pogrubienie, by nowa informacja była lepiej widoczna */}
+                        <strong>{message}</strong>
                     </div>
                 )}
 
@@ -59,15 +65,15 @@ const UserFormTab = () => {
                     <div className="form-group">
                         <span className="form-label">Imię</span>
                         <input
-                            className="form-input" type="text" name="firstName"
-                            value={formData.firstName} onChange={handleChange} required
+                            className="form-input" type="text" name="name"
+                            value={formData.name} onChange={handleChange} required
                         />
                     </div>
                     <div className="form-group">
                         <span className="form-label">Nazwisko</span>
                         <input
-                            className="form-input" type="text" name="lastName"
-                            value={formData.lastName} onChange={handleChange} required
+                            className="form-input" type="text" name="surname"
+                            value={formData.surname} onChange={handleChange} required
                         />
                     </div>
                     <div className="form-group">
@@ -78,21 +84,14 @@ const UserFormTab = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <span className="form-label">Hasło początkowe</span>
-                        <input
-                            className="form-input" type="password" name="password"
-                            value={formData.password} onChange={handleChange} required
-                        />
-                    </div>
-                    <div className="form-group">
                         <span className="form-label">Rola systemowa</span>
                         <select
-                            className="form-input" name="role"
-                            value={formData.role} onChange={handleChange}
+                            className="form-input" name="roleName"
+                            value={formData.roleName} onChange={handleChange}
                         >
-                            <option value="USER">Pracownik (USER)</option>
-                            <option value="MANAGER">Kierownik (MANAGER)</option>
-                            <option value="ADMIN">Administrator (ADMIN)</option>
+                            <option value="ROLE_EMPLOYEE">Pracownik</option>
+                            <option value="ROLE_MANAGER">Kierownik</option>
+                            <option value="ROLE_ADMIN">Administrator</option>
                         </select>
                     </div>
                 </div>

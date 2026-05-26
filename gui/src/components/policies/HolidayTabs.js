@@ -8,12 +8,12 @@ const HolidayTabs = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        loadGlobalHolidays();
+        loadHolidays();
     }, []);
 
-    const loadGlobalHolidays = async () => {
+    const loadHolidays = async () => {
         try {
-            const data = await policiesService.getAllGlobalHolidays();
+            const data = await policiesService.getAllHolidays();
             setGlobalHolidays(data);
         } catch (err) {
             console.error("Błąd pobierania świąt:", err, err.message, err.type);
@@ -28,10 +28,10 @@ const HolidayTabs = () => {
 
         setIsSaving(true);
         try {
-            await policiesService.createGlobalHoliday(newHoliday);
+            await policiesService.createHoliday(newHoliday);
             alert("Święto zostało dodane!");
             setNewHoliday({ name: '', date: '', occursYearly: true });
-            await loadGlobalHolidays();
+            await loadHolidays();
         } catch (err) {
             alert("Wystąpił błąd: " + err.message);
         } finally {
@@ -39,11 +39,11 @@ const HolidayTabs = () => {
         }
     };
 
-    const handleDeleteHoliday = async (id) => {
+    const handleDeleteHoliday = async (holidayId) => {
         if (!window.confirm("Na pewno chcesz usunąć ten dzień wolny?")) return;
         try {
-            await policiesService.deleteGlobalHoliday(id);
-            await loadGlobalHolidays();
+            await policiesService.deleteHoliday(holidayId);
+            await loadHolidays();
         } catch (err) {
             alert("Błąd usuwania: " + err.message);
         }
@@ -94,7 +94,7 @@ const HolidayTabs = () => {
                         </div>
                     ) : (
                         globalHolidays.map(holiday => (
-                            <div key={holiday.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
+                            <div key={holiday.holidayId} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
                                 <div>
                                     <strong style={{ display: 'block', fontSize: '15px' }}>{holiday.name}</strong>
                                     <span style={{ color: '#666', fontSize: '13px' }}>{holiday.date}</span>
@@ -102,7 +102,7 @@ const HolidayTabs = () => {
                                 <button
                                     className="btn-outline-rounded"
                                     style={{ color: 'red', borderColor: '#ffcdd2', backgroundColor: '#ffebee', padding: '5px 10px' }}
-                                    onClick={() => handleDeleteHoliday(holiday.id)}
+                                    onClick={() => handleDeleteHoliday(holiday.holidayId)}
                                 >
                                     <Trash2 size={16} />
                                 </button>

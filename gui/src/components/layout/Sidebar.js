@@ -1,17 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings, Shield } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { authService } from '../../services';
+import { userService } from '../../services';
 
 import './layout.css';
 
-const isAdmin = () => {
-    return true
-};
-
-
-
 const Sidebar = () => {
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                const response = await userService.getMyRole();
+                if (response.role === "ROLE_ADMIN") {
+                    setIsAdmin(true);
+                }
+            } catch (error) {
+                console.error("Nie udało się pobrać roli", error);
+            }
+        };
+
+        fetchRole();
+    }, []);
     return (
         <aside className="sidebar">
             <div className="sidebar-logo">
@@ -30,7 +40,7 @@ const Sidebar = () => {
                     <BarChart2 size={24} />
                     <span>Raporty</span>
                 </NavLink>
-                {isAdmin() && (
+                {isAdmin && (
                 <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <Shield size={24} />
                     <span style={{ textAlign: 'center' }}>Panel Administratora</span>

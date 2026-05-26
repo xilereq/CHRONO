@@ -31,13 +31,37 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
 
     const getInitials = () => {
         if (!selectedUser) return 'AN';
-        const first = selectedUser.firstName ? selectedUser.firstName.charAt(0) : '';
-        const last = selectedUser.lastName ? selectedUser.lastName.charAt(0) : '';
+        const first = selectedUser.name ? selectedUser.name.charAt(0) : '';
+        const last = selectedUser.surname ? selectedUser.surname.charAt(0) : '';
         return (first + last).toUpperCase() || 'U';
     };
 
     return (
         <div className="policies-sidebar">
+
+            <nav className="policies-nav">
+                <button
+                    className={`policies-nav-item ${activeTab === 'policies' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('policies')}
+                >
+                    <Clock size={18} /> System pracy (Polityki)
+                </button>
+
+                <button
+                    className={`policies-nav-item ${activeTab === 'holidays' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('holidays')}
+                >
+                    <Calendar size={18} /> Święta globalne
+                </button>
+
+                <button
+                    className={`policies-nav-item ${activeTab === 'users' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('users')}
+                >
+                    <UserPlus size={18} /> Użytkownicy
+                </button>
+
+            </nav>
 
             <div
                 className="policies-user-card dropdown-toggle"
@@ -48,7 +72,7 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                 <div className="user-info dropdown-user-info">
                     <div className="user-name">
                         {selectedUser
-                            ? `${selectedUser.firstName || ''} ${selectedUser.lastName || ''}`
+                            ? `${selectedUser.name || ''} ${selectedUser.surname || ''}`
                             : 'Wybierz pracownika...'}
                     </div>
                     <div className="user-role dropdown-user-email">
@@ -78,7 +102,7 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                                     className={`dropdown-item ${selectedUser?.id === user.id ? 'active' : ''}`}
                                 >
                                     <strong className="dropdown-item-name">
-                                        {user.firstName} {user.lastName}
+                                        {user.name} {user.surname}
                                     </strong>
                                     <span className="dropdown-item-email">
                                         {user.email}
@@ -90,29 +114,6 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                 )}
             </div>
 
-            <nav className="policies-nav">
-                <button
-                    className={`policies-nav-item ${activeTab === 'policies' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('policies')}
-                >
-                    <Clock size={18} /> System pracy (Polityki)
-                </button>
-
-                <button
-                    className={`policies-nav-item ${activeTab === 'holidays' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('holidays')}
-                >
-                    <Calendar size={18} /> Święta globalne
-                </button>
-
-                <button
-                    className={`policies-nav-item ${activeTab === 'users' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('users')}
-                >
-                    <UserPlus size={18} /> Użytkownicy
-                </button>
-
-            </nav>
         </div>
     );
 };

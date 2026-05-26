@@ -7,7 +7,30 @@ const getHeaders = () => ({
 });
 
 const policiesService = {
-    getAll: async () => {
+    // --- POLICIES (PolicyController) ---
+
+    createPolicy: async (request) => {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(request)
+        });
+        if (!response.ok) throw new Error('Błąd podczas tworzenia polityki');
+        return response.json();
+    },
+
+    assignPolicyToUser: async (userId, request) => {
+        const response = await fetch(`${API_URL}/${userId}/assign`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(request)
+        });
+        if (!response.ok) throw new Error('Błąd podczas przypisywania polityki');
+        if (response.status === 204) return { success: true };
+        return response.json();
+    },
+
+    getAllPolicies: async () => {
         const response = await fetch(API_URL, {
             headers: getHeaders()
         });
@@ -15,26 +38,16 @@ const policiesService = {
         return response.json();
     },
 
-    getById: async (id) => {
-        const response = await fetch(`${API_URL}/${id}`, {
+    getPolicyById: async (policyId) => {
+        const response = await fetch(`${API_URL}/${policyId}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Nie udało się pobrać polityki');
         return response.json();
     },
 
-    create: async (policyData) => {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(policyData)
-        });
-        if (!response.ok) throw new Error('Błąd podczas tworzenia polityki');
-        return response.json();
-    },
-
-    remove: async (id) => {
-        const response = await fetch(`${API_URL}/${id}`, {
+    deletePolicy: async (policyId) => {
+        const response = await fetch(`${API_URL}/${policyId}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -43,18 +56,9 @@ const policiesService = {
         return response.json();
     },
 
-    assignToUser: async (userId, assignRequest) => {
-        const response = await fetch(`${API_URL}/${userId}/assign`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(assignRequest)
-        });
-        if (!response.ok) throw new Error('Błąd podczas przypisywania polityki');
-        if (response.status === 204) return { success: true };
-        return response.json();
-    },
+    // --- POLICY HOLIDAYS (PolicyController) ---
 
-    getHolidays: async (policyId) => {
+    getHolidaysForPolicy: async (policyId) => {
         const response = await fetch(`${API_URL}/${policyId}/holidays`, {
             headers: getHeaders()
         });
@@ -62,18 +66,18 @@ const policiesService = {
         return response.json();
     },
 
-    assignHoliday: async (policyId, holidayRequest) => {
+    assignHolidayToPolicy: async (policyId, request) => {
         const response = await fetch(`${API_URL}/${policyId}/holidays`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(holidayRequest)
+            body: JSON.stringify(request)
         });
         if (!response.ok) throw new Error('Błąd podczas przypisywania dnia wolnego');
         if (response.status === 204) return { success: true };
         return response.json();
     },
 
-    removeHoliday: async (policyId, holidayId) => {
+    removeHolidayFromPolicy: async (policyId, holidayId) => {
         const response = await fetch(`${API_URL}/${policyId}/holidays/${holidayId}`, {
             method: 'DELETE',
             headers: getHeaders()
@@ -83,26 +87,36 @@ const policiesService = {
         return response.json();
     },
 
-    getAllGlobalHolidays: async () => {
-        const response = await fetch(HOLIDAYS_API_URL, {
-            headers: getHeaders()
-        });
-        if (!response.ok) throw new Error('Nie udało się pobrać globalnych świąt');
-        return response.json();
-    },
+    // --- GLOBAL HOLIDAYS (HolidayController) ---
 
-    createGlobalHoliday: async (holidayData) => {
+    createHoliday: async (request) => {
         const response = await fetch(HOLIDAYS_API_URL, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify(holidayData)
+            body: JSON.stringify(request)
         });
-        if (!response.ok) throw new Error('Błąd podczas dodawania globalnego święta');
+        if (!response.ok) throw new Error('Błąd podczas dodawania święta');
         return response.json();
     },
 
-    deleteGlobalHoliday: async (id) => {
-        const response = await fetch(`${HOLIDAYS_API_URL}/${id}`, {
+    getAllHolidays: async () => {
+        const response = await fetch(HOLIDAYS_API_URL, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Nie udało się pobrać świąt');
+        return response.json();
+    },
+
+    getHolidayById: async (holidayId) => {
+        const response = await fetch(`${HOLIDAYS_API_URL}/${holidayId}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Nie udało się pobrać święta');
+        return response.json();
+    },
+
+    deleteHoliday: async (holidayId) => {
+        const response = await fetch(`${HOLIDAYS_API_URL}/${holidayId}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
