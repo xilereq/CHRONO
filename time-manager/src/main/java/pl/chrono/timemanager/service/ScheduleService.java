@@ -1,6 +1,5 @@
 package pl.chrono.timemanager.service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -31,16 +30,14 @@ public class ScheduleService {
     LocalDateTime threshold = LocalDateTime.now().minusHours(maxWorkHours);
     timeData.findActiveWorkLogsBefore(threshold).forEach(workLog -> {
       LocalDateTime now = LocalDateTime.now();
-      long workedTime = Duration.between(workLog.getStartTime(), now).toHours();
-      long breakTime = workLog.calculateTotalBreakSeconds(now);
-      long effectiveWorkTime = workedTime - breakTime;
-      if (effectiveWorkTime <= maxWorkHours * 3600L) {
+      long workTime = workLog.calculateWorkTime(now);
+      if (workTime <= maxWorkHours * 3600L) {
         return;
       }
 
       LocalDateTime closeTime = workLog.getStartTime()
           .plusHours(maxWorkHours)
-          .plusSeconds(breakTime);
+          .plusSeconds(workLog.calculateBreakTime(now));
       workLog.getLeaveLogs().stream()
           .filter(leaveLog -> leaveLog.getEndTime() == null
               || leaveLog.getEndTime().isAfter(closeTime))
@@ -48,7 +45,7 @@ public class ScheduleService {
             leaveLog.setEndTime(closeTime);
             timeData.saveLeaveLog(leaveLog);
           });
-      workLog.setEndTime(workLog.getStartTime().plusHours(maxWorkHours));
+      workLog.setEndTime(closeTime);
       timeData.saveWorkLog(workLog);
 
       OperationLog auditLog = new OperationLog();
@@ -73,9 +70,8 @@ public class ScheduleService {
 
     for (WorkLog workLog : unsettledWorkLogs) {
       if (workLog.getEndTime() != null) {
-        Duration duration = Duration.between(workLog.getStartTime(), workLog.getEndTime());
-        int secondsWorked = (int) duration.toSeconds();
-        int overtimeSeconds = Math.max(0, secondsWorked - limit);
+        long workTime = workLog.calculateWorkTime(workLog.getEndTime());
+        int overtimeSeconds = (int) Math.max(0, workTime - limit);
         workLog.setSettled(true);
         timeData.saveWorkLog(workLog);
 

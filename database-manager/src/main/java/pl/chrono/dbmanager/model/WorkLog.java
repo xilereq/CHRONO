@@ -39,11 +39,20 @@ public class WorkLog {
   @Column(name = "is_settled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
   private boolean settled;
 
-  public long calculateTotalBreakSeconds(LocalDateTime boundaryTime) {
+  public long calculateWorkTime(LocalDateTime boundaryTime) {
+    LocalDateTime endTime = this.getEndTime() != null ? this.getEndTime() : boundaryTime;
+    if (this.startTime == null || this.getStartTime().isAfter(endTime)) {
+      return 0L;
+    }
+    long workTime = Duration.between(this.getStartTime(), endTime).getSeconds();
+    long breakTime = calculateBreakTime(endTime);
+    return Math.max(0L, workTime - breakTime);
+  }
+
+  public long calculateBreakTime(LocalDateTime boundaryTime) {
     if (this.getLeaveLogs() == null || this.getLeaveLogs().isEmpty()) {
       return 0L;
     }
-
     return this.getLeaveLogs().stream()
         .mapToLong(leave -> {
           LocalDateTime leaveStart = leave.getStartTime();

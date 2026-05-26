@@ -1,7 +1,6 @@
 package pl.chrono.timemanager.service;
 
 import java.time.DayOfWeek;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -57,11 +56,8 @@ public class WorkLogService {
   public String getActiveWorkTime(Integer userId) {
     return timeData.findActiveWorkLog(userId)
         .map(workLog -> {
-          LocalDateTime now = LocalDateTime.now();
-          long totalSeconds = Duration.between(workLog.getStartTime(), now).getSeconds();
-          long breakSeconds = workLog.calculateTotalBreakSeconds(now);
-          long effectiveSeconds = Math.max(0, totalSeconds - breakSeconds);
-          return formatSecondsToTime(effectiveSeconds);
+          long workTime = workLog.calculateWorkTime(LocalDateTime.now());
+          return formatSecondsToTime(workTime);
         })
         .orElse("00:00:00");
   }
@@ -95,12 +91,7 @@ public class WorkLogService {
         .stream()
         .filter(workLog -> workLog.getEndTime() != null
             && workLog.getEndTime().isBefore(today.atStartOfDay()))
-        .mapToLong(workLog -> {
-          long breakSeconds = workLog.calculateTotalBreakSeconds(workLog.getEndTime());
-          long workSeconds = Duration.between(workLog.getStartTime(),
-              workLog.getEndTime()).getSeconds();
-          return Math.max(0, workSeconds - breakSeconds);
-        })
+        .mapToLong(workLog -> workLog.calculateWorkTime(workLog.getEndTime()))
         .sum();
 
     int totalHoursWorked = (int) (totalSecondsWorked / 3600);
