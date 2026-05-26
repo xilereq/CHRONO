@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Holiday;
 import pl.chrono.dbmanager.repository.HolidayPolicyRepository;
 import pl.chrono.dbmanager.repository.HolidayRepository;
+import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.exception.HolidayException;
@@ -20,6 +21,7 @@ public class HolidayService {
   private final HolidayPolicyRepository holidayPolicyRepository;
 
   @Transactional
+  @LogActivity(action = "CREATE_HOLIDAY", details = "Created holiday")
   public HolidayDto createHoliday(CreateHolidayRequest request) {
     Holiday holiday = holidayMapper.toEntity(request);
     return holidayMapper.toDto(holidayRepository.save(holiday));
@@ -37,6 +39,7 @@ public class HolidayService {
   }
 
   @Transactional
+  @LogActivity(action = "DELETE_HOLIDAY", details = "Deleted holiday")
   public void deleteHoliday(Integer holidayId) {
     Holiday holiday = holidayRepository.findById(holidayId)
         .orElseThrow(() -> new HolidayException.NotFound(holidayId));

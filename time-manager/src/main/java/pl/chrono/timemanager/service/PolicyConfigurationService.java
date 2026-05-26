@@ -10,6 +10,7 @@ import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.repository.HolidayPolicyRepository;
 import pl.chrono.dbmanager.repository.HolidayRepository;
 import pl.chrono.dbmanager.repository.PolicyRepository;
+import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
@@ -64,6 +65,7 @@ public class PolicyConfigurationService {
   }
 
   @Transactional
+  @LogActivity(action = "ASSIGN_HOLIDAY", details = "Assigned holiday to policy")
   public void assignHolidayToPolicy(Integer policyId, AssignHolidayRequest request) {
     Policy policy = policyRepository.findById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
@@ -84,6 +86,7 @@ public class PolicyConfigurationService {
   }
 
   @Transactional
+  @LogActivity(action = "REMOVED_POLICY_HOLIDAY", details = "Removed holiday from policy")
   public void removeHolidayFromPolicy(Integer policyId, Integer holidayId) {
     Policy policy = policyRepository.findById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
@@ -98,6 +101,7 @@ public class PolicyConfigurationService {
   }
 
   @Transactional
+  @LogActivity(action = "DELETED_POLICY", details = "Deleted policy")
   public void deletePolicy(Integer policyId) {
     Policy policy = policyRepository.findById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));

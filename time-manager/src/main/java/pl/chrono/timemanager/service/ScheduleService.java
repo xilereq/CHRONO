@@ -9,9 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.OperationLog;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
+import pl.chrono.dbmanager.repository.OperationLogRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 
 @Service
@@ -19,6 +21,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 public class ScheduleService {
   private final I_TimeData timeData;
   private final UserRepository userRepository;
+  private final OperationLogRepository logRepository;
 
   @Value("${chrono.max-work-hours:12}")
   private int maxWorkHours;
@@ -36,6 +39,13 @@ public class ScheduleService {
           });
       workLog.setEndTime(workLog.getStartTime().plusHours(maxWorkHours));
       timeData.saveWorkLog(workLog);
+      OperationLog auditLog = new OperationLog();
+      auditLog.setAction("SYSTEM_CLOSE_WORKLOG");
+      auditLog.setDetails("System has automatically closed a work log for user "
+          + workLog.getUser().getName() + " " + workLog.getUser().getSurname() + ".");
+      auditLog.setUserEmail("SYSTEM");
+      auditLog.setTimestamp(LocalDateTime.now());
+      logRepository.save(auditLog);
     });
   }
 
@@ -47,6 +57,7 @@ public class ScheduleService {
     }
     Set<User> usersToUpdate = new HashSet<>();
     int limit = 8 * 3600;
+    int processedLogsCount = 0;
 
     for (WorkLog workLog : unsettledWorkLogs) {
       if (workLog.getEndTime() != null) {
@@ -60,9 +71,21 @@ public class ScheduleService {
         int currentBalance = user.getOvertimeBalance() != null ? user.getOvertimeBalance() : 0;
         user.setOvertimeBalance(currentBalance + overtimeSeconds);
         usersToUpdate.add(user);
+        processedLogsCount++;
       }
     }
     userRepository.saveAll(usersToUpdate);
-  }
 
+    if (processedLogsCount > 0) {
+      OperationLog auditLog = new OperationLog();
+      auditLog.setAction("SYSTEM_COUNT_OVERTIME");
+      auditLog.setDetails(String.format(
+          "Overtime hours have been calculated. %d work logs have been updated for %d workers.",
+          processedLogsCount, usersToUpdate.size()
+      ));
+      auditLog.setUserEmail("SYSTEM");
+      auditLog.setTimestamp(LocalDateTime.now());
+      logRepository.save(auditLog);
+    }
+  }
 }

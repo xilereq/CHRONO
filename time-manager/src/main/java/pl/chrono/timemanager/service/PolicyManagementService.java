@@ -11,6 +11,7 @@ import pl.chrono.dbmanager.model.UsersPolicy;
 import pl.chrono.dbmanager.repository.PolicyRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.UsersPolicyRepository;
+import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.exception.ErrorCodes;
 import pl.chrono.timemanager.exception.PolicyException;
@@ -23,6 +24,7 @@ public class PolicyManagementService {
   private final UserRepository userRepository;
 
   @Transactional
+  @LogActivity(action = "ASSIGNED_POLICY", details = "Assigned policy to user")
   public void assignPolicyToUser(Integer userId, AssignPolicyRequest request) {
     if (request.startDate().isBefore(LocalDate.now())) {
       throw new PolicyException.InvalidDate(
