@@ -30,15 +30,27 @@ public class ScheduleService {
   public void closeTooLongWorkLogs() {
     LocalDateTime threshold = LocalDateTime.now().minusHours(maxWorkHours);
     timeData.findActiveWorkLogsBefore(threshold).forEach(workLog -> {
-      LocalDateTime closeTime = workLog.getStartTime().plusHours(maxWorkHours);
+      LocalDateTime now = LocalDateTime.now();
+      long workedTime = Duration.between(workLog.getStartTime(), now).toHours();
+      long breakTime = workLog.calculateTotalBreakSeconds(now);
+      long effectiveWorkTime = workedTime - breakTime;
+      if (effectiveWorkTime <= maxWorkHours * 3600L) {
+        return;
+      }
+
+      LocalDateTime closeTime = workLog.getStartTime()
+          .plusHours(maxWorkHours)
+          .plusSeconds(breakTime);
       workLog.getLeaveLogs().stream()
-          .filter(leaveLog -> leaveLog.getEndTime() == null || leaveLog.getEndTime().isAfter(closeTime))
+          .filter(leaveLog -> leaveLog.getEndTime() == null
+              || leaveLog.getEndTime().isAfter(closeTime))
           .forEach(leaveLog -> {
             leaveLog.setEndTime(closeTime);
             timeData.saveLeaveLog(leaveLog);
           });
       workLog.setEndTime(workLog.getStartTime().plusHours(maxWorkHours));
       timeData.saveWorkLog(workLog);
+
       OperationLog auditLog = new OperationLog();
       auditLog.setAction("SYSTEM_CLOSE_WORKLOG");
       auditLog.setDetails("System has automatically closed a work log for user "

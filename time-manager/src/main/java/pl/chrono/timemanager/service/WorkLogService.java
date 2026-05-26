@@ -55,15 +55,16 @@ public class WorkLogService {
 
   @Transactional(readOnly = true)
   public String getActiveWorkTime(Integer userId) {
-    int duration = timeData.findActiveWorkLog(userId)
-        .map(workLog -> Duration.between(workLog.getStartTime(), LocalDateTime.now()).getSeconds())
-        .orElse(0L).intValue();
-    int hours = duration / 3600;
-    int minutes = duration % 3600 / 60;
-    int seconds = duration % 60;
-    return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+    return timeData.findActiveWorkLog(userId)
+        .map(workLog -> {
+          LocalDateTime now = LocalDateTime.now();
+          long totalSeconds = Duration.between(workLog.getStartTime(), now).getSeconds();
+          long breakSeconds = workLog.calculateTotalBreakSeconds(now);
+          long effectiveSeconds = Math.max(0, totalSeconds - breakSeconds);
+          return formatSecondsToTime(effectiveSeconds);
+        })
+        .orElse("00:00:00");
   }
-
 
   private boolean isWorkDay(LocalDate date) {
     DayOfWeek day = date.getDayOfWeek();
@@ -94,7 +95,12 @@ public class WorkLogService {
         .stream()
         .filter(workLog -> workLog.getEndTime() != null
             && workLog.getEndTime().isBefore(today.atStartOfDay()))
-        .mapToLong(workLog -> Duration.between(workLog.getStartTime(), workLog.getEndTime()).getSeconds())
+        .mapToLong(workLog -> {
+          long breakSeconds = workLog.calculateTotalBreakSeconds(workLog.getEndTime());
+          long workSeconds = Duration.between(workLog.getStartTime(),
+              workLog.getEndTime()).getSeconds();
+          return Math.max(0, workSeconds - breakSeconds);
+        })
         .sum();
 
     int totalHoursWorked = (int) (totalSecondsWorked / 3600);
@@ -111,6 +117,13 @@ public class WorkLogService {
         overtimeSeconds
     );
 
+  }
+
+  private String formatSecondsToTime(long totalSeconds) {
+    long hours = totalSeconds / 3600;
+    long minutes = (totalSeconds % 3600) / 60;
+    long seconds = totalSeconds % 60;
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds);
   }
 }
 

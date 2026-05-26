@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import lombok.Getter;
@@ -37,4 +38,22 @@ public class WorkLog {
 
   @Column(name = "is_settled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
   private boolean settled;
+
+  public long calculateTotalBreakSeconds(LocalDateTime boundaryTime) {
+    if (this.getLeaveLogs() == null || this.getLeaveLogs().isEmpty()) {
+      return 0L;
+    }
+
+    return this.getLeaveLogs().stream()
+        .mapToLong(leave -> {
+          LocalDateTime leaveStart = leave.getStartTime();
+          LocalDateTime leaveEnd = leave.getEndTime() != null ? leave.getEndTime() : boundaryTime;
+
+          if (leaveStart.isAfter(leaveEnd)) {
+            return 0L;
+          }
+          return Duration.between(leaveStart, leaveEnd).getSeconds();
+        })
+        .sum();
+  }
 }
