@@ -30,7 +30,7 @@ public class UserDataAdapter implements I_UserData {
   @Override
   public List<User> findAll(){
     return userRepository.findAll();
-  };
+  }
 
   @Override
   public Optional<User> findByEmail(String email) {
