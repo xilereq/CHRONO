@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -68,8 +69,6 @@ public class User implements UserDetails {
   )
   private Set<Role> roles = new HashSet<>();
 
-  private Integer overtimeBalance;
-
   @ManyToOne
   @JoinColumn(name = "manager_id")
   private User manager;
@@ -100,5 +99,18 @@ public class User implements UserDetails {
   @Override
   public String getUsername() {
     return this.email;
+  }
+
+  public Policy getActivePolicy() {
+    if (this.userPolicies == null || this.userPolicies.isEmpty()) {
+      return null;
+    }
+    LocalDate now = LocalDate.now();
+    return this.userPolicies.stream()
+        .filter(up -> (up.getValidFrom() == null || !now.isBefore(up.getValidFrom())) &&
+                      (up.getValidTo() == null || !now.isAfter(up.getValidTo())))
+        .map(UsersPolicy::getPolicy)
+        .findFirst()
+        .orElse(null);
   }
 }

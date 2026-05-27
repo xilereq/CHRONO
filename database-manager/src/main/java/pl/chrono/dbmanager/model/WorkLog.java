@@ -65,4 +65,62 @@ public class WorkLog {
         })
         .sum();
   }
+
+  public int getRequiredSeconds() {
+    if (this.user != null && this.user.getActivePolicy() != null && this.startTime != null) {
+      return this.user.getActivePolicy().getRequiredSecondsForDate(this.startTime.toLocalDate());
+    }
+    return 8 * 3600;
+  }
+
+  public int getMaxAllowedSeconds() {
+    if (this.user != null && this.user.getActivePolicy() != null) {
+      return this.user.getActivePolicy().getMaxAllowedSeconds();
+    }
+    return 12 * 3600;
+  }
+
+  public int getOvertimeThresholdSeconds() {
+    if (this.user != null && this.user.getActivePolicy() != null) {
+      return this.user.getActivePolicy().getOvertimeThresholdSeconds();
+    }
+    return 15 * 60;
+  }
+
+  public int getRoundingSeconds() {
+    if (this.user != null && this.user.getActivePolicy() != null
+        && this.user.getActivePolicy().getRoundingMinutes() != null) {
+      return this.user.getActivePolicy().getRoundingMinutes() * 60;
+    }
+    return 0;
+  }
+
+  public void forceClose(LocalDateTime boundaryTime) {
+    if (this.getStartTime() == null) {
+      return;
+    }
+
+    int requiredSeconds = getRequiredSeconds();
+
+    LocalDateTime autoCloseTime = this.startTime
+        .plusSeconds(requiredSeconds)
+        .plusSeconds(calculateBreakTime(boundaryTime));
+    if (this.leaveLogs != null) {
+      this.leaveLogs.stream().filter(
+          leave -> leave.getEndTime() == null)
+          .forEach(leave -> leave.setEndTime(autoCloseTime));
+    }
+    this.endTime = autoCloseTime;
+  }
+
+  public long getEffectiveWorkTime(LocalDateTime boundaryTime) {
+    long exactWorkTime = calculateWorkTime(boundaryTime);
+    int requiredSeconds = getRequiredSeconds();
+    int roundingSeconds = getRoundingSeconds();
+    if (exactWorkTime >= (requiredSeconds - roundingSeconds) && exactWorkTime < requiredSeconds) {
+      return requiredSeconds;
+    }
+    return exactWorkTime;
+  }
+
 }
