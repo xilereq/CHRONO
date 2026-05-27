@@ -15,4 +15,6 @@ export {default as ForgotPasswordReset} from './Login/ForgotPasswordReset';
 export {default as Settings} from './Settings/Settings';
 export {default as Policies} from './Policies/Policies'
 
+export {default as Logs} from './Logs/Logs'
+
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings, Shield } from 'lucide-react';
+import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings, Shield, Terminal } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { userService } from '../../services';
 
@@ -41,11 +41,18 @@ const Sidebar = () => {
                     <span>Raporty</span>
                 </NavLink>
                 {isAdmin && (
-                <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
-                    <Shield size={24} />
-                    <span style={{ textAlign: 'center' }}>Panel Administratora</span>
-                </NavLink>
-                    )}
+                    <>
+                        <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                            <Shield size={24} />
+                            <span style={{ textAlign: 'center' }}>Panel Administratora</span>
+                        </NavLink>
+
+                        <NavLink to="/logs" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                            <Terminal size={24} />
+                            <span style={{ textAlign: 'center' }}>Logi Systemowe</span>
+                        </NavLink>
+                    </>
+                )}
 
                 <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
                     <Settings size={24} />
