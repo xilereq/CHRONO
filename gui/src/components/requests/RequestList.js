@@ -6,6 +6,12 @@ const RequestList = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+
+    // 1. Dodane stany dla poszczególnych filtrów
+    const [filterStatus, setFilterStatus] = useState("");
+    const [filterType, setFilterType] = useState("");
+    const [filterDate, setFilterDate] = useState("");
+
     const userId = 1;
 
     const fetchRequests = async () => {
@@ -24,21 +30,56 @@ const RequestList = () => {
         fetchRequests();
     }, [userId]);
 
+    // 2. Logika filtrowania - generujemy nową tablicę na podstawie wybranych filtrów
+    const filteredRequests = requests.filter(r => {
+        const matchStatus = filterStatus === "" || r.status === filterStatus;
+        const matchType = filterType === "" || r.type === filterType;
+
+        let matchDate = true;
+        if (filterDate !== "") {
+            // Sprawdzamy czy wybrana z filtra data mieści się w przedziale trwania wniosku
+            const requestStart = new Date(r.startDate);
+            const requestEnd = new Date(r.endDate);
+            const selectedDate = new Date(filterDate);
+
+            matchDate = selectedDate >= requestStart && selectedDate <= requestEnd;
+        }
+
+        return matchStatus && matchType && matchDate;
+    });
+
     return (
         <div className="requests-container">
             <div className="section-panel filters-bar">
-                <select className="filter-select">
+                {/* 3. Podpięcie stanów (value i onChange) do elementów select i input */}
+                <select
+                    className="filter-select"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                >
                     <option value="">Status</option>
                     <option value="APPROVED">Zatwierdzony</option>
                     <option value="PENDING">Weryfikacja</option>
                     <option value="REJECTED">Odrzucony</option>
                 </select>
-                <select className="filter-select">
+
+                <select
+                    className="filter-select"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                >
                     <option value="">Typ</option>
-                    <option value="Urlop wypoczynkowy">Urlop wypoczynkowy</option>
-                    <option value="Nadgodziny">Nadgodziny</option>
+                    <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
+                    <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
+                    <option value="OVERTIME">Nadgodziny</option>
                 </select>
-                <input type="date" className="filter-input" />
+
+                <input
+                    type="date"
+                    className="filter-input"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                />
             </div>
 
             {showForm && (
@@ -67,11 +108,11 @@ const RequestList = () => {
             )}
 
             <div className="section-panel">
-                <div className="section-title">Lista moich wniosk w</div>
+                <div className="section-title">Lista moich wniosków</div>
                 {loading ? (
                     <div className="empty">Ładowanie danych z serwera...</div>
-                ) : !requests || requests.length === 0 ? (
-                    <div className="empty">Brak wniosk w w wybranym okresie.</div>
+                ) : !filteredRequests || filteredRequests.length === 0 ? ( // Użyto filteredRequests
+                    <div className="empty">Brak wniosków spełniających kryteria.</div>
                 ) : (
                     <div className="requests-table-container">
                         <table className="requests-table">
@@ -80,14 +121,15 @@ const RequestList = () => {
                                 <th>Typ Wniosku</th>
                                 <th>Okres / Data</th>
                                 <th>Liczba Dni/Godz.</th>
-                                <th>Data Zlenia</th>
+                                <th>Data Złożenia</th>
                                 <th>Status</th>
                                 <th>Zatwierdzający</th>
                                 <th>Akcje</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {requests.map(r => (
+                            {/* 4. Mapowanie pofiltrowanej tablicy zamiast oryginalnej */}
+                            {filteredRequests.map(r => (
                                 <RequestCard key={r.id} request={r} />
                             ))}
                             </tbody>

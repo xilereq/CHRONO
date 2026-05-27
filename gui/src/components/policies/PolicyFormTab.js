@@ -41,7 +41,7 @@ const PolicyFormTab = () => {
 
         setIsSaving(true);
         try {
-            await policiesService.create(policyData);
+            await policiesService.createPolicy(policyData);
             alert("Polityka została pomyślnie utworzona i zapisana w bazie!");
             setPolicyData({
                 name: '', dailyHours: 8, maxDailyHours: 12, maxWeeklyHours: 40,
