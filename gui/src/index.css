@@ -10,6 +10,7 @@
 }
 
 [data-theme="dark"] {
+    color-scheme: dark;
     --bg-main: #111827;
     --bg-card: #1f2937;
     --text-main: #f9fafb;

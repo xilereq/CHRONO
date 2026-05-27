@@ -26,7 +26,7 @@ const RequestCard = ({ request }) => {
 
     return (
         <tr>
-            <td style={{ fontWeight: 600, color: '#111827' }}>{translateType(request.type)}</td>
+            <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{translateType(request.type)}</td>
             <td>{request.startDate} - {request.endDate}</td>
             <td>{request.daysCount || '-'}</td>
             <td>{request.createdAt || '-'}</td>
