@@ -3,6 +3,7 @@ package pl.chrono.usermanager.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.usermanager.api.I_UserService;
 import pl.chrono.usermanager.dto.response.UserDto;
@@ -68,5 +69,18 @@ public class UserService implements I_UserService {
         .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
         .collect(Collectors.toList());
   }
+
+  @Override
+  @Transactional
+  public void setManager(String email, String managerEmail) {
+    User user = userData.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+    User manager = userData.findByEmail(managerEmail)
+        .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+    user.setManager(manager);
+
+    userData.save(user);
+  }
+
 
 }

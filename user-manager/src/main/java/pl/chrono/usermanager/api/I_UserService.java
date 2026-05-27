@@ -16,4 +16,6 @@ public interface I_UserService {
   List<UserDto> getAllHrs();
 
   List<UserDto> getAllUsers();
+
+  void setManager(String email, String managerEmail);
 }

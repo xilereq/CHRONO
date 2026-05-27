@@ -74,6 +74,13 @@ public class AuthService {
     newUser.getRoles().add(role);
     newUser.setForcePasswordChange(true);
 
+    if(request.managerEmail() != null && request.managerEmail().isBlank()) {
+      User manager = userData.findByEmail(request.managerEmail())
+          .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+
+      newUser.setManager(manager);
+    }
+
     userData.save(newUser);
 
     return new RegisterResponse(newUser.getEmail(), tempPassword);
@@ -81,8 +88,8 @@ public class AuthService {
 
   @Transactional
   public void changeFirstPassword(String userEmail, ChangePasswordRequest request){
-    User user = userData.findByEmail(userEmail).orElseThrow(
-        () -> new IllegalArgumentException("Nie znaleziono użytkownika")
+    User user = userData.findByEmail(userEmail)
+        .orElseThrow( () -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje.")
     );
 
     if(!user.isForcePasswordChange()) {
@@ -134,7 +141,7 @@ public class AuthService {
   @LogActivity(action = "PASSWORD_CHANGE", details = "User changed theirs password")
   public void changePassword(String email, ChangePasswordRequest request) {
     User user = userData.findByEmail(email)
-        .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono użytkownika."));
+        .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
 
     if(passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
       throw new IllegalArgumentException("Podane aktualne hasło jest niepoprawne.");
