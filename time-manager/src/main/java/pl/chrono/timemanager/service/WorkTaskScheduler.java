@@ -11,19 +11,13 @@ import org.springframework.stereotype.Component;
 public class WorkTaskScheduler {
   private final ScheduleService scheduleService;
 
-  @Scheduled(fixedRate = 300000)
-  public void runCloseTooLongWorkLogs() {
-    scheduleService.closeTooLongWorkLogs();
-  }
-
   @Scheduled(cron = "0 0 4 * * *")
   public void runCountOvertime() {
-    scheduleService.countOvertime();
+    scheduleService.processWorkLogs();
   }
 
   @EventListener(ApplicationReadyEvent.class)
   public void runOnStartup() {
-    scheduleService.closeTooLongWorkLogs();
-    scheduleService.countOvertime();
+    scheduleService.processWorkLogs();
   }
 }
