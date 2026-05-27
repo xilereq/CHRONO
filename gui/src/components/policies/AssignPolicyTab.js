@@ -55,7 +55,7 @@ const AssignPolicyTab = () => {
         setLoading(true);
         try {
             await policiesService.assignPolicyToUser(formData.userId, {
-                policyId: parseInt(formData.policyId, 10),
+                policyId: formData.policyId,
                 startDate: formData.startDate
             });
             alert("Polityka została pomyślnie przypisana do użytkownika!");
@@ -103,7 +103,7 @@ const AssignPolicyTab = () => {
                         >
                             <option value="">{isFetchingUsers ? 'Pobieranie listy...' : '-- Wybierz pracownika --'}</option>
                             {users.map(user => (
-                                <option key={user.id} value={user.id}>
+                                <option key={user.userID} value={user.userID}>
                                     {user.name} {user.surname} ({user.email})
                                 </option>
                             ))}

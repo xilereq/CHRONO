@@ -27,8 +27,8 @@ const Requests = () => {
             <h2 className="page-title-no-margin">Moje wnioski</h2>
             <div>
                 <RequestList />
-
-                <ApprovalList />
+                {isAdminOrManager && (
+                <ApprovalList /> )}
             </div>
         </div>
     );
