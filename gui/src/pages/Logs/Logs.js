@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { logService } from '../../services';
 import '../../components/requests/requests.css';
 import '../main.css';
+import './Logs.css';
 
 const Logs = () => {
     const [logs, setLogs] = useState([]);
@@ -39,7 +40,6 @@ const Logs = () => {
         fetchLogs();
     }, []);
 
-
     const handleClearFilters = () => {
         setFilterAction("");
         setFilterEmail("");
@@ -47,7 +47,6 @@ const Logs = () => {
         setFilterTimeFrom("");
         setFilterTimeTo("");
     };
-
 
     const filteredLogs = logs.filter(log => {
         const matchAction = filterAction === "" || log.action === filterAction;
@@ -74,12 +73,10 @@ const Logs = () => {
         return matchAction && matchEmail && matchDate && matchTime;
     });
 
-
     const formatDateTime = (isoString) => {
         if (!isoString) return '';
         return isoString.replace('T', ' ').substring(0, 19);
     };
-
 
     return (
         <div className="requests-container">
@@ -163,8 +160,8 @@ const Logs = () => {
                                 <tr key={log.logID}>
                                     <td style={{ fontWeight: 600 }}>#{log.logID}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(log.timestamp)}</td>
-                                    <td>{log.userEmail || 'Brak danych'}</td>
-                                    <td style={{ color: 'var(--primary-color)', fontWeight: 600 }}>{log.action}</td>
+                                    <td className="log-user-email">{log.userEmail || 'Brak danych'}</td>
+                                    <td className="log-action">{log.action}</td>
                                     <td>{log.details}</td>
                                 </tr>
                             ))}

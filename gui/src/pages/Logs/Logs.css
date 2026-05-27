@@ -1,0 +1,17 @@
+.requests-table .log-user-email {
+    color: #059669;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .requests-table .log-user-email {
+    color: #34d399;
+}
+
+.requests-table .log-action {
+    color: #9a3412;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .requests-table .log-action {
+    color: #f97316;
+}
