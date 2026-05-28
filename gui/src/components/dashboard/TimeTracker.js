@@ -38,7 +38,6 @@ const TimeTracker = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Nowa funkcja pobierająca zsynchronizowany czas z serwera (bez czasu spędzonego na przerwie)
     const syncActiveTime = async () => {
         try {
             const timeStr = await workLogService.getActiveTime();
@@ -112,8 +111,6 @@ const TimeTracker = () => {
                 await leaveLogService.endLeave();
                 setIsOnBreak(false);
 
-                // POPRAWKA: Po powrocie z przerwy synchronizujemy czas z backendem.
-                // Dzięki temu "startTime" przesunie się do przodu, wymuszając na stoperze pominięcie przerwy.
                 await syncActiveTime();
 
             } catch (error) {

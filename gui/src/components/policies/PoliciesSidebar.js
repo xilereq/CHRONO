@@ -37,13 +37,11 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
         }
     };
 
-    // Funkcja do obsługi wyboru użytkownika z listy
     const handleUserSelect = (user) => {
         setSelectedUser(user);
-        setIsDropdownOpen(false); // Zamyka menu po wyborze
+        setIsDropdownOpen(false);
     };
 
-    // Generowanie inicjałów do awatara
     const getInitials = () => {
         if (!selectedUser) return 'AN';
         const first = selectedUser.name ? selectedUser.name.charAt(0) : '';
@@ -87,14 +85,7 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                     className={`policies-nav-item ${activeTab === 'users' ? 'active' : ''}`}
                     onClick={() => setActiveTab('users')}
                 >
-                    <UserPlus size={18} /> Użytkownicy
-                </button>
-
-                <button
-                    className={`policies-nav-item ${activeTab === 'setManager' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('setManager')}
-                >
-                    <Users size={18} /> Przypisz Managera
+                    <Users size={18} /> Zarządzanie Użytkownikami
                 </button>
             </nav>
         </div>

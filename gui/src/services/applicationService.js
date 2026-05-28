@@ -6,7 +6,6 @@ const getHeaders = () => ({
 });
 
 const applicationService = {
-    // Pobiera wszystkie wnioski danego pracownika (GET /employee/{id})
     getUserApplications: async (employeeId) => {
         const response = await fetch(`${API_URL}/employee/${employeeId}`, {
             headers: getHeaders()
@@ -15,7 +14,6 @@ const applicationService = {
         return response.json();
     },
 
-    // Tworzy nowy wniosek (POST /employee/{id})
     createApplication: async (employeeId, applicationData) => {
         const response = await fetch(`${API_URL}/employee/${employeeId}`, {
             method: 'POST',
@@ -26,7 +24,6 @@ const applicationService = {
         return response.json();
     },
 
-    // Zmienia status (PATCH /{id}/status) - przydatne dla panelu managera
     changeStatus: async (applicationId, newStatus, reviewerId, decisionReason) => {
         const url = `${API_URL}/${applicationId}/status?newStatus=${newStatus}&reviewerId=${reviewerId}&decisionReason=${decisionReason}`;
         const response = await fetch(url, {

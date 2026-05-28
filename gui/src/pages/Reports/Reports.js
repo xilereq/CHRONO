@@ -61,7 +61,6 @@ const OVERTIME_WEEKS = [
     { label: '22–30 kwi',val: 8  },
 ];
 
-/* ---------- Bar Chart ---------- */
 const BarChart = ({ data }) => {
     const maxRaw = Math.max(...data.map(d => Math.max(d.plan, d.przepr)));
     const roundedMax = Math.ceil(maxRaw / 50) * 50 || 50;
@@ -122,7 +121,6 @@ const BarChart = ({ data }) => {
     );
 };
 
-/* ---------- Main page ---------- */
 const Reports = () => {
     const [month, setMonth] = useState(3);
     const [year, setYear]   = useState(2026);

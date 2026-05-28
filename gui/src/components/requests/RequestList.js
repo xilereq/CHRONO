@@ -7,7 +7,6 @@ const RequestList = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
 
-    // 1. Dodane stany dla poszczególnych filtrów
     const [filterStatus, setFilterStatus] = useState("");
     const [filterType, setFilterType] = useState("");
     const [filterDate, setFilterDate] = useState("");
@@ -30,14 +29,12 @@ const RequestList = () => {
         fetchRequests();
     }, [userId]);
 
-    // 2. Logika filtrowania - generujemy nową tablicę na podstawie wybranych filtrów
     const filteredRequests = requests.filter(r => {
         const matchStatus = filterStatus === "" || r.status === filterStatus;
         const matchType = filterType === "" || r.type === filterType;
 
         let matchDate = true;
         if (filterDate !== "") {
-            // Sprawdzamy czy wybrana z filtra data mieści się w przedziale trwania wniosku
             const requestStart = new Date(r.startDate);
             const requestEnd = new Date(r.endDate);
             const selectedDate = new Date(filterDate);

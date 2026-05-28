@@ -1,6 +1,4 @@
 import React from 'react';
-
-// UI styles
 import './ui.css';
 
 const Button = ({ children, variant = 'primary', className = '', ...props }) => {

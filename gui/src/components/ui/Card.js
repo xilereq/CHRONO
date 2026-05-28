@@ -1,6 +1,4 @@
 import React from 'react';
-
-// UI styles
 import './ui.css';
 
 const Card = ({ title, children, className = '' }) => {

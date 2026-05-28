@@ -7,7 +7,6 @@ const getHeaders = () => ({
 });
 
 const policiesService = {
-    // --- POLICIES (PolicyController) ---
 
     createPolicy: async (request) => {
         const response = await fetch(API_URL, {
@@ -56,7 +55,6 @@ const policiesService = {
         return response.json();
     },
 
-    // --- POLICY HOLIDAYS (PolicyController) ---
 
     getHolidaysForPolicy: async (policyId) => {
         const response = await fetch(`${API_URL}/${policyId}/holidays`, {
@@ -87,7 +85,6 @@ const policiesService = {
         return response.json();
     },
 
-    // --- GLOBAL HOLIDAYS (HolidayController) ---
 
     createHoliday: async (request) => {
         const response = await fetch(HOLIDAYS_API_URL, {
