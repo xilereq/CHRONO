@@ -21,4 +21,10 @@ public interface WorkLogRepository extends JpaRepository<WorkLog, Integer> {
   List<WorkLog> findByUser_UserIdAndStartTimeAfter(Integer userId, LocalDateTime threshold);
 
   List<WorkLog> findByEndTimeIsNotNullAndSettledFalse();
+
+  Optional<WorkLog> findByUserUserIdAndStartTimeBetween(
+      Integer employeeId,
+      LocalDateTime startOfDay,
+      LocalDateTime endOfDay
+  );
 }

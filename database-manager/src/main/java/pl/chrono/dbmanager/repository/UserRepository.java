@@ -18,4 +18,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
   List<User> findByRoles_Name(String role);
   List<User> findAllByIsActiveTrue();
   List<User> findByIsActiveFalseAndEmploymentEndDateBefore(LocalDate cutoffDate);
+
+  List<User> findByManagerUserId(Integer managerId);
 }

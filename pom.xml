@@ -21,6 +21,7 @@
 		<module>workforce-api</module>
         <module>application-manager</module>
         <module>log-manager</module>
+        <module>report-manager</module>
     </modules>
 
 	<properties>

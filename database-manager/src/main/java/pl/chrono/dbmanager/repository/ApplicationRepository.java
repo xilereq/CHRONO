@@ -1,5 +1,6 @@
 package pl.chrono.dbmanager.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,8 +18,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
   List<Application> findPendingByManagerId(@Param("status") ApplicationStatus status, @Param("managerId") Integer managerId);
 
   @Query("SELECT a FROM Application a WHERE a.employee.userId = :employeeId AND a.status = 'APPROVED' AND :date BETWEEN a.startDate AND a.endDate")
-  List<Application> findApprovedByEmployeeAndDate(@Param("employeeId") Integer employeeId, @Param("date") java.time.LocalDate date);
+  List<Application> findApprovedByEmployeeAndDate(@Param("employeeId") Integer employeeId, @Param("date") LocalDate date);
 
   @Query("SELECT a FROM Application a WHERE a.employee.manager.userId = :managerId")
   List<Application> findAllByManagerId(@Param("managerId") Integer managerId);
+
+  List<Application> findByEmployeeManagerUserIdAndStartDateBetween(Integer managerId, LocalDate startDate, LocalDate endDate);
 }
