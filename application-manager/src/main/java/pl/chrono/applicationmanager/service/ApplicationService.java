@@ -128,4 +128,12 @@ public class ApplicationService implements I_UserApplication {
 
     return dto;
   }
+
+  @Override
+  public List<ApplicationDTO> getAllApplicationsForManager(Integer managerId) {
+    return applicationRepository.findAllByManagerId(managerId)
+        .stream()
+        .map(this::mapToDTO)
+        .collect(Collectors.toList());
+  }
 }

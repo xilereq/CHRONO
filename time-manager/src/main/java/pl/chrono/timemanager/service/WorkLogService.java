@@ -14,7 +14,6 @@ import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
-import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.exception.WorkException;
@@ -168,7 +167,7 @@ public class WorkLogService {
     LocalDate today = LocalDate.now();
     Policy policy = user.getActivePolicy();
 
-    int baseRequiredSeconds = policy != null ? policy.getRequiredSecondsForDate(today) : (defaultIsWorkDay(today) ? 8 * 3600 : 0);
+    int baseRequiredSeconds = policy != null ? policy.getRequiredSecondsForDate(today) : defaultIsWorkDay(today) ? 8 * 3600 : 0;
 
     List<Application> todaysApps = applicationRepository.findApprovedByEmployeeAndDate(userId, today);
 

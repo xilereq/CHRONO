@@ -12,6 +12,8 @@ import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.OperationLogRepository;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
+import pl.chrono.dbmanager.model.Application;
+
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +52,7 @@ public class ScheduleService {
       long workTime = workLog.getEffectiveWorkTime(now);
       int requiredSeconds = workLog.getRequiredSeconds();
 
-      List<pl.chrono.dbmanager.model.Application> dailyApps = applicationRepository.findApprovedByEmployeeAndDate(userId, workDate);
+      List<Application> dailyApps = applicationRepository.findApprovedByEmployeeAndDate(userId, workDate);
 
       if (workTime > requiredSeconds) {
         dailyApps.stream()

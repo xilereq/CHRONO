@@ -11,4 +11,6 @@ public interface I_UserApplication {
   List<ApplicationDTO> getUserApplications(Integer employeeId, Integer requesterId);
 
   List<ApplicationDTO> getPendingApplicationsForManager(Integer managerId);
+
+  List<ApplicationDTO> getAllApplicationsForManager(Integer managerId);
 }

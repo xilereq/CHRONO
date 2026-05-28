@@ -71,4 +71,14 @@ public class ApplicationController extends BaseController {
     List<ApplicationDTO> pendingApplications = applicationService.getPendingApplicationsForManager(managerId);
     return ResponseEntity.ok(pendingApplications);
   }
+
+  @GetMapping("/manager/all")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<List<ApplicationDTO>> getAllApplicationsForManager(
+      @RequestHeader("Authorization") String token) {
+
+    Integer managerId = extractId(token);
+    List<ApplicationDTO> allApplications = applicationService.getAllApplicationsForManager(managerId);
+    return ResponseEntity.ok(allApplications);
+  }
 }
