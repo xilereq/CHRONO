@@ -42,7 +42,7 @@ public class WorkLogService {
     return workLogMapper.toDto(saved);
   }
 
-  @Transactional
+  @Transactional(noRollbackFor = WorkException.ExcessiveWorkTime.class)
   public WorkLogDto endWork(Integer userId) {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
         .orElseThrow(() -> new WorkException.NoActiveWork(userId));
