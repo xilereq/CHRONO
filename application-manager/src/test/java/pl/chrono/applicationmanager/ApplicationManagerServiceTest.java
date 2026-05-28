@@ -16,6 +16,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.applicationmanager.dto.ApplicationDTO;
 import pl.chrono.applicationmanager.service.ApplicationService;
 import pl.chrono.dbmanager.model.Application;
@@ -35,8 +37,12 @@ class ApplicationManagerServiceTest {
   @Mock
   private UserRepository userRepository;
 
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
   @InjectMocks
   private ApplicationService applicationService;
+
 
   @Test
   void createApplication_ShouldReturnDto_WhenUserExists() {
@@ -44,6 +50,7 @@ class ApplicationManagerServiceTest {
 
     User mockUser = new User();
     mockUser.setUserId(employeeId);
+    mockUser.setEmail("pracownik@chrono.pl");
 
     ApplicationDTO requestDto = new ApplicationDTO();
     requestDto.setType("OVERTIME_EARN");
@@ -77,6 +84,7 @@ class ApplicationManagerServiceTest {
     assertNotNull(result.getCreationDateTime());
 
     verify(applicationRepository, times(1)).save(any(Application.class));
+    verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
   }
 
   @Test
@@ -88,9 +96,12 @@ class ApplicationManagerServiceTest {
 
     User mockReviewer = new User();
     mockReviewer.setUserId(reviewerId);
-
+    mockReviewer.setEmail("manager@chrono.pl");
+    mockReviewer.setName("Jan");
+    mockReviewer.setSurname("Kowalski");
     User mockEmployee = new User();
     mockEmployee.setUserId(1);
+    mockEmployee.setEmail("pracownik@chrono.pl");
     mockEmployee.setManager(mockReviewer);
 
     Application mockApplication = new Application();
@@ -111,7 +122,9 @@ class ApplicationManagerServiceTest {
     assertEquals(decisionReason, result.getDecisionReason());
     assertEquals(reviewerId, result.getReviewerId());
     assertNotNull(result.getDecisionDateTime());
+
     verify(applicationRepository, times(1)).save(mockApplication);
+    verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
   }
 
   @Test
@@ -290,5 +303,150 @@ class ApplicationManagerServiceTest {
 
     assertNotNull(result);
     assertEquals(1, result.size());
+  }
+
+  @Test
+  void getAllApplicationsForManager_ShouldReturnListOfDtos() {
+    Integer managerId = 2;
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(30L);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.OVERTIME_TAKE);
+    mockApplication.setStatus(ApplicationStatus.APPROVED);
+
+    when(applicationRepository.findAllByManagerId(managerId))
+        .thenReturn(List.of(mockApplication));
+
+    List<ApplicationDTO> result = applicationService.getAllApplicationsForManager(managerId);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(30L, result.getFirst().getId());
+
+    verify(applicationRepository, times(1)).findAllByManagerId(managerId);
+  }
+
+  @Test
+  void createApplication_ShouldReturnDto_WhenEmployeeHasManager() {
+    Integer employeeId = 1;
+
+    User mockManager = new User();
+    mockManager.setUserId(2);
+
+    User mockUser = new User();
+    mockUser.setUserId(employeeId);
+    mockUser.setEmail("pracownik@chrono.pl");
+    mockUser.setManager(mockManager);
+
+    ApplicationDTO requestDto = new ApplicationDTO();
+    requestDto.setType("OVERTIME_EARN");
+    requestDto.setStartDate(LocalDate.of(2026, 5, 1));
+    requestDto.setEndDate(LocalDate.of(2026, 5, 1));
+
+    Application savedApplication = new Application();
+    savedApplication.setId(100L);
+    savedApplication.setEmployee(mockUser);
+    savedApplication.setType(ApplicationType.OVERTIME_EARN);
+    savedApplication.setStatus(ApplicationStatus.PENDING);
+    savedApplication.setStartDate(requestDto.getStartDate());
+    savedApplication.setEndDate(requestDto.getEndDate());
+    savedApplication.setCreationDateTime(java.time.LocalDateTime.now());
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockUser));
+    when(applicationRepository.save(any(Application.class))).thenReturn(savedApplication);
+
+    ApplicationDTO result = applicationService.createApplication(requestDto, employeeId);
+
+    assertNotNull(result);
+    verify(eventPublisher, times(1)).publishEvent(any(pl.chrono.applicationmanager.event.ApplicationNotificationEvent.class));
+  }
+
+  @Test
+  void changeStatus_ShouldThrowException_WhenReviewerNotFound() {
+    Long applicationId = 1L;
+    Integer reviewerId = 2;
+
+    User mockManager = new User();
+    mockManager.setUserId(reviewerId);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setManager(mockManager);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+    mockApplication.setEmployee(mockEmployee);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.empty());
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        applicationService.changeStatus(applicationId, "APPROVED", reviewerId, "Reason")
+    );
+    assertNotNull(exception.getMessage());
+  }
+
+  @Test
+  void getUserApplications_ShouldThrowException_WhenEmployeeNotFound() {
+    when(userRepository.findById(1)).thenReturn(Optional.empty());
+    assertThrows(RuntimeException.class, () -> applicationService.getUserApplications(1, 2));
+  }
+
+  @Test
+  void getUserApplications_ShouldThrowException_WhenRequesterNotFound() {
+    User employee = new User();
+    when(userRepository.findById(1)).thenReturn(Optional.of(employee));
+    when(userRepository.findById(2)).thenReturn(Optional.empty());
+
+    assertThrows(RuntimeException.class, () -> applicationService.getUserApplications(1, 2));
+  }
+
+  @Test
+  void getUserApplications_ShouldReturnDtos_WhenRequesterIsDirectManager() {
+    Integer employeeId = 1;
+    Integer requesterId = 2;
+
+    User mockRequester = new User();
+    mockRequester.setUserId(requesterId);
+    mockRequester.setRoles(Set.of());
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(employeeId);
+    mockEmployee.setManager(mockRequester);
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockEmployee));
+    when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
+    when(applicationRepository.findAllByEmployeeUserId(employeeId)).thenReturn(List.of());
+
+    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+    assertNotNull(result);
+  }
+
+  @Test
+  void getUserApplications_ShouldReturnDtos_WhenRequesterIsAdmin() {
+    Integer employeeId = 1;
+    Integer requesterId = 2;
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(employeeId);
+
+    Role adminRole = new Role();
+    adminRole.setName("ROLE_ADMIN");
+
+    User mockRequester = new User();
+    mockRequester.setUserId(requesterId);
+    mockRequester.setRoles(Set.of(adminRole));
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockEmployee));
+    when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
+    when(applicationRepository.findAllByEmployeeUserId(employeeId)).thenReturn(List.of());
+
+    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+    assertNotNull(result);
   }
 }

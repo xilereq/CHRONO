@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.applicationmanager.api.I_UserApplication;
 import pl.chrono.applicationmanager.dto.ApplicationDTO;
+import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
@@ -22,6 +24,7 @@ public class ApplicationService implements I_UserApplication {
 
   private final ApplicationRepository applicationRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -41,6 +44,17 @@ public class ApplicationService implements I_UserApplication {
     application.setDurationSeconds(request.getDurationSeconds());
 
     Application savedApplication = applicationRepository.save(application);
+
+    Integer managerId = employee.getManager() != null ? employee.getManager().getUserId() : null;
+    eventPublisher.publishEvent(new ApplicationNotificationEvent(
+        savedApplication.getId(),
+        employee.getUserId(),
+        managerId,
+        "CREATED",
+        "PENDING",
+        null
+    ));
+
     return mapToDTO(savedApplication);
   }
 
@@ -72,6 +86,16 @@ public class ApplicationService implements I_UserApplication {
     application.setDecisionDateTime(LocalDateTime.now());
 
     Application updatedApplication = applicationRepository.save(application);
+
+    eventPublisher.publishEvent(new ApplicationNotificationEvent(
+        updatedApplication.getId(),
+        employee.getUserId(),
+        employee.getManager().getUserId(),
+        "STATUS_CHANGED",
+        newStatus,
+        reviewer.getName() + " " + reviewer.getSurname()
+    ));
+
     return mapToDTO(updatedApplication);
   }
 
