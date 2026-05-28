@@ -21,3 +21,4 @@ export { default as PolicyFormTab } from './policies/PolicyFormTab';
 export { default as UserFormTab } from './policies/UserFormTab';
 export { default as PolicyListTab } from './policies/PolicyListTab';
 export { default as AssignPolicyTab } from './policies/AssignPolicyTab';
+export { default as SetManagerTab } from './policies/SetManagerTab';

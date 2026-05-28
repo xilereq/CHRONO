@@ -385,3 +385,465 @@
         grid-template-columns: 1fr;
     }
 }
+
+.policies-user-card.dropdown-toggle {
+    position: relative;
+    cursor: pointer;
+    padding-bottom: 15px;
+}
+
+.dropdown-user-info {
+    flex: 1;
+}
+
+.dropdown-user-email {
+    text-transform: none !important;
+    color: #666 !important;
+}
+
+.dropdown-icon {
+    color: #888;
+    transition: transform 0.2s ease-in-out;
+}
+
+.dropdown-icon.open {
+    transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 10px;
+    right: 10px;
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.dropdown-empty {
+    padding: 12px;
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+}
+
+.dropdown-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item.active {
+    background-color: #f0f7ff;
+}
+
+.dropdown-item-name {
+    display: block;
+    font-size: 14px;
+    color: #333;
+}
+
+.dropdown-item-email {
+    font-size: 12px;
+    color: #666;
+}
+
+.policies-page-wrapper {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    color: var(--text-main);
+}
+
+.policies-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.policies-user-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    background: var(--bg-main);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.user-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+}
+
+.policies-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.policies-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.policies-nav-item:hover {
+    background: var(--bg-main);
+}
+
+.policies-nav-item.active {
+    background: var(--primary-color);
+    color: #111827;
+    box-shadow: 0 4px 10px rgba(212, 163, 42, 0.25);
+}
+
+.policies-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+}
+
+.policies-header {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.policy-section {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.section-header.align-center {
+    align-items: center;
+}
+
+.section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-main);
+}
+
+.section-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0 0 0;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem;
+}
+
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    justify-content: space-between;
+}
+
+.action-buttons-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.form-select {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    font-size: 0.85rem;
+    color: var(--text-main);
+    outline: none;
+    min-width: 100px;
+}
+
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.btn-text.history-btn {
+    color: var(--text-muted);
+}
+
+.cancel-btn {
+    color: var(--text-main) !important;
+}
+
+.btn-outline-rounded {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 0.4rem 1.25rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-gray-outline {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hours-config {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.form-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.inline-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.form-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    font-size: 0.9rem;
+    color: var(--text-main);
+    outline: none;
+}
+
+.short-input {
+    width: 60px;
+    text-align: left;
+}
+
+.grid-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.policies-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.btn-yellow {
+    background: var(--primary-color);
+    color: #111827;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(212, 163, 42, 0.2);
+    transition: background 0.2s;
+}
+
+.btn-yellow:hover {
+    background: #c39626;
+}
+
+@media (max-width: 900px) {
+    .policies-page-wrapper {
+        flex-direction: column;
+    }
+    .policies-sidebar {
+        width: 100%;
+    }
+    .grid-2-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .policies-content {
+        padding: 1.25rem 1rem;
+    }
+
+    .policy-section {
+        padding: 1rem;
+    }
+
+    .section-header,
+    .section-header.align-center {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .section-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .action-buttons-right {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .form-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .form-select,
+    .form-input {
+        width: 100%;
+    }
+
+    .short-input {
+        width: 100%;
+        max-width: 150px;
+    }
+
+    .policies-footer {
+        flex-direction: column-reverse;
+        gap: 1.5rem;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .footer-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .btn-yellow,
+    .btn-text.cancel-btn {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding: 0.8rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-dropdown-menu {
+        left: 0;
+        right: 0;
+        width: 100%;
+    }
+
+    .policies-user-card {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../main.css';
 import './policies.css';
-import { PoliciesSidebar, PolicyFormTab, HolidayTabs, UserFormTab, PolicyListTab, AssignPolicyTab } from "../../components";
+import { PoliciesSidebar, PolicyFormTab, HolidayTabs, UserFormTab, PolicyListTab, AssignPolicyTab, SetManagerTab } from "../../components";
 
 const Policies = () => {
     // Stan zarządzający tym, która zakładka jest obecnie otwarta
@@ -21,6 +21,7 @@ const Policies = () => {
                     {activeTab === 'assignPolicy' && <AssignPolicyTab />}
                     {activeTab === 'holidays' && <HolidayTabs />}
                     {activeTab === 'users' && <UserFormTab />}
+                    {activeTab === 'setManager' && <SetManagerTab />}
                 </div>
 
             </div>

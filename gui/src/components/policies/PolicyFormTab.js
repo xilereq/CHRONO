@@ -19,6 +19,7 @@ const PolicyFormTab = () => {
         dailyHours: 8,
         maxDailyHours: 12,
         maxWeeklyHours: 40,
+        roundingMinutes: 15,
         workingDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY']
     });
 
@@ -44,7 +45,7 @@ const PolicyFormTab = () => {
             await policiesService.createPolicy(policyData);
             alert("Polityka została pomyślnie utworzona i zapisana w bazie!");
             setPolicyData({
-                name: '', dailyHours: 8, maxDailyHours: 12, maxWeeklyHours: 40,
+                name: '', dailyHours: 8, maxDailyHours: 12, maxWeeklyHours: 40, roundingMinutes: 15,
                 workingDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY']
             });
         } catch (err) {
@@ -56,7 +57,7 @@ const PolicyFormTab = () => {
 
     const handleReset = () => {
         setPolicyData({
-            name: '', dailyHours: 8, maxDailyHours: 12, maxWeeklyHours: 40,
+            name: '', dailyHours: 8, maxDailyHours: 12, maxWeeklyHours: 40, roundingMinutes: 15,
             workingDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY']
         });
     };
@@ -134,6 +135,21 @@ const PolicyFormTab = () => {
                             </button>
                         );
                     })}
+                </div>
+            </div>
+
+            <div className="policy-section">
+                <h2 className="section-title">Sekcja 5: Zaokrąglanie czasu pracy</h2>
+                <div className="hours-config" style={{ marginTop: '15px' }}>
+                    <div className="form-row">
+                        <div className="inline-input-group">
+                            <span>Zaokrąglanie (minuty):</span>
+                            <input
+                                type="number" className="form-input short-input"
+                                value={policyData.roundingMinutes} onChange={(e) => setPolicyData({...policyData, roundingMinutes: parseInt(e.target.value) || 0})}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 

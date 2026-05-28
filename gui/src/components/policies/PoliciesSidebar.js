@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, UserPlus, ChevronDown, Filter, List, UserCheck } from 'lucide-react';
+import { Clock, Calendar, UserPlus, Users, List, UserCheck } from 'lucide-react';
 import { userService } from '../../services';
 
 const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
@@ -88,6 +88,13 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                     onClick={() => setActiveTab('users')}
                 >
                     <UserPlus size={18} /> Użytkownicy
+                </button>
+
+                <button
+                    className={`policies-nav-item ${activeTab === 'setManager' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('setManager')}
+                >
+                    <Users size={18} /> Przypisz Managera
                 </button>
             </nav>
         </div>

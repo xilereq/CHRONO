@@ -1,21 +1,40 @@
-import React, { useState } from 'react';
-import { authService } from '../../services';
+import React, { useState, useEffect } from 'react';
+import { authService, userService } from '../../services';
 
 const UserFormTab = () => {
     const [formData, setFormData] = useState({
         name: '',
         surname: '',
         email: '',
-        roleName: "ROLE_EMPLOYEE"
+        roleName: "ROLE_EMPLOYEE",
+        managerEmail: ''
     });
 
+    const [managers, setManagers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
+    useEffect(() => {
+        const fetchManagers = async () => {
+            try {
+                const response = await userService.getManagers();
+                setManagers(response || []);
+            } catch (err) {
+                console.error("Nie udało się pobrać listy managerów.", err);
+            }
+        };
+
+        fetchManagers();
+    }, []);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: value,
+            ...(name === 'roleName' && value !== 'ROLE_EMPLOYEE' ? { managerEmail: '' } : {})
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -24,16 +43,20 @@ const UserFormTab = () => {
         setMessage('');
         setLoading(true);
 
-        console.log(formData);
-        console.log(formData.roleName);
+        const payload = { ...formData };
+        if (!payload.managerEmail) {
+            payload.managerEmail = null;
+        }
+
+        console.log(payload);
 
         try {
-            const response = await authService.register(formData);
+            const response = await authService.register(payload);
             const generatedPassword = response.temporaryPassword || '[Brak danych o haśle]';
 
-            setMessage(`Użytkownik ${formData.name} ${formData.surname} został pomyślnie dodany. Tymczasowe hasło: ${generatedPassword}`);
+            setMessage(`Użytkownik ${payload.name} ${payload.surname} został pomyślnie dodany. Tymczasowe hasło: ${generatedPassword}`);
 
-            setFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE' });
+            setFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE', managerEmail: '' });
         } catch (err) {
             setError(err.message || 'Wystąpił błąd podczas dodawania użytkownika.');
         } finally {
@@ -56,7 +79,6 @@ const UserFormTab = () => {
                 )}
                 {message && (
                     <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>
-                        {/* Dodano pogrubienie, by nowa informacja była lepiej widoczna */}
                         <strong>{message}</strong>
                     </div>
                 )}
@@ -95,6 +117,23 @@ const UserFormTab = () => {
                             <option value="ROLE_ADMIN">Administrator</option>
                         </select>
                     </div>
+
+                    {formData.roleName === 'ROLE_EMPLOYEE' && (
+                        <div className="form-group">
+                            <span className="form-label">Przypisz managera</span>
+                            <select
+                                className="form-input" name="manager_email"
+                                value={formData.managerEmail} onChange={handleChange}
+                            >
+                                <option value="">-- Wybierz managera --</option>
+                                {managers.map(manager => (
+                                    <option key={manager.id} value={manager.email}>
+                                        {manager.name} {manager.surname} ({manager.email})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 

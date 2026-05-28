@@ -42,7 +42,25 @@ const userService = {
         const response = await fetch(`${API_URL}/hrs`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Błąd pobierania działu HR');
         return response.json();
-    }
+    },
+    setManager: async (email, managerEmail) => {
+        const response = await fetch(`${API_URL}/set-manager`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                email: email,
+                managerEmail: managerEmail
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Nie udało się przypisać managera.');
+        }
+
+        return true;
+    },
+
 };
 
 export default userService;
