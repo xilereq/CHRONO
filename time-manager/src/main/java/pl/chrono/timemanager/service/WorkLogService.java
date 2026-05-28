@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.Policy;
+import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
@@ -20,6 +22,7 @@ public class WorkLogService {
   private final I_TimeData timeData;
   private final UserRepository userRepository;
   private final WorkLogMapper workLogMapper;
+  private final OvertimeService overtimeService;
 
   @Transactional
   public WorkLogDto startWork(Integer userId) {
@@ -42,7 +45,24 @@ public class WorkLogService {
     if (timeData.isUserOnLeave(userId)) {
       throw new WorkException.LeaveStarted(userId);
     }
-    workLog.setEndTime(LocalDateTime.now());
+
+    LocalDateTime now = LocalDateTime.now();
+    long workTime = workLog.calculateWorkTime(now);
+
+    int requiredSeconds = workLog.getRequiredSeconds();
+    int roundingSeconds = workLog.getRoundingSeconds();
+    int maxAllowedSeconds = workLog.getMaxAllowedSeconds();
+    if (workTime > maxAllowedSeconds) {
+      workLog.forceClose(now);
+      timeData.saveWorkLog(workLog);
+      throw new WorkException.ExcessiveWorkTime(requiredSeconds, maxAllowedSeconds);
+    } else {
+      if (workTime < (requiredSeconds - roundingSeconds)) {
+        long missingSeconds = requiredSeconds - workTime;
+        throw new WorkException.InsufficientWorkTime(formatSecondsToTime(missingSeconds));
+      }
+      workLog.setEndTime(LocalDateTime.now());
+    }
     WorkLog saved = timeData.saveWorkLog(workLog);
     return workLogMapper.toDto(saved);
   }
@@ -62,13 +82,14 @@ public class WorkLogService {
         .orElse("00:00:00");
   }
 
-  private boolean isWorkDay(LocalDate date) {
+  private boolean defaultIsWorkDay(LocalDate date) {
     DayOfWeek day = date.getDayOfWeek();
     return day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY;
   }
 
-  public WorkStats getMonthlyStats(Integer userId) {
-    LocalDate today = LocalDate.now();
+  private record MonthlyHours(int total, int remaining) {}
+
+  private MonthlyHours calculateMonthlyHours(Policy policy, LocalDate today) {
     LocalDate firstDay = today.withDayOfMonth(1);
     LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
 
@@ -77,37 +98,54 @@ public class WorkLogService {
     LocalDate cur = firstDay;
 
     while (!cur.isAfter(lastDay)) {
-      if (isWorkDay(cur)) {
-        totalMonthlyHours += 8;
-        if (!cur.isBefore(today)) {
-          remainingHours += 8;
-        }
-      }
-        cur = cur.plusDays(1);
-    }
+      int dailySeconds = policy != null
+          ? policy.getRequiredSecondsForDate(cur)
+          : defaultIsWorkDay(cur) ? 8 * 3600 : 0;
 
+      int dailyHours = dailySeconds / 3600;
+      totalMonthlyHours += dailyHours;
+
+      if (!cur.isBefore(today)) {
+        remainingHours += dailyHours;
+      }
+      cur = cur.plusDays(1);
+    }
+    return new MonthlyHours(totalMonthlyHours, remainingHours);
+  }
+
+  private int calculateTotalHoursWorked(Integer userId, LocalDate today) {
     LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
+
     long totalSecondsWorked = timeData.findUserWorkLogsAfter(userId, startOfMonth)
         .stream()
         .filter(workLog -> workLog.getEndTime() != null
             && workLog.getEndTime().isBefore(today.atStartOfDay()))
-        .mapToLong(workLog -> workLog.calculateWorkTime(workLog.getEndTime()))
+        .mapToLong(workLog -> workLog.getEffectiveWorkTime(workLog.getEndTime()))
         .sum();
 
-    int totalHoursWorked = (int) (totalSecondsWorked / 3600);
+    return (int) (totalSecondsWorked / 3600);
+  }
 
-    int overtimeSeconds = userRepository.findById(userId)
-        .map(user -> user.getOvertimeBalance() != null ? user.getOvertimeBalance() : 0)
-        .orElse(0);
+  @Transactional(readOnly = true)
+  public WorkStats getMonthlyStats(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+    LocalDate today = LocalDate.now();
+    Policy policy = user.getActivePolicy();
+
+    MonthlyHours monthlyHours = calculateMonthlyHours(policy, today);
+
+    int totalHoursWorked = calculateTotalHoursWorked(userId, today);
+
+    int overtimeSeconds = overtimeService.getOvertimeBalance(userId);
 
     return new WorkStats(
         totalHoursWorked,
-        remainingHours,
-        totalMonthlyHours,
+        monthlyHours.remaining(),
+        monthlyHours.total(),
         overtimeSeconds
     );
-
   }
 
   private String formatSecondsToTime(long totalSeconds) {

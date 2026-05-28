@@ -75,7 +75,6 @@ public class DataInitializer implements CommandLineRunner {
       employee.setPasswordHash(passwordEncoder.encode("user123"));
       employee.setRoles(Set.of(roleEmployee));
       employee.setManager(manager);
-      employee.setOvertimeBalance(0);
       employee.setForcePasswordChange(false);
       userRepository.save(employee);
     }

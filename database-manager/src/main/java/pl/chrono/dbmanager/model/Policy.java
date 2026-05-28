@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,8 @@ public class Policy {
 
   private Integer maxWeeklyHours;
 
+  private Integer roundingMinutes;
+
   @OneToMany(mappedBy = "policy")
   private List<UsersPolicy> userPolicies;
 
@@ -50,4 +53,34 @@ public class Policy {
   @CollectionTable(name = "policy_working_days", joinColumns = @JoinColumn(name = "policy_id"))
   @Column(name = "day_of_week")
   private Set<DayOfWeek> workingDays = new HashSet<>();
+
+  public int getRequiredSecondsForDate(LocalDate date) {
+    if (date == null) {
+      return 0;
+    }
+    if (!workingDays.contains(date.getDayOfWeek())) {
+      return 0;
+    }
+    if (holidayPolicies != null) {
+      boolean isHoliday = holidayPolicies.stream()
+          .map(HolidayPolicy::getHoliday)
+          .filter(holiday -> holiday != null && holiday.getDate() != null)
+          .anyMatch(holiday -> {
+            if (holiday.isOccursYearly()) {
+              return holiday.getDate().getMonth() == date.getMonth() &&
+                  holiday.getDate().getDayOfMonth() == date.getDayOfMonth();
+            } else {
+              return holiday.getDate().equals(date);
+            }
+          });
+      if (isHoliday) {
+        return 0;
+        }
+    }
+    return (dailyHours != null ? dailyHours : 8) * 3600;
+  }
+
+  public int getMaxAllowedSeconds() {
+    return maxDailyHours != null ? maxDailyHours * 3600 : 12 * 3600;
+  }
 }

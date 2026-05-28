@@ -45,4 +45,33 @@ public class WorkException extends TimeManagerException {
       );
     }
   }
+
+  public static class InsufficientWorkTime extends WorkException {
+    public InsufficientWorkTime(String formattedTime) {
+      super(
+          ErrorCodes.INSUFFICIENT_WORK_TIME,
+          "You still need to work for: " + formattedTime + " today.",
+          HttpStatus.BAD_REQUEST
+      );
+    }
+  }
+
+  public static class ExcessiveWorkTime extends WorkException {
+    public ExcessiveWorkTime(int requiredSeconds, int maxAllowedSeconds) {
+      super(
+          ErrorCodes.EXCESSIVE_WORK_TIME, buildMessage(requiredSeconds, maxAllowedSeconds),
+          HttpStatus.CONFLICT
+      );
+    }
+
+    private static String buildMessage(int requiredSeconds, int maxAllowedSeconds) {
+      int requiredHours = requiredSeconds / 3600;
+      int requiredMinutes = requiredSeconds % 3600 / 60;
+      String formattedTime = String.format("%02dh:%02dm", requiredHours, requiredMinutes);
+      int maxHours = maxAllowedSeconds / 3600;
+      String maxFormattedTime = String.format("%02dh", maxHours);
+      return "You have exceeded maximum work time for your policy: " + maxFormattedTime +
+          ". Your work time has automatically been set to " + formattedTime + ".";
+    }
+  }
 }
