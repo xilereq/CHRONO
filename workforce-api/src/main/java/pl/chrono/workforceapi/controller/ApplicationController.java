@@ -10,10 +10,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.applicationmanager.api.I_UserApplication;
-import pl.chrono.applicationmanager.dto.ApplicationDTO;
+import pl.chrono.applicationmanager.dto.request.ChangeApplicationStatusRequest;
+import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
+import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.usermanager.service.AuthService;
 
 @RestController
@@ -28,57 +29,66 @@ public class ApplicationController extends BaseController {
 
   @PostMapping("/employee")
   @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
-  public ResponseEntity<ApplicationDTO> createApplication(
+  public ResponseEntity<ApplicationResponse> createApplication(
       @RequestHeader("Authorization") String token,
-      @RequestBody ApplicationDTO request) {
+      @RequestBody CreateApplicationRequest request) {
 
     Integer employeeId = extractId(token);
-    ApplicationDTO createdApplication = applicationService.createApplication(request, employeeId);
+    ApplicationResponse createdApplication = applicationService.createApplication(request, employeeId);
     return ResponseEntity.ok(createdApplication);
   }
 
-  @GetMapping("/employee/{employeeId}")
+  @GetMapping("/my")
   @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
-  public ResponseEntity<List<ApplicationDTO>> getUserApplications(
+  public ResponseEntity<List<ApplicationResponse>> getMyApplications(
+      @RequestHeader("Authorization") String token) {
+
+    Integer myId = extractId(token);
+    List<ApplicationResponse> applications = applicationService.getUserApplications(myId, myId);
+    return ResponseEntity.ok(applications);
+  }
+
+  @GetMapping("/employee/{employeeId}")
+  @PreAuthorize("hasAnyRole('MANAGER', 'HR', 'ADMIN')")
+  public ResponseEntity<List<ApplicationResponse>> getUserApplications(
       @RequestHeader("Authorization") String token,
       @PathVariable Integer employeeId) {
 
     Integer requesterId = extractId(token);
-    List<ApplicationDTO> applications = applicationService.getUserApplications(employeeId, requesterId);
+    List<ApplicationResponse> applications = applicationService.getUserApplications(employeeId, requesterId);
     return ResponseEntity.ok(applications);
   }
 
   @PatchMapping("/{applicationId}/status")
   @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-  public ResponseEntity<ApplicationDTO> changeStatus(
+  public ResponseEntity<ApplicationResponse> changeStatus(
       @RequestHeader("Authorization") String token,
       @PathVariable Long applicationId,
-      @RequestParam String newStatus,
-      @RequestParam String decisionReason) {
+      @RequestBody ChangeApplicationStatusRequest request) {
 
     Integer reviewerId = extractId(token);
-    ApplicationDTO updatedApplication = applicationService.changeStatus(
-        applicationId, newStatus, reviewerId, decisionReason);
+    ApplicationResponse updatedApplication = applicationService.changeStatus(
+        applicationId, request.newStatus(), reviewerId, request.decisionReason());
     return ResponseEntity.ok(updatedApplication);
   }
 
   @GetMapping("/manager/pending")
   @PreAuthorize("hasRole('MANAGER')")
-  public ResponseEntity<List<ApplicationDTO>> getPendingApplicationsForManager(
+  public ResponseEntity<List<ApplicationResponse>> getPendingApplicationsForManager(
       @RequestHeader("Authorization") String token) {
 
     Integer managerId = extractId(token);
-    List<ApplicationDTO> pendingApplications = applicationService.getPendingApplicationsForManager(managerId);
+    List<ApplicationResponse> pendingApplications = applicationService.getPendingApplicationsForManager(managerId);
     return ResponseEntity.ok(pendingApplications);
   }
 
   @GetMapping("/manager/all")
   @PreAuthorize("hasRole('MANAGER')")
-  public ResponseEntity<List<ApplicationDTO>> getAllApplicationsForManager(
+  public ResponseEntity<List<ApplicationResponse>> getAllApplicationsForManager(
       @RequestHeader("Authorization") String token) {
 
     Integer managerId = extractId(token);
-    List<ApplicationDTO> allApplications = applicationService.getAllApplicationsForManager(managerId);
+    List<ApplicationResponse> allApplications = applicationService.getAllApplicationsForManager(managerId);
     return ResponseEntity.ok(allApplications);
   }
 }

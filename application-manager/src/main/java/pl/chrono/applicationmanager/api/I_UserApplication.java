@@ -1,16 +1,17 @@
 package pl.chrono.applicationmanager.api;
 
 import java.util.List;
-import pl.chrono.applicationmanager.dto.ApplicationDTO;
+import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
+import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 
 public interface I_UserApplication {
-  ApplicationDTO createApplication(ApplicationDTO request, Integer employeeId);
+  ApplicationResponse createApplication(CreateApplicationRequest request, Integer employeeId);
 
-  ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason);
+  ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason);
 
-  List<ApplicationDTO> getUserApplications(Integer employeeId, Integer requesterId);
+  List<ApplicationResponse> getUserApplications(Integer employeeId, Integer requesterId);
 
-  List<ApplicationDTO> getPendingApplicationsForManager(Integer managerId);
+  List<ApplicationResponse> getPendingApplicationsForManager(Integer managerId);
 
-  List<ApplicationDTO> getAllApplicationsForManager(Integer managerId);
+  List<ApplicationResponse> getAllApplicationsForManager(Integer managerId);
 }

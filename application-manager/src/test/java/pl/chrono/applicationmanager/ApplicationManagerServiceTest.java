@@ -18,7 +18,8 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
-import pl.chrono.applicationmanager.dto.ApplicationDTO;
+import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
+import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.applicationmanager.service.ApplicationService;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
@@ -43,7 +44,6 @@ class ApplicationManagerServiceTest {
   @InjectMocks
   private ApplicationService applicationService;
 
-
   @Test
   void createApplication_ShouldReturnDto_WhenUserExists() {
     Integer employeeId = 1;
@@ -52,36 +52,37 @@ class ApplicationManagerServiceTest {
     mockUser.setUserId(employeeId);
     mockUser.setEmail("pracownik@chrono.pl");
 
-    ApplicationDTO requestDto = new ApplicationDTO();
-    requestDto.setType("OVERTIME_EARN");
-    requestDto.setStartDate(LocalDate.of(2026, 5, 1));
-    requestDto.setEndDate(LocalDate.of(2026, 5, 1));
-    requestDto.setReason("Projekt nadgodziny");
-    requestDto.setDurationSeconds(7200);
+    CreateApplicationRequest requestDto = new CreateApplicationRequest(
+        "OVERTIME_EARN",
+        LocalDate.of(2026, 5, 1),
+        LocalDate.of(2026, 5, 1),
+        "Projekt nadgodziny",
+        7200
+    );
 
     Application savedApplication = new Application();
     savedApplication.setId(100L);
     savedApplication.setEmployee(mockUser);
     savedApplication.setType(ApplicationType.OVERTIME_EARN);
     savedApplication.setStatus(ApplicationStatus.PENDING);
-    savedApplication.setStartDate(requestDto.getStartDate());
-    savedApplication.setEndDate(requestDto.getEndDate());
-    savedApplication.setReason(requestDto.getReason());
+    savedApplication.setStartDate(requestDto.startDate());
+    savedApplication.setEndDate(requestDto.endDate());
+    savedApplication.setReason(requestDto.reason());
     savedApplication.setDurationSeconds(7200);
     savedApplication.setCreationDateTime(java.time.LocalDateTime.now());
 
     when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockUser));
     when(applicationRepository.save(any(Application.class))).thenReturn(savedApplication);
 
-    ApplicationDTO result = applicationService.createApplication(requestDto, employeeId);
+    ApplicationResponse result = applicationService.createApplication(requestDto, employeeId);
 
     assertNotNull(result);
-    assertEquals(100L, result.getId());
-    assertEquals("OVERTIME_EARN", result.getType());
-    assertEquals("PENDING", result.getStatus());
-    assertEquals(employeeId, result.getEmployeeId());
-    assertEquals(7200, result.getDurationSeconds());
-    assertNotNull(result.getCreationDateTime());
+    assertEquals(100L, result.id());
+    assertEquals("OVERTIME_EARN", result.type());
+    assertEquals("PENDING", result.status());
+    assertEquals(employeeId, result.employeeId());
+    assertEquals(7200, result.durationSeconds());
+    assertNotNull(result.creationDateTime());
 
     verify(applicationRepository, times(1)).save(any(Application.class));
     verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
@@ -115,13 +116,13 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
     when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
 
-    ApplicationDTO result = applicationService.changeStatus(applicationId, newStatus, reviewerId, decisionReason);
+    ApplicationResponse result = applicationService.changeStatus(applicationId, newStatus, reviewerId, decisionReason);
 
     assertNotNull(result);
-    assertEquals(newStatus, result.getStatus());
-    assertEquals(decisionReason, result.getDecisionReason());
-    assertEquals(reviewerId, result.getReviewerId());
-    assertNotNull(result.getDecisionDateTime());
+    assertEquals(newStatus, result.status());
+    assertEquals(decisionReason, result.decisionReason());
+    assertEquals(reviewerId, result.reviewerId());
+    assertNotNull(result.decisionDateTime());
 
     verify(applicationRepository, times(1)).save(mockApplication);
     verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
@@ -144,12 +145,12 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findAllByEmployeeUserId(employeeId))
         .thenReturn(List.of(mockApplication));
 
-    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+    List<ApplicationResponse> result = applicationService.getUserApplications(employeeId, requesterId);
 
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(10L, result.getFirst().getId());
-    assertEquals("SICK_LEAVE", result.getFirst().getType());
+    assertEquals(10L, result.getFirst().id());
+    assertEquals("SICK_LEAVE", result.getFirst().type());
   }
 
   @Test
@@ -168,12 +169,12 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, managerId))
         .thenReturn(List.of(mockApplication));
 
-    List<ApplicationDTO> result = applicationService.getPendingApplicationsForManager(managerId);
+    List<ApplicationResponse> result = applicationService.getPendingApplicationsForManager(managerId);
 
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(20L, result.getFirst().getId());
-    assertEquals("PENDING", result.getFirst().getStatus());
+    assertEquals(20L, result.getFirst().id());
+    assertEquals("PENDING", result.getFirst().status());
 
     verify(applicationRepository, times(1)).findPendingByManagerId(ApplicationStatus.PENDING, managerId);
   }
@@ -181,7 +182,9 @@ class ApplicationManagerServiceTest {
   @Test
   void createApplication_ShouldThrowException_WhenUserDoesNotExist() {
     Integer employeeId = 999;
-    ApplicationDTO requestDto = new ApplicationDTO();
+    CreateApplicationRequest requestDto = new CreateApplicationRequest(
+        "EARLY_EXIT", LocalDate.now(), LocalDate.now(), "Test", 3600
+    );
 
     when(userRepository.findById(employeeId)).thenReturn(Optional.empty());
 
@@ -299,7 +302,7 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
     when(applicationRepository.findAllByEmployeeUserId(employeeId)).thenReturn(List.of(mockApplication));
 
-    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+    List<ApplicationResponse> result = applicationService.getUserApplications(employeeId, requesterId);
 
     assertNotNull(result);
     assertEquals(1, result.size());
@@ -321,11 +324,11 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findAllByManagerId(managerId))
         .thenReturn(List.of(mockApplication));
 
-    List<ApplicationDTO> result = applicationService.getAllApplicationsForManager(managerId);
+    List<ApplicationResponse> result = applicationService.getAllApplicationsForManager(managerId);
 
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(30L, result.getFirst().getId());
+    assertEquals(30L, result.getFirst().id());
 
     verify(applicationRepository, times(1)).findAllByManagerId(managerId);
   }
@@ -342,24 +345,27 @@ class ApplicationManagerServiceTest {
     mockUser.setEmail("pracownik@chrono.pl");
     mockUser.setManager(mockManager);
 
-    ApplicationDTO requestDto = new ApplicationDTO();
-    requestDto.setType("OVERTIME_EARN");
-    requestDto.setStartDate(LocalDate.of(2026, 5, 1));
-    requestDto.setEndDate(LocalDate.of(2026, 5, 1));
+    CreateApplicationRequest requestDto = new CreateApplicationRequest(
+        "OVERTIME_EARN",
+        LocalDate.of(2026, 5, 1),
+        LocalDate.of(2026, 5, 1),
+        null,
+        null
+    );
 
     Application savedApplication = new Application();
     savedApplication.setId(100L);
     savedApplication.setEmployee(mockUser);
     savedApplication.setType(ApplicationType.OVERTIME_EARN);
     savedApplication.setStatus(ApplicationStatus.PENDING);
-    savedApplication.setStartDate(requestDto.getStartDate());
-    savedApplication.setEndDate(requestDto.getEndDate());
+    savedApplication.setStartDate(requestDto.startDate());
+    savedApplication.setEndDate(requestDto.endDate());
     savedApplication.setCreationDateTime(java.time.LocalDateTime.now());
 
     when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockUser));
     when(applicationRepository.save(any(Application.class))).thenReturn(savedApplication);
 
-    ApplicationDTO result = applicationService.createApplication(requestDto, employeeId);
+    ApplicationResponse result = applicationService.createApplication(requestDto, employeeId);
 
     assertNotNull(result);
     verify(eventPublisher, times(1)).publishEvent(any(pl.chrono.applicationmanager.event.ApplicationNotificationEvent.class));
@@ -423,7 +429,7 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
     when(applicationRepository.findAllByEmployeeUserId(employeeId)).thenReturn(List.of());
 
-    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+    List<ApplicationResponse> result = applicationService.getUserApplications(employeeId, requesterId);
     assertNotNull(result);
   }
 
@@ -446,7 +452,7 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
     when(applicationRepository.findAllByEmployeeUserId(employeeId)).thenReturn(List.of());
 
-    List<ApplicationDTO> result = applicationService.getUserApplications(employeeId, requesterId);
+    List<ApplicationResponse> result = applicationService.getUserApplications(employeeId, requesterId);
     assertNotNull(result);
   }
 }

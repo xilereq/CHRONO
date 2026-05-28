@@ -8,8 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.applicationmanager.api.I_UserApplication;
-import pl.chrono.applicationmanager.dto.ApplicationDTO;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
+import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
+import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
@@ -17,6 +18,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.logmanager.audit.LogActivity;
+
 
 @Service
 @RequiredArgsConstructor
@@ -29,19 +31,19 @@ public class ApplicationService implements I_UserApplication {
   @Override
   @Transactional
   @LogActivity(action = "CREATE_APPLICATION", details = "Pracownik złożył nowy wniosek")
-  public ApplicationDTO createApplication(ApplicationDTO request, Integer employeeId) {
+  public ApplicationResponse createApplication(CreateApplicationRequest request, Integer employeeId) {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
 
     Application application = new Application();
     application.setEmployee(employee);
-    application.setType(ApplicationType.valueOf(request.getType()));
-    application.setStartDate(request.getStartDate());
-    application.setEndDate(request.getEndDate());
-    application.setReason(request.getReason());
+    application.setType(ApplicationType.valueOf(request.type()));
+    application.setStartDate(request.startDate());
+    application.setEndDate(request.endDate());
+    application.setReason(request.reason());
     application.setStatus(ApplicationStatus.PENDING);
     application.setCreationDateTime(LocalDateTime.now());
-    application.setDurationSeconds(request.getDurationSeconds());
+    application.setDurationSeconds(request.durationSeconds());
 
     Application savedApplication = applicationRepository.save(application);
 
@@ -55,13 +57,13 @@ public class ApplicationService implements I_UserApplication {
         null
     ));
 
-    return mapToDTO(savedApplication);
+    return mapToResponse(savedApplication);
   }
 
   @Override
   @Transactional
   @LogActivity(action = "CHANGE_APPLICATION_STATUS", details = "Zmiana statusu wniosku pracownika")
-  public ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
+  public ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
     Application application = applicationRepository.findById(applicationId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
 
@@ -96,11 +98,11 @@ public class ApplicationService implements I_UserApplication {
         reviewer.getName() + " " + reviewer.getSurname()
     ));
 
-    return mapToDTO(updatedApplication);
+    return mapToResponse(updatedApplication);
   }
 
   @Override
-  public List<ApplicationDTO> getUserApplications(Integer employeeId, Integer requesterId) {
+  public List<ApplicationResponse> getUserApplications(Integer employeeId, Integer requesterId) {
     if (!employeeId.equals(requesterId)) {
       User employee = userRepository.findById(employeeId)
           .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
@@ -120,44 +122,40 @@ public class ApplicationService implements I_UserApplication {
 
     return applicationRepository.findAllByEmployeeUserId(employeeId)
         .stream()
-        .map(this::mapToDTO)
-        .collect(Collectors.toList());
+        .map(this::mapToResponse)
+        .toList();
   }
 
   @Override
-  public List<ApplicationDTO> getPendingApplicationsForManager(Integer managerId) {
+  public List<ApplicationResponse> getPendingApplicationsForManager(Integer managerId) {
     return applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, managerId)
         .stream()
-        .map(this::mapToDTO)
-        .collect(Collectors.toList());
-  }
-
-  private ApplicationDTO mapToDTO(Application entity) {
-    ApplicationDTO dto = new ApplicationDTO();
-    dto.setId(entity.getId());
-    dto.setType(entity.getType().name());
-    dto.setStatus(entity.getStatus().name());
-    dto.setStartDate(entity.getStartDate());
-    dto.setEndDate(entity.getEndDate());
-    dto.setReason(entity.getReason());
-    dto.setDecisionReason(entity.getDecisionReason());
-    dto.setEmployeeId(entity.getEmployee().getUserId());
-    dto.setCreationDateTime(entity.getCreationDateTime());
-    dto.setDecisionDateTime(entity.getDecisionDateTime());
-    dto.setDurationSeconds(entity.getDurationSeconds());
-
-    if (entity.getReviewer() != null) {
-      dto.setReviewerId(entity.getReviewer().getUserId());
-    }
-
-    return dto;
+        .map(this::mapToResponse)
+        .toList();
   }
 
   @Override
-  public List<ApplicationDTO> getAllApplicationsForManager(Integer managerId) {
+  public List<ApplicationResponse> getAllApplicationsForManager(Integer managerId) {
     return applicationRepository.findAllByManagerId(managerId)
         .stream()
-        .map(this::mapToDTO)
+        .map(this::mapToResponse)
         .collect(Collectors.toList());
+  }
+
+  private ApplicationResponse mapToResponse(Application application) {
+    return new ApplicationResponse(
+        application.getId(),
+        application.getType().name(),
+        application.getStatus().name(),
+        application.getStartDate(),
+        application.getEndDate(),
+        application.getDurationSeconds(),
+        application.getReason(),
+        application.getCreationDateTime(),
+        application.getDecisionDateTime(),
+        application.getDecisionReason(),
+        application.getEmployee().getUserId(),
+        application.getReviewer() != null ? application.getReviewer().getUserId() : null
+    );
   }
 }
