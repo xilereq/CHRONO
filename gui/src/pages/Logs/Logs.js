@@ -144,7 +144,7 @@ const Logs = () => {
                 ) : filteredLogs.length === 0 ? (
                     <div className="empty">Brak logów spełniających kryteria.</div>
                 ) : (
-                    <div className="requests-table-container">
+                    <div className="requests-table-container logs-table-scroll">
                         <table className="requests-table">
                             <thead>
                             <tr>
