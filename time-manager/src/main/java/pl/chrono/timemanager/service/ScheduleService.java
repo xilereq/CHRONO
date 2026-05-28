@@ -1,6 +1,7 @@
 package pl.chrono.timemanager.service;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,8 @@ import pl.chrono.dbmanager.model.OperationLog;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.OperationLogRepository;
+import pl.chrono.dbmanager.repository.ApplicationRepository;
+import pl.chrono.dbmanager.model.enums.ApplicationType;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +19,7 @@ public class ScheduleService {
   private final I_TimeData timeData;
   private final OperationLogRepository logRepository;
   private final OvertimeService overtimeService;
+  private final ApplicationRepository applicationRepository;
 
   @Transactional
   public void processWorkLogs() {
@@ -41,28 +45,26 @@ public class ScheduleService {
       timeData.saveWorkLog(workLog);
       settledCount++;
 
-      /*
-
-      NIE JESTEM W STANIE TEGO DOKOŃCZYĆ DOPÓKI MI NIE ZROBICIE LOGIKI WNIOSKÓW
-
       Integer userId = workLog.getUser().getUserId();
       LocalDate workDate = workLog.getStartTime().toLocalDate();
+      long workTime = workLog.getEffectiveWorkTime(now);
+      int requiredSeconds = workLog.getRequiredSeconds();
+
+      List<pl.chrono.dbmanager.model.Application> dailyApps = applicationRepository.findApprovedByEmployeeAndDate(userId, workDate);
 
       if (workTime > requiredSeconds) {
-          // overtimeApplication = ____
-          //
-          // if (overtimeApplication.isPresent()) {
-          //     overtimeService.grantOvertime(overtimeApplication.get(), workLog);
-          // }
+        dailyApps.stream()
+            .filter(app -> app.getType() == ApplicationType.OVERTIME_EARN)
+            .findFirst()
+            .ifPresent(app -> overtimeService.grantOvertime(app, workLog));
+
+      } else if (workTime < requiredSeconds) {
+        dailyApps.stream()
+            .filter(app -> app.getType() == ApplicationType.EARLY_EXIT
+                || app.getType() == ApplicationType.OVERTIME_TAKE)
+            .findFirst()
+            .ifPresent(app -> overtimeService.registerDebt(app, workLog));
       }
-      else if (workTime < requiredSeconds) {
-          // overtimeApplication = _____
-          //
-          // if (overtimeApplication.isPresent()) {
-          //     overtimeService.registerDebt(overtimeApplication.get(), workLog);
-          // }
-      }
-      */
     }
     if (settledCount > 0) {
       OperationLog auditLog = new OperationLog();

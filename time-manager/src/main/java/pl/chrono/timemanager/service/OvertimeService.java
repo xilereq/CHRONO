@@ -21,9 +21,6 @@ public class OvertimeService {
   private final I_OvertimeData overtimeData;
   private final OvertimeMapper overtimeMapper;
 
-  // TODO: Aktualnie wnioski nie posiadają pola z czasem trwania. Na razie podstawiam 15 minut
-  private final int duration = 15 * 60;
-
   @Transactional(readOnly = true)
   public Integer getOvertimeBalance(Integer userId) {
     return overtimeData.getUserOvertimeBalance(userId);
@@ -31,7 +28,7 @@ public class OvertimeService {
 
   @Transactional
   public void reserveOvertimeForApplication(Application application) {
-    // int duration = application.getDuration()
+    int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
 
     int currentBalance = overtimeData.getUserOvertimeBalance(application.getEmployee().getUserId());
     if (currentBalance < duration) {
@@ -49,7 +46,7 @@ public class OvertimeService {
 
   @Transactional
   public void refundOvertimeForApplication(Application application) {
-    // int duration = application.getDuration()
+    int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
 
     OvertimeArchive archive = new OvertimeArchive();
     archive.setUser(application.getEmployee());
@@ -63,7 +60,7 @@ public class OvertimeService {
 
   @Transactional
   public void grantOvertime(Application application, WorkLog workLog) {
-    // int duration = application.getDuration()
+    int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
 
     if (duration <= 0) {
       return;
@@ -81,7 +78,7 @@ public class OvertimeService {
 
   @Transactional
   public void registerDebt(Application application, WorkLog workLog) {
-    // int duration = application.getDuration() - przykładowo
+    int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
 
     if (duration <= 0) {
       return;

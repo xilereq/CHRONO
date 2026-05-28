@@ -15,4 +15,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
   @Query("SELECT a FROM Application a WHERE a.status = :status AND a.employee.manager.userId = :managerId")
   List<Application> findPendingByManagerId(@Param("status") ApplicationStatus status, @Param("managerId") Integer managerId);
+
+  @Query("SELECT a FROM Application a WHERE a.employee.userId = :employeeId AND a.status = 'APPROVED' AND :date BETWEEN a.startDate AND a.endDate")
+  List<Application> findApprovedByEmployeeAndDate(@Param("employeeId") Integer employeeId, @Param("date") java.time.LocalDate date);
 }
