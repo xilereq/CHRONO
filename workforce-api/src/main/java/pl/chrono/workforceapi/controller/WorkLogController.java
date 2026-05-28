@@ -46,4 +46,9 @@ public class WorkLogController extends BaseController {
   public ResponseEntity<WorkStats> getMonthlyStats(@RequestHeader("Authorization") String token) {
     return ResponseEntity.ok(workLogService.getMonthlyStats(extractId(token)));
   }
+
+  @GetMapping("/today-target")
+  public ResponseEntity<String> getTodayTarget(@RequestHeader("Authorization") String token) {
+    return ResponseEntity.ok(workLogService.getTodayTarget(extractId(token)));
+  }
 }

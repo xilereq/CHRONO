@@ -3,14 +3,18 @@ package pl.chrono.timemanager.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.repository.ApplicationRepository;
+import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.exception.WorkException;
@@ -23,6 +27,7 @@ public class WorkLogService {
   private final UserRepository userRepository;
   private final WorkLogMapper workLogMapper;
   private final OvertimeService overtimeService;
+  private final ApplicationRepository applicationRepository;
 
   @Transactional
   public WorkLogDto startWork(Integer userId) {
@@ -153,6 +158,39 @@ public class WorkLogService {
     long minutes = totalSeconds % 3600 / 60;
     long seconds = totalSeconds % 60;
     return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+  }
+
+  @Transactional(readOnly = true)
+  public String getTodayTarget(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    LocalDate today = LocalDate.now();
+    Policy policy = user.getActivePolicy();
+
+    int baseRequiredSeconds = policy != null ? policy.getRequiredSecondsForDate(today) : (defaultIsWorkDay(today) ? 8 * 3600 : 0);
+
+    List<Application> todaysApps = applicationRepository.findApprovedByEmployeeAndDate(userId, today);
+
+    for (Application app : todaysApps) {
+      int duration = app.getDurationSeconds() != null ? app.getDurationSeconds() : 0;
+
+      switch (app.getType()) {
+        case EARLY_EXIT:
+        case OVERTIME_TAKE:
+          baseRequiredSeconds -= duration;
+          break;
+        case OVERTIME_EARN:
+          baseRequiredSeconds += duration;
+          break;
+        default:
+          break;
+      }
+    }
+
+    baseRequiredSeconds = Math.max(0, baseRequiredSeconds);
+
+    return formatSecondsToTime(baseRequiredSeconds);
   }
 }
 
