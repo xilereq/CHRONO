@@ -43,8 +43,6 @@ public class Policy {
 
   private Integer roundingMinutes;
 
-  private Integer overtimeThresholdMinutes;
-
   @OneToMany(mappedBy = "policy")
   private List<UsersPolicy> userPolicies;
 
@@ -84,9 +82,5 @@ public class Policy {
 
   public int getMaxAllowedSeconds() {
     return maxDailyHours != null ? maxDailyHours * 3600 : 12 * 3600;
-  }
-
-  public int getOvertimeThresholdSeconds() {
-    return overtimeThresholdMinutes != null ? overtimeThresholdMinutes * 60 : 15 * 60;
   }
 }

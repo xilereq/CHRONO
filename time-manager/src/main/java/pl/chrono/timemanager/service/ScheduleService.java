@@ -37,16 +37,32 @@ public class ScheduleService {
         autoClosedCount++;
       }
 
-      long workTime = workLog.getEffectiveWorkTime(workLog.getEndTime());
-      int requiredSeconds = workLog.getRequiredSeconds();
-      int overtimeSeconds = (int) Math.max(0, workTime - requiredSeconds);
       workLog.setSettled(true);
       timeData.saveWorkLog(workLog);
       settledCount++;
 
-      if (overtimeSeconds >= workLog.getOvertimeThresholdSeconds()) {
-        overtimeService.grantOvertime(overtimeSeconds, workLog);
+      /*
+
+      NIE JESTEM W STANIE TEGO DOKOŃCZYĆ DOPÓKI MI NIE ZROBICIE LOGIKI WNIOSKÓW
+
+      Integer userId = workLog.getUser().getUserId();
+      LocalDate workDate = workLog.getStartTime().toLocalDate();
+
+      if (workTime > requiredSeconds) {
+          // overtimeApplication = ____
+          //
+          // if (overtimeApplication.isPresent()) {
+          //     overtimeService.grantOvertime(overtimeApplication.get(), workLog);
+          // }
       }
+      else if (workTime < requiredSeconds) {
+          // overtimeApplication = _____
+          //
+          // if (overtimeApplication.isPresent()) {
+          //     overtimeService.registerDebt(overtimeApplication.get(), workLog);
+          // }
+      }
+      */
     }
     if (settledCount > 0) {
       OperationLog auditLog = new OperationLog();

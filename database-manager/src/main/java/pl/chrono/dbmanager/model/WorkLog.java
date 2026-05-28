@@ -80,13 +80,6 @@ public class WorkLog {
     return 12 * 3600;
   }
 
-  public int getOvertimeThresholdSeconds() {
-    if (this.user != null && this.user.getActivePolicy() != null) {
-      return this.user.getActivePolicy().getOvertimeThresholdSeconds();
-    }
-    return 15 * 60;
-  }
-
   public int getRoundingSeconds() {
     if (this.user != null && this.user.getActivePolicy() != null
         && this.user.getActivePolicy().getRoundingMinutes() != null) {

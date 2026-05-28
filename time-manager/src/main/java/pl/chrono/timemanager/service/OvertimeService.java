@@ -12,6 +12,7 @@ import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
+import pl.chrono.timemanager.exception.OvertimeException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @Service
@@ -20,16 +21,21 @@ public class OvertimeService {
   private final I_OvertimeData overtimeData;
   private final OvertimeMapper overtimeMapper;
 
+  // TODO: Aktualnie wnioski nie posiadają pola z czasem trwania. Na razie podstawiam 15 minut
+  private final int duration = 15 * 60;
+
   @Transactional(readOnly = true)
   public Integer getOvertimeBalance(Integer userId) {
     return overtimeData.getUserOvertimeBalance(userId);
   }
 
   @Transactional
-  public void reserveOvertimeForApplication(Application application, int duration) {
+  public void reserveOvertimeForApplication(Application application) {
+    // int duration = application.getDuration()
+
     int currentBalance = overtimeData.getUserOvertimeBalance(application.getEmployee().getUserId());
     if (currentBalance < duration) {
-      throw new IllegalArgumentException("Not enough overtime balance to reserve");
+      throw new OvertimeException.InsufficientBalance(currentBalance);
     }
     OvertimeArchive archive = new OvertimeArchive();
     archive.setUser(application.getEmployee());
@@ -42,7 +48,9 @@ public class OvertimeService {
   }
 
   @Transactional
-  public void refundOvertimeForApplication(Application application, int duration) {
+  public void refundOvertimeForApplication(Application application) {
+    // int duration = application.getDuration()
+
     OvertimeArchive archive = new OvertimeArchive();
     archive.setUser(application.getEmployee());
     archive.setType(OvertimeType.REFUNDED);
@@ -54,7 +62,9 @@ public class OvertimeService {
   }
 
   @Transactional
-  public void grantOvertime(int duration, WorkLog workLog) {
+  public void grantOvertime(Application application, WorkLog workLog) {
+    // int duration = application.getDuration()
+
     if (duration <= 0) {
       return;
     }
@@ -62,9 +72,28 @@ public class OvertimeService {
     archive.setUser(workLog.getUser());
     archive.setType(OvertimeType.EARNED);
     archive.setDurationSeconds(duration);
+    archive.setApplication(application);
     archive.setWorkLog(workLog);
     archive.setValidUntil(calculateEndOfQuarter());
-    archive.setNote("Automatically awarded for day: " + workLog.getStartTime().toLocalDate());
+    archive.setNote("Awarded for day: " + workLog.getStartTime().toLocalDate());
+    overtimeData.saveOvertimeRecord(archive);
+  }
+
+  @Transactional
+  public void registerDebt(Application application, WorkLog workLog) {
+    // int duration = application.getDuration() - przykładowo
+
+    if (duration <= 0) {
+      return;
+    }
+    OvertimeArchive archive = new OvertimeArchive();
+    archive.setUser(application.getEmployee());
+    archive.setType(OvertimeType.DEBT);
+    archive.setDurationSeconds(duration);
+    archive.setApplication(application);
+    archive.setWorkLog(workLog);
+    archive.setValidUntil(calculateEndOfQuarter());
+    archive.setNote("Debt for day: " + workLog.getStartTime().toLocalDate());
     overtimeData.saveOvertimeRecord(archive);
   }
 

@@ -12,7 +12,8 @@ public interface OvertimeArchiveRepository extends JpaRepository<OvertimeArchive
         SELECT COALESCE(
             SUM(CASE\s
                 WHEN o.type IN ('EARNED', 'MANUAL_ADDITION', 'REFUNDED') THEN o.durationSeconds\s
-                WHEN o.type IN ('LOCKED', 'EXPIRED', 'MANUAL_DEDUCTION') THEN -o.durationSeconds\s
+                WHEN o.type IN ('LOCKED', 'EXPIRED',\s
+                   'MANUAL_DEDUCTION', 'DEBT') THEN -o.durationSeconds\s
                 ELSE 0\s
             END), 0
         )\s
