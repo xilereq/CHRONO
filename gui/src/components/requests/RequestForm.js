@@ -13,10 +13,9 @@ const RequestForm = ({ onCancel, onSuccess }) => {
         type: 'HOLIDAY_LEAVE',
         startDate: '',
         endDate: '',
-        reason: ''
+        reason: '',
+        durationHours: ''
     });
-
-    const userId = 1;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -32,7 +31,16 @@ const RequestForm = ({ onCancel, onSuccess }) => {
             if (new Date(formData.startDate) > new Date(formData.endDate)) {
                 throw new Error('Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.');
             }
-            await applicationService.createApplication(userId, formData);
+
+            const payload = {
+                type: formData.type,
+                startDate: formData.startDate,
+                endDate: formData.endDate,
+                reason: formData.reason || formData.title,
+                durationSeconds: formData.durationHours ? parseInt(formData.durationHours) * 3600 : null
+            };
+
+            await applicationService.createApplication(payload);
             alert('Wniosek został wysłany pomyślnie!');
             if (onSuccess) onSuccess();
         } catch (err) {
@@ -71,9 +79,26 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                         >
                             <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
                             <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
-                            <option value="OVERTIME">Odbiór nadgodzin</option>
+                            <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
+                            <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
+                            <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
                         </select>
                     </label>
+
+                    {(formData.type === 'EARLY_EXIT' || formData.type === 'OVERTIME_EARN' || formData.type === 'OVERTIME_TAKE') && (
+                        <label className="field field-full-width">
+                            <span className="field-label">Liczba godzin</span>
+                            <input
+                                className="field-input"
+                                type="number"
+                                name="durationHours"
+                                value={formData.durationHours}
+                                onChange={handleChange}
+                                min="1"
+                                required
+                            />
+                        </label>
+                    )}
 
                     <div className="field-row">
                         <label className="field field-flex">

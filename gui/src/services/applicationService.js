@@ -6,16 +6,16 @@ const getHeaders = () => ({
 });
 
 const applicationService = {
-    getUserApplications: async (employeeId) => {
-        const response = await fetch(`${API_URL}/employee/${employeeId}`, {
+    getUserApplications: async () => {
+        const response = await fetch(`${API_URL}/my`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Nie udało się pobrać wniosków');
         return response.json();
     },
 
-    createApplication: async (employeeId, applicationData) => {
-        const response = await fetch(`${API_URL}/employee/${employeeId}`, {
+    createApplication: async (applicationData) => {
+        const response = await fetch(`${API_URL}/employee`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(applicationData)
@@ -31,6 +31,14 @@ const applicationService = {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Błąd zmiany statusu');
+        return response.json();
+    },
+
+    getPendingForManager: async () => {
+        const response = await fetch(`${API_URL}/manager/pending`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Nie udało się pobrać wniosków do zatwierdzenia');
         return response.json();
     }
 };

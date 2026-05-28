@@ -25,12 +25,10 @@ const RecentRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const userId = 1;
-
     useEffect(() => {
         const fetchRequests = async () => {
             try {
-                const data = await applicationService.getUserApplications(userId);
+                const data = await applicationService.getUserApplications();
                 setRequests(data.slice(0, 4));
             } catch (error) {
                 console.error(error);
@@ -40,7 +38,7 @@ const RecentRequests = () => {
         };
 
         fetchRequests();
-    }, [userId]);
+    }, []);
 
     return (
         <Card title="OSTATNIE WNIOSKI" className="table-container">

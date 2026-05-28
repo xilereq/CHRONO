@@ -26,7 +26,6 @@ const RequestDetail = () => {
     const [request, setRequest] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const userId = 1; // TODO: Pobrać z kontekstu logowania
 
     useEffect(() => {
         const fetchRequestDetails = async () => {

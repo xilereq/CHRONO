@@ -11,12 +11,11 @@ const RequestList = () => {
     const [filterType, setFilterType] = useState("");
     const [filterDate, setFilterDate] = useState("");
 
-    const userId = 1;
 
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const data = await applicationService.getUserApplications(userId);
+            const data = await applicationService.getUserApplications();
             setRequests(data);
         } catch (error) {
             console.error(error);
@@ -27,7 +26,7 @@ const RequestList = () => {
 
     useEffect(() => {
         fetchRequests();
-    }, [userId]);
+    }, []);
 
     const filteredRequests = requests.filter(r => {
         const matchStatus = filterStatus === "" || r.status === filterStatus;

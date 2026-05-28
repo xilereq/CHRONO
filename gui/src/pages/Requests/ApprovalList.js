@@ -10,14 +10,12 @@ const ApprovalList = () => {
     const [actionReason, setActionReason] = useState('');
     const [processingId, setProcessingId] = useState(null);
 
-    const reviewerId = 2; //to do: pobrać z kontekstu logowania
 
     const fetchPendingRequests = async () => {
         setLoading(true);
         try {
-            const data = await applicationService.getUserApplications(1);
-            const pending = data.filter(req => req.status === 'PENDING');
-            setPendingRequests(pending);
+            const data = await applicationService.getPendingForManager();
+            setPendingRequests(data);
         } catch (error) {
             console.error("Błąd podczas ładowania wniosków do zatwierdzenia:", error);
         } finally {
@@ -38,7 +36,7 @@ const ApprovalList = () => {
         setProcessingId(activeAction.id);
         const decisionReason = actionReason;
         try {
-            await applicationService.changeStatus(activeAction.id, activeAction.type, reviewerId, decisionReason);
+            await applicationService.changeStatus(activeAction.id, activeAction.type, decisionReason);
             setActiveAction({ id: null, type: null });
             setActionReason('');
             fetchPendingRequests();
