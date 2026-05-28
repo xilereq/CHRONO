@@ -19,4 +19,5 @@ public class ApplicationDTO {
   private Integer reviewerId;
   private LocalDateTime creationDateTime;
   private LocalDateTime decisionDateTime;
+  private Integer durationSeconds;
 }

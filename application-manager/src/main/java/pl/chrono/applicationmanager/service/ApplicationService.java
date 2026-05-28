@@ -25,6 +25,7 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
+  @LogActivity(action = "CREATE_APPLICATION", details = "Pracownik złożył nowy wniosek")
   public ApplicationDTO createApplication(ApplicationDTO request, Integer employeeId) {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
@@ -37,6 +38,7 @@ public class ApplicationService implements I_UserApplication {
     application.setReason(request.getReason());
     application.setStatus(ApplicationStatus.PENDING);
     application.setCreationDateTime(LocalDateTime.now());
+    application.setDurationSeconds(request.getDurationSeconds());
 
     Application savedApplication = applicationRepository.save(application);
     return mapToDTO(savedApplication);
@@ -44,7 +46,7 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
-  @LogActivity(action = "zmiana")
+  @LogActivity(action = "CHANGE_APPLICATION_STATUS", details = "Zmiana statusu wniosku pracownika")
   public ApplicationDTO changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
     Application application = applicationRepository.findById(applicationId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
@@ -118,6 +120,7 @@ public class ApplicationService implements I_UserApplication {
     dto.setEmployeeId(entity.getEmployee().getUserId());
     dto.setCreationDateTime(entity.getCreationDateTime());
     dto.setDecisionDateTime(entity.getDecisionDateTime());
+    dto.setDurationSeconds(entity.getDurationSeconds());
 
     if (entity.getReviewer() != null) {
       dto.setReviewerId(entity.getReviewer().getUserId());

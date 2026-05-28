@@ -60,4 +60,7 @@ public class Application {
 
   @Column(name = "decision_date_time")
   private LocalDateTime decisionDateTime;
+
+  @Column(name = "duration_seconds")
+  private Integer durationSeconds;
 }

@@ -27,7 +27,7 @@ import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-class ApplicationServiceTest {
+class ApplicationManagerServiceTest {
 
   @Mock
   private ApplicationRepository applicationRepository;
@@ -46,19 +46,21 @@ class ApplicationServiceTest {
     mockUser.setUserId(employeeId);
 
     ApplicationDTO requestDto = new ApplicationDTO();
-    requestDto.setType("HOLIDAY_LEAVE");
+    requestDto.setType("OVERTIME_EARN");
     requestDto.setStartDate(LocalDate.of(2026, 5, 1));
-    requestDto.setEndDate(LocalDate.of(2026, 5, 10));
-    requestDto.setReason("Majówka");
+    requestDto.setEndDate(LocalDate.of(2026, 5, 1));
+    requestDto.setReason("Projekt nadgodziny");
+    requestDto.setDurationSeconds(7200);
 
     Application savedApplication = new Application();
     savedApplication.setId(100L);
     savedApplication.setEmployee(mockUser);
-    savedApplication.setType(ApplicationType.HOLIDAY_LEAVE);
+    savedApplication.setType(ApplicationType.OVERTIME_EARN);
     savedApplication.setStatus(ApplicationStatus.PENDING);
     savedApplication.setStartDate(requestDto.getStartDate());
     savedApplication.setEndDate(requestDto.getEndDate());
     savedApplication.setReason(requestDto.getReason());
+    savedApplication.setDurationSeconds(7200);
     savedApplication.setCreationDateTime(java.time.LocalDateTime.now());
 
     when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockUser));
@@ -68,9 +70,10 @@ class ApplicationServiceTest {
 
     assertNotNull(result);
     assertEquals(100L, result.getId());
-    assertEquals("HOLIDAY_LEAVE", result.getType());
+    assertEquals("OVERTIME_EARN", result.getType());
     assertEquals("PENDING", result.getStatus());
     assertEquals(employeeId, result.getEmployeeId());
+    assertEquals(7200, result.getDurationSeconds());
     assertNotNull(result.getCreationDateTime());
 
     verify(applicationRepository, times(1)).save(any(Application.class));
@@ -95,6 +98,7 @@ class ApplicationServiceTest {
     mockApplication.setStatus(ApplicationStatus.PENDING);
     mockApplication.setEmployee(mockEmployee);
     mockApplication.setType(ApplicationType.HOLIDAY_LEAVE);
+    mockApplication.setDurationSeconds(0);
 
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
@@ -145,7 +149,7 @@ class ApplicationServiceTest {
     Application mockApplication = new Application();
     mockApplication.setId(20L);
     mockApplication.setEmployee(mockEmployee);
-    mockApplication.setType(ApplicationType.HOLIDAY_LEAVE);
+    mockApplication.setType(ApplicationType.EARLY_EXIT);
     mockApplication.setStatus(ApplicationStatus.PENDING);
 
     when(applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, managerId))
