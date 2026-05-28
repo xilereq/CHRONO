@@ -1,5 +1,6 @@
 package pl.chrono.dbmanager.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,5 +16,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
   List<User> findAllByManager_UserId(Integer managerId);
   List<User> findByRoles_Name(String role);
-
+  List<User> findAllByIsActiveTrue();
+  List<User> findByIsActiveFalseAndEmploymentEndDateBefore(LocalDate cutoffDate);
 }

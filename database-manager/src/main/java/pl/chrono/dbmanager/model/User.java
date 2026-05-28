@@ -60,6 +60,14 @@ public class User implements UserDetails {
   @Column(name = "reset_token_expiration")
   private LocalDateTime resetTokenExpiration;
 
+  @Column(name = "is_active")
+  private boolean isActive = true;
+
+  @Column(name = "employment_start_date")
+  private LocalDate employmentStartDate;
+
+  @Column(name = "employment_end_date")
+  private LocalDate employmentEndDate;
 
   @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(
@@ -112,5 +120,10 @@ public class User implements UserDetails {
         .map(UsersPolicy::getPolicy)
         .findFirst()
         .orElse(null);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return this.isActive;
   }
 }
