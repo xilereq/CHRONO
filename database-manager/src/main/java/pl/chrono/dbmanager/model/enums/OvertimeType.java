@@ -6,6 +6,7 @@ public enum OvertimeType {
   REFUNDED,
   EXPIRED,
   DEBT,
+  USED,
   MANUAL_ADDITION,
   MANUAL_SUBTRACTION
 }

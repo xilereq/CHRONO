@@ -4,7 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.chrono.dbmanager.model.OvertimeArchive;
+import pl.chrono.dbmanager.model.enums.OvertimeType;
 import java.util.List;
+import java.util.Optional;
 
 public interface OvertimeArchiveRepository extends JpaRepository<OvertimeArchive, Long> {
 
@@ -13,7 +15,7 @@ public interface OvertimeArchiveRepository extends JpaRepository<OvertimeArchive
             SUM(CASE\s
                 WHEN o.type IN ('EARNED', 'MANUAL_ADDITION', 'REFUNDED') THEN o.durationSeconds\s
                 WHEN o.type IN ('LOCKED', 'EXPIRED',\s
-                   'MANUAL_DEDUCTION', 'DEBT') THEN -o.durationSeconds\s
+                   'MANUAL_DEDUCTION', 'DEBT', 'USED') THEN -o.durationSeconds\s
                 ELSE 0\s
             END), 0
         )\s
@@ -23,4 +25,6 @@ public interface OvertimeArchiveRepository extends JpaRepository<OvertimeArchive
   Integer calculateOvertimeBalanceSeconds(@Param("userId") Integer userId);
 
   List<OvertimeArchive> findByUser_UserId(Integer userId);
+
+  Optional<OvertimeArchive> findByApplication_IdAndType(Long applicationId, OvertimeType type);
 }

@@ -65,7 +65,13 @@ public class ScheduleService {
             .filter(app -> app.getType() == ApplicationType.EARLY_EXIT
                 || app.getType() == ApplicationType.OVERTIME_TAKE)
             .findFirst()
-            .ifPresent(app -> overtimeService.registerDebt(app, workLog));
+            .ifPresent(app -> {
+              if (app.getType() == ApplicationType.EARLY_EXIT) {
+                overtimeService.registerDebt(app, workLog);
+              } else if (app.getType() == ApplicationType.OVERTIME_TAKE) {
+                overtimeService.changeOvertimeStatus(app, workLog);
+              }
+            });
       }
     }
     if (settledCount > 0) {

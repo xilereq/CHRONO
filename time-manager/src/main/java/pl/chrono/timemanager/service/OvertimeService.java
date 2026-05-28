@@ -94,6 +94,17 @@ public class OvertimeService {
     overtimeData.saveOvertimeRecord(archive);
   }
 
+  @Transactional
+  public void changeOvertimeStatus(Application application, WorkLog workLog) {
+    overtimeData.findByApplicationAndType(application.getId(), OvertimeType.LOCKED)
+        .ifPresent(archive -> {
+          archive.setType(OvertimeType.USED);
+          archive.setWorkLog(workLog);
+          archive.setNote("Used for work log on: " + workLog.getStartTime().toLocalDate());
+          overtimeData.saveOvertimeRecord(archive);
+        });
+  }
+
   private LocalDateTime calculateEndOfQuarter() {
     LocalDateTime now = LocalDateTime.now();
     int currentMonth = now.getMonthValue();
