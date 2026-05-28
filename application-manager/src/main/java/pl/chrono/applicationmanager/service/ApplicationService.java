@@ -18,6 +18,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.logmanager.audit.LogActivity;
+import pl.chrono.timemanager.service.OvertimeService;
 
 
 @Service
@@ -27,6 +28,8 @@ public class ApplicationService implements I_UserApplication {
   private final ApplicationRepository applicationRepository;
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
+
+  private final OvertimeService overtimeService;
 
   @Override
   @Transactional
@@ -46,6 +49,10 @@ public class ApplicationService implements I_UserApplication {
     application.setDurationSeconds(request.durationSeconds());
 
     Application savedApplication = applicationRepository.save(application);
+
+    if (savedApplication.getType() == ApplicationType.OVERTIME_TAKE) {
+      overtimeService.reserveOvertimeForApplication(savedApplication);
+    }
 
     Integer managerId = employee.getManager() != null ? employee.getManager().getUserId() : null;
     eventPublisher.publishEvent(new ApplicationNotificationEvent(
@@ -82,12 +89,18 @@ public class ApplicationService implements I_UserApplication {
         .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: "
             + reviewerId));
 
-    application.setStatus(ApplicationStatus.valueOf(newStatus));
+    ApplicationStatus updatedStatus = ApplicationStatus.valueOf(newStatus);
+    application.setStatus(updatedStatus);
     application.setReviewer(reviewer);
     application.setDecisionReason(decisionReason);
     application.setDecisionDateTime(LocalDateTime.now());
 
     Application updatedApplication = applicationRepository.save(application);
+
+    if (updatedApplication.getType() == ApplicationType.OVERTIME_TAKE
+        && updatedStatus == ApplicationStatus.REJECTED) {
+      overtimeService.refundOvertimeForApplication(updatedApplication);
+    }
 
     eventPublisher.publishEvent(new ApplicationNotificationEvent(
         updatedApplication.getId(),
