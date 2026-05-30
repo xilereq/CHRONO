@@ -91,4 +91,11 @@ public class ApplicationController extends BaseController {
     List<ApplicationResponse> allApplications = applicationService.getAllApplicationsForManager(managerId);
     return ResponseEntity.ok(allApplications);
   }
+
+  @GetMapping("/all")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<List<ApplicationResponse>> getAllApplications() {
+    List<ApplicationResponse> applications = applicationService.getAllApplications();
+    return ResponseEntity.ok(applications);
+  }
 }

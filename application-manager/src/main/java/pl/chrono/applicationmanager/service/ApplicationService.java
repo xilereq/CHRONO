@@ -31,6 +31,7 @@ public class ApplicationService implements I_UserApplication {
 
   private final OvertimeService overtimeService;
 
+  // sekcja tworzenia wniosku
   @Override
   @Transactional
   @LogActivity(action = "CREATE_APPLICATION", details = "Pracownik złożył nowy wniosek")
@@ -47,6 +48,10 @@ public class ApplicationService implements I_UserApplication {
     application.setStatus(ApplicationStatus.PENDING);
     application.setCreationDateTime(LocalDateTime.now());
     application.setDurationSeconds(request.durationSeconds());
+
+    if (employee.getManager() != null) {
+      application.setReviewer(employee.getManager());
+    }
 
     Application savedApplication = applicationRepository.save(application);
 
@@ -65,6 +70,14 @@ public class ApplicationService implements I_UserApplication {
     ));
 
     return mapToResponse(savedApplication);
+  }
+
+  @Override
+  public List<ApplicationResponse> getAllApplications() {
+    return applicationRepository.findAll()
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   @Override

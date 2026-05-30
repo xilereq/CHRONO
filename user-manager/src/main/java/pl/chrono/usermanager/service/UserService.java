@@ -18,55 +18,55 @@ public class UserService implements I_UserService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserDto> getSubordinatesForManager(Integer managerID){
+  public List<UserDto> getSubordinatesForManager(Integer managerID) {
     return userData.getSubordinatesForManager(managerID)
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname(), user.getEmail()))
         .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserDto> getAllManagers(){
+  public List<UserDto> getAllManagers() {
     return userData.findByRoles_Name("ROLE_MANAGER")
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname(), user.getEmail()))
         .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserDto> getAllEmployees(){
+  public List<UserDto> getAllEmployees() {
     return userData.findByRoles_Name("ROLE_EMPLOYEE")
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname(), user.getEmail()))
         .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserDto> getAllAdmins(){
+  public List<UserDto> getAllAdmins() {
     return userData.findByRoles_Name("ROLE_ADMIN")
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname(), user.getEmail()))
         .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserDto> getAllHrs(){
+  public List<UserDto> getAllHrs() {
     return userData.findByRoles_Name("ROLE_HR")
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname(), user.getEmail()))
         .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserDto> getAllUsers(){
-    return  userData.findAll()
+  public List<UserDto> getAllUsers() {
+    return userData.findAll()
         .stream()
-        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname() ,user.getEmail()))
+        .map(user -> new UserDto(user.getUserId(), user.getName(), user.getSurname(), user.getEmail()))
         .collect(Collectors.toList());
   }
 
@@ -81,6 +81,4 @@ public class UserService implements I_UserService {
 
     userData.save(user);
   }
-
-
 }

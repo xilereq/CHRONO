@@ -14,4 +14,6 @@ public interface I_UserApplication {
   List<ApplicationResponse> getPendingApplicationsForManager(Integer managerId);
 
   List<ApplicationResponse> getAllApplicationsForManager(Integer managerId);
+
+  List<ApplicationResponse> getAllApplications();
 }

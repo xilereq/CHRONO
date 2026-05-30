@@ -2,30 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { applicationService } from '../../services';
 import './ApprovalList.css';
 
-const ApprovalList = () => {
+const ApprovalList = ({ userRole }) => {
+
     const [pendingRequests, setPendingRequests] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [activeAction, setActiveAction] = useState({ id: null, type: null });
     const [actionReason, setActionReason] = useState('');
     const [processingId, setProcessingId] = useState(null);
 
-
-    const fetchPendingRequests = async () => {
+    const loadRequests = async () => {
         setLoading(true);
         try {
-            const data = await applicationService.getPendingForManager();
-            setPendingRequests(data);
+            let data;
+            if (userRole === 'ADMIN') {
+                data = await applicationService.getAllApplications();
+            } else if (userRole === 'MANAGER') {
+                data = await applicationService.getPendingForManager();
+            } else {
+                data = [];
+            }
+            setPendingRequests(data || []);
         } catch (error) {
-            console.error("Błąd podczas ładowania wniosków do zatwierdzenia:", error);
+            console.error("Błąd podczas ładowania wniosków:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchPendingRequests();
-    }, []);
+        if (userRole) {
+            loadRequests();
+        }
+    }, [userRole]);
 
     const initiateAction = (id, type) => {
         setActiveAction({ id, type });
@@ -39,7 +47,7 @@ const ApprovalList = () => {
             await applicationService.changeStatus(activeAction.id, activeAction.type, decisionReason);
             setActiveAction({ id: null, type: null });
             setActionReason('');
-            fetchPendingRequests();
+            loadRequests();
         } catch (error) {
             alert("Nie udało się zmienić statusu wniosku.");
         } finally {
@@ -50,12 +58,12 @@ const ApprovalList = () => {
     return (
         <div className="requests-container">
             <div className="section-panel">
-                <div className="section-title">Wnioski oczekujące na Twoją decyzję</div>
+                <div className="section-title">Wnioski w systemie</div>
 
                 {loading ? (
                     <div className="table-empty-cell">Ładowanie wniosków...</div>
                 ) : pendingRequests.length === 0 ? (
-                    <div className="table-empty-cell">Super! Nie masz żadnych wniosków do zatwierdzenia.</div>
+                    <div className="table-empty-cell">Brak wniosków do wyświetlenia.</div>
                 ) : (
                     <div className="requests-table-container">
                         <table className="requests-table">
@@ -65,7 +73,7 @@ const ApprovalList = () => {
                                 <th>Okres / Data</th>
                                 <th>Liczba Dni</th>
                                 <th>Powód</th>
-                                <th>Akcje</th>
+                                {userRole === 'MANAGER' && <th>Akcje</th>}
                             </tr>
                             </thead>
                             <tbody>
@@ -76,27 +84,30 @@ const ApprovalList = () => {
                                         <td>{r.startDate} - {r.endDate}</td>
                                         <td>{r.daysCount || '-'}</td>
                                         <td>{r.reason || '-'}</td>
-                                        <td>
-                                            <div className="submit-actions-row">
-                                                <button
-                                                    className="action-btn action-btn-approve"
-                                                    onClick={() => initiateAction(r.id, 'APPROVED')}
-                                                    title="Zatwierdź"
-                                                >
-                                                    Zatwierdź
-                                                </button>
-                                                <button
-                                                    className="action-btn action-btn-reject"
-                                                    onClick={() => initiateAction(r.id, 'REJECTED')}
-                                                    title="Odrzuć"
-                                                >
-                                                    Odrzuć
-                                                </button>
-                                            </div>
-                                        </td>
+
+                                        {userRole === 'MANAGER' && (
+                                            <td>
+                                                <div className="submit-actions-row">
+                                                    <button
+                                                        className="action-btn action-btn-approve"
+                                                        onClick={() => initiateAction(r.id, 'APPROVED')}
+                                                        title="Zatwierdź"
+                                                    >
+                                                        Zatwierdź
+                                                    </button>
+                                                    <button
+                                                        className="action-btn action-btn-reject"
+                                                        onClick={() => initiateAction(r.id, 'REJECTED')}
+                                                        title="Odrzuć"
+                                                    >
+                                                        Odrzuć
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
 
-                                    {activeAction.id === r.id && (
+                                    {activeAction.id === r.id && userRole === 'MANAGER' && (
                                         <tr>
                                             <td colSpan="5" className={`action-panel-td ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                 <div className="action-panel-container">

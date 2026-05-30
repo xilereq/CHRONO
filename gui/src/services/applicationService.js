@@ -24,13 +24,27 @@ const applicationService = {
         return response.json();
     },
 
-    changeStatus: async (applicationId, newStatus, reviewerId, decisionReason) => {
-        const url = `${API_URL}/${applicationId}/status?newStatus=${newStatus}&reviewerId=${reviewerId}&decisionReason=${decisionReason}`;
-        const response = await fetch(url, {
+    // Sekcja zaktualizowana: wysyłamy JSON-a w polu body
+    changeStatus: async (applicationId, newStatus, decisionReason) => {
+        const payload = {
+            newStatus: newStatus,
+            decisionReason: decisionReason || ""
+        };
+
+        const response = await fetch(`${API_URL}/${applicationId}/status`, {
             method: 'PATCH',
-            headers: getHeaders()
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
         });
         if (!response.ok) throw new Error('Błąd zmiany statusu');
+        return response.json();
+    },
+
+    getAllApplications: async () => {
+        const response = await fetch(`${API_URL}/all`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Nie udało się pobrać wszystkich wniosków');
         return response.json();
     },
 

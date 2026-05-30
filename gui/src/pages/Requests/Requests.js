@@ -1,35 +1,59 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { RequestList } from '../../components';
-import { ApprovalList } from '../../pages';
-import '../main.css'
-import {userService} from "../../services";
+import ApprovalList from './ApprovalList';
+import { userService, applicationService } from '../../services';
+import '../main.css';
 
 const Requests = () => {
-    const [isAdminOrManager, setIsAdminOrManager] = useState(false);
 
+    // sekcja zmienne lokalne
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isManager, setIsManager] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // sekcja automatycznego wykrywania uprawnień
     useEffect(() => {
-        const fetchRole = async () => {
+        const checkPermissions = async () => {
             try {
-                const response = await userService.getMyRole();
-                if (response.role === "ROLE_ADMIN" || response.role === "ROLE_MANAGER") {
-                    setIsAdminOrManager(true);
+                const roleResponse = await userService.getMyRole();
+
+                if (roleResponse.role === "ROLE_ADMIN") {
+                    setIsAdmin(true);
+                    setIsLoading(false);
+                    return;
                 }
+
+                try {
+                    await applicationService.getPendingForManager();
+                    setIsManager(true);
+                } catch (managerError) {
+                    setIsManager(false);
+                }
+
             } catch (error) {
-                console.error("Nie udało się pobrać roli", error);
+                console.error("Błąd podczas sprawdzania uprawnień:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
-        fetchRole();
+        checkPermissions();
     }, []);
 
+    // sekcja wyglądu widoku
     return (
         <div className="page-container">
             <h2 className="page-title-no-margin">Moje wnioski</h2>
-            <div>
-                <RequestList />
-                {isAdminOrManager && (
-                <ApprovalList /> )}
-            </div>
+
+            {isLoading ? (
+                <div style={{ padding: '20px' }}>Ładowanie uprawnień...</div>
+            ) : (
+                <div>
+                    <RequestList />
+                    {isAdmin && <ApprovalList userRole="ADMIN" />}
+                    {!isAdmin && isManager && <ApprovalList userRole="MANAGER" />}
+                </div>
+            )}
         </div>
     );
 };

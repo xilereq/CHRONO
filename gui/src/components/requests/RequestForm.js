@@ -86,7 +86,7 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                     </label>
 
                     {(formData.type === 'EARLY_EXIT' || formData.type === 'OVERTIME_EARN' || formData.type === 'OVERTIME_TAKE') && (
-                        <label className="field field-full-width">
+                        <label className="field">
                             <span className="field-label">Liczba godzin</span>
                             <input
                                 className="field-input"
@@ -100,7 +100,7 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                         </label>
                     )}
 
-                    <div className="field-row">
+                    <div className="field-row" style={{ gridColumn: 'span 2' }}>
                         <label className="field field-flex">
                             <span className="field-label">Od</span>
                             <input
