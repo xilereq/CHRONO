@@ -9,5 +9,6 @@ public record PolicyDto(
     Integer dailyHours,
     Integer maxDailyHours,
     Integer maxWeeklyHours,
+    Integer roundingMinutes,
     Set<DayOfWeek> workingDays
 ) {}
