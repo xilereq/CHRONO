@@ -64,11 +64,10 @@ public class ScheduleService {
         dailyApps.stream()
             .filter(app -> app.getType() == ApplicationType.EARLY_EXIT
                 || app.getType() == ApplicationType.OVERTIME_TAKE)
-            .findFirst()
-            .ifPresent(app -> {
+            .forEach(app -> {
               if (app.getType() == ApplicationType.EARLY_EXIT) {
                 overtimeService.registerDebt(app, workLog);
-              } else if (app.getType() == ApplicationType.OVERTIME_TAKE) {
+              } else {
                 overtimeService.changeOvertimeStatus(app, workLog);
               }
             });
