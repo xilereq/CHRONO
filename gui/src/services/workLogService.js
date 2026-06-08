@@ -1,3 +1,5 @@
+import {handleApiResponse} from "../utils/errorHandler";
+
 const API_URL = 'http://localhost:8080/api/work-log';
 
 const getHeaders = () => ({
@@ -16,21 +18,19 @@ const workLogService = {
             method: 'POST',
             headers: getHeaders()
         });
-        if (!response.ok) throw new Error('Błąd podczas rozpoczynania pracy');
-        return response.json();
-    },
-    getActiveTime: async () => {
-        const response = await fetch(`${API_URL}/active-time`, { headers: getHeaders() });
-        if (!response.ok) throw new Error('Błąd pobierania czasu pracy');
-        return response.text();
+        return handleApiResponse(response);
     },
     endWork: async () => {
         const response = await fetch(`${API_URL}/end`, {
             method: 'POST',
             headers: getHeaders()
         });
-        if (!response.ok) throw new Error('Błąd podczas kończenia pracy');
-        return response.json();
+        return handleApiResponse(response);
+    },
+    getActiveTime: async () => {
+        const response = await fetch(`${API_URL}/active-time`, { headers: getHeaders() });
+        if (!response.ok) throw new Error('Błąd pobierania czasu pracy');
+        return response.text();
     },
     getMonthlyStats: async () => {
         const response = await fetch(`${API_URL}/monthly-stats`, { headers: getHeaders() });

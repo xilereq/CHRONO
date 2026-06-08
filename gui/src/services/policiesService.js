@@ -1,3 +1,5 @@
+import {handleApiResponse} from "../utils/errorHandler";
+
 const API_URL = 'http://localhost:8080/api/policies';
 const HOLIDAYS_API_URL = 'http://localhost:8080/api/holidays';
 
@@ -24,7 +26,7 @@ const policiesService = {
             headers: getHeaders(),
             body: JSON.stringify(request)
         });
-        if (!response.ok) throw new Error('Błąd podczas przypisywania polityki');
+        if (!response.ok) return handleApiResponse(response);
         if (response.status === 204) return { success: true };
         return response.json();
     },
@@ -70,7 +72,7 @@ const policiesService = {
             headers: getHeaders(),
             body: JSON.stringify(request)
         });
-        if (!response.ok) throw new Error('Błąd podczas przypisywania dnia wolnego');
+        if (!response.ok) return handleApiResponse(response);
         if (response.status === 204) return { success: true };
         return response.json();
     },
