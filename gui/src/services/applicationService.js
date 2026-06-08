@@ -24,13 +24,20 @@ const applicationService = {
         return response.json();
     },
 
-    // Sekcja zaktualizowana: wysyłamy JSON-a w polu body
+    cancelApplication: async (applicationId) => {
+        const response = await fetch(`${API_URL}/${applicationId}/cancel`, {
+            method: 'PATCH',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Błąd podczas anulowania wniosku');
+        return response.json();
+    },
+
     changeStatus: async (applicationId, newStatus, decisionReason) => {
         const payload = {
             newStatus: newStatus,
             decisionReason: decisionReason || ""
         };
-
         const response = await fetch(`${API_URL}/${applicationId}/status`, {
             method: 'PATCH',
             headers: getHeaders(),

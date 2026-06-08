@@ -181,7 +181,31 @@ public class ApplicationService implements I_UserApplication {
         application.getDecisionDateTime(),
         application.getDecisionReason(),
         application.getEmployee().getUserId(),
-        application.getReviewer() != null ? application.getReviewer().getUserId() : null
+        application.getReviewer() != null ? application.getReviewer().getUserId() : null,
+        application.getReviewer() != null ? application.getReviewer().getEmail() : null
     );
+  }
+
+  @Override
+  @Transactional
+  @LogActivity(action = "CANCEL_APPLICATION", details = "Pracownik anulował własny wniosek")
+  public ApplicationResponse cancelApplication(Long applicationId, Integer userId) {
+    Application application = applicationRepository.findById(applicationId)
+        .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
+
+    if (!application.getEmployee().getUserId().equals(userId)) {
+      throw new SecurityException("Możesz anulować tylko swoje własne wnioski.");
+    }
+    if (application.getStatus() != ApplicationStatus.PENDING) {
+      throw new IllegalStateException("Można anulować tylko wniosek w statusie PENDING.");
+    }
+    if (application.getType() == ApplicationType.OVERTIME_TAKE) {
+      overtimeService.refundOvertimeForApplication(application);
+    }
+
+    application.setStatus(ApplicationStatus.CANCELLED);
+    application.setDecisionDateTime(LocalDateTime.now());
+    Application saved = applicationRepository.save(application);
+    return mapToResponse(saved);
   }
 }

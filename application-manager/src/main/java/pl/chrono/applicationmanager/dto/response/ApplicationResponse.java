@@ -15,5 +15,6 @@ public record ApplicationResponse(
     LocalDateTime decisionDateTime,
     String decisionReason,
     Integer employeeId,
-    Integer reviewerId
+    Integer reviewerId,
+    String reviewerEmail
 ) {}

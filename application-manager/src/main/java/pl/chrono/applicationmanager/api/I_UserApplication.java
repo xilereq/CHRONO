@@ -16,4 +16,6 @@ public interface I_UserApplication {
   List<ApplicationResponse> getAllApplicationsForManager(Integer managerId);
 
   List<ApplicationResponse> getAllApplications();
+
+  ApplicationResponse cancelApplication(Long applicationId, Integer userId);
 }

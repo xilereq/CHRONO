@@ -2,6 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { applicationService } from '../../services';
 import './ApprovalList.css';
 
+const translateType = (type) => {
+    switch (type) {
+        case 'HOLIDAY_LEAVE': return 'Urlop wypoczynkowy';
+        case 'SICK_LEAVE': return 'Zwolnienie lekarskie';
+        case 'EARLY_EXIT': return 'Wyjście wcześniejsze';
+        case 'OVERTIME_EARN': return 'Zgłoszenie nadgodzin';
+        case 'OVERTIME_TAKE': return 'Odbiór nadgodzin';
+        default: return type || 'Inny';
+    }
+};
+
+const HOURLY_TYPES = ['EARLY_EXIT', 'OVERTIME_EARN', 'OVERTIME_TAKE'];
+
+const getDuration = (request) => {
+    if (HOURLY_TYPES.includes(request.type)) {
+        if (!request.durationSeconds) return '-';
+        return `${Math.round(request.durationSeconds / 3600)} godz.`;
+    }
+    if (!request.startDate || !request.endDate) return '-';
+    const start = new Date(request.startDate);
+    const end = new Date(request.endDate);
+    const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    return `${days} dni`;
+};
+
 const ApprovalList = ({ userRole }) => {
 
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -58,7 +83,9 @@ const ApprovalList = ({ userRole }) => {
     return (
         <div className="requests-container">
             <div className="section-panel">
-                <div className="section-title">Wnioski w systemie</div>
+                <div className="section-title">
+                    {userRole === 'MANAGER' ? 'Wnioski pracownicze' : 'Wnioski w systemie'}
+                </div>
 
                 {loading ? (
                     <div className="table-empty-cell">Ładowanie wniosków...</div>
@@ -80,9 +107,9 @@ const ApprovalList = ({ userRole }) => {
                             {pendingRequests.map(r => (
                                 <React.Fragment key={r.id}>
                                     <tr>
-                                        <td className="request-card-title-cell">{r.type || r.title}</td>
+                                        <td className="request-card-title-cell">{translateType(r.type)}</td>
                                         <td>{r.startDate} - {r.endDate}</td>
-                                        <td>{r.daysCount || '-'}</td>
+                                        <td>{getDuration(r)}</td>
                                         <td>{r.reason || '-'}</td>
 
                                         {userRole === 'MANAGER' && (

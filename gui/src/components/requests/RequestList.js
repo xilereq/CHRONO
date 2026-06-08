@@ -47,7 +47,6 @@ const RequestList = () => {
     return (
         <div className="requests-container">
             <div className="section-panel filters-bar">
-                {/* 3. Podpięcie stanów (value i onChange) do elementów select i input */}
                 <select
                     className="filter-select"
                     value={filterStatus}
@@ -57,6 +56,7 @@ const RequestList = () => {
                     <option value="APPROVED">Zatwierdzony</option>
                     <option value="PENDING">Weryfikacja</option>
                     <option value="REJECTED">Odrzucony</option>
+                    <option value="CANCELLED">Anulowany</option>
                 </select>
 
                 <select
@@ -67,7 +67,9 @@ const RequestList = () => {
                     <option value="">Typ</option>
                     <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
                     <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
-                    <option value="OVERTIME">Nadgodziny</option>
+                    <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
+                    <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
+                    <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
                 </select>
 
                 <input

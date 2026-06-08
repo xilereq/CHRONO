@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { applicationService } from '../../services';
 import { Button } from '../../components';
 import './requests.css';
 
-const RequestForm = ({ onCancel, onSuccess }) => {
+const SINGLE_DATE_TYPES = ['EARLY_EXIT', 'OVERTIME_EARN', 'OVERTIME_TAKE'];
+
+const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -17,9 +19,35 @@ const RequestForm = ({ onCancel, onSuccess }) => {
         durationHours: ''
     });
 
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                title: initialData.reason || '',
+                type: initialData.type || 'HOLIDAY_LEAVE',
+                startDate: initialData.startDate || '',
+                endDate: initialData.endDate || '',
+                reason: initialData.reason || '',
+                durationHours: initialData.durationSeconds
+                    ? Math.round(initialData.durationSeconds / 3600).toString()
+                    : ''
+            });
+        }
+    }, [initialData]);
+
+    const isSingleDateType = SINGLE_DATE_TYPES.includes(formData.type);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            const updated = { ...prev, [name]: value };
+            if (name === 'startDate' && SINGLE_DATE_TYPES.includes(updated.type)) {
+                updated.endDate = value;
+            }
+            if (name === 'type' && SINGLE_DATE_TYPES.includes(value)) {
+                updated.endDate = updated.startDate;
+            }
+            return updated;
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -28,20 +56,28 @@ const RequestForm = ({ onCancel, onSuccess }) => {
         setLoading(true);
 
         try {
-            if (new Date(formData.startDate) > new Date(formData.endDate)) {
+            const effectiveEndDate = isSingleDateType ? formData.startDate : formData.endDate;
+
+            if (!isSingleDateType && new Date(formData.startDate) > new Date(effectiveEndDate)) {
                 throw new Error('Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.');
             }
 
             const payload = {
                 type: formData.type,
                 startDate: formData.startDate,
-                endDate: formData.endDate,
+                endDate: effectiveEndDate,
                 reason: formData.reason || formData.title,
                 durationSeconds: formData.durationHours ? parseInt(formData.durationHours) * 3600 : null
             };
 
+            if (oldApplicationId) {
+                await applicationService.cancelApplication(oldApplicationId);
+            }
+
             await applicationService.createApplication(payload);
-            alert('Wniosek został wysłany pomyślnie!');
+            alert(oldApplicationId
+                ? 'Wniosek zaktualizowany! Nowy wniosek trafił do kierownika.'
+                : 'Wniosek wysłany pomyślnie!');
             if (onSuccess) onSuccess();
         } catch (err) {
             setError(err.message || 'Wystąpił błąd podczas wysyłania wniosku.');
@@ -100,9 +136,9 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                         </label>
                     )}
 
-                    <div className="field-row" style={{ gridColumn: 'span 2' }}>
-                        <label className="field field-flex">
-                            <span className="field-label">Od</span>
+                    {isSingleDateType ? (
+                        <label className="field" style={{ gridColumn: 'span 2' }}>
+                            <span className="field-label">Data</span>
                             <input
                                 className="field-input"
                                 type="date"
@@ -112,18 +148,32 @@ const RequestForm = ({ onCancel, onSuccess }) => {
                                 required
                             />
                         </label>
-                        <label className="field field-flex">
-                            <span className="field-label">Do</span>
-                            <input
-                                className="field-input"
-                                type="date"
-                                name="endDate"
-                                value={formData.endDate}
-                                onChange={handleChange}
-                                required
-                            />
-                        </label>
-                    </div>
+                    ) : (
+                        <div className="field-row" style={{ gridColumn: 'span 2' }}>
+                            <label className="field field-flex">
+                                <span className="field-label">Od</span>
+                                <input
+                                    className="field-input"
+                                    type="date"
+                                    name="startDate"
+                                    value={formData.startDate}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </label>
+                            <label className="field field-flex">
+                                <span className="field-label">Do</span>
+                                <input
+                                    className="field-input"
+                                    type="date"
+                                    name="endDate"
+                                    value={formData.endDate}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </label>
+                        </div>
+                    )}
 
                     <label className="field field-full-width">
                         <span className="field-label">Powód (opcjonalnie)</span>
