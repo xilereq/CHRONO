@@ -180,7 +180,8 @@ class ScheduleServiceTest {
     Application wrongApp = new Application();
     wrongApp.setType(ApplicationType.EARLY_EXIT);
 
-    WorkLog mockWorkLog = createMockWorkLog(LocalDateTime.now(), 0L, 0, 36000L, 28800, List.of(wrongApp));
+    WorkLog mockWorkLog = createMockWorkLog(
+        LocalDateTime.now(), 0L, 0, 36000L, 28800, List.of(wrongApp));
     when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
 
     scheduleService.processWorkLogs();
@@ -193,7 +194,8 @@ class ScheduleServiceTest {
     Application wrongApp = new Application();
     wrongApp.setType(ApplicationType.OVERTIME_EARN);
 
-    WorkLog mockWorkLog = createMockWorkLog(LocalDateTime.now(), 0L, 0, 20000L, 28800, List.of(wrongApp));
+    WorkLog mockWorkLog = createMockWorkLog(
+        LocalDateTime.now(), 0L, 0, 20000L, 28800, List.of(wrongApp));
     when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
 
     scheduleService.processWorkLogs();

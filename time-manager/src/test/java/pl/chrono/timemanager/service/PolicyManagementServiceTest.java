@@ -1,10 +1,19 @@
 package pl.chrono.timemanager.service;
 
+import java.time.LocalDate;
+import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
@@ -14,13 +23,6 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.UsersPolicyRepository;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.exception.PolicyException;
-
-import java.time.LocalDate;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PolicyManagementServiceTest {
@@ -127,8 +129,7 @@ class PolicyManagementServiceTest {
     User user = new User();
 
     when(policyRepository.findById(policyId)).thenReturn(Optional.of(newPolicy));
-    when(usersPolicyRepository.findActiveByUserId(userId)).thenReturn(
-        Optional.empty());
+    when(usersPolicyRepository.findActiveByUserId(userId)).thenReturn(Optional.empty());
     when(userRepository.getReferenceById(userId)).thenReturn(user);
 
     policyManagementService.assignPolicyToUser(userId, request);
