@@ -161,6 +161,7 @@
 						<configLocation>google_checks.xml</configLocation>
 						<consoleOutput>true</consoleOutput>
 						<failsOnError>true</failsOnError>
+                        <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
 					</configuration>
 					<executions>
 						<execution>
