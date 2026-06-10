@@ -37,7 +37,7 @@ public class WorkTaskScheduler {
     int currentMonth = today.getMonthValue();
     int currentYear = today.getYear();
 
-    int firstMonthOfQuarter = ((currentMonth - 1) / 3) * 3 + 1;
+    int firstMonthOfQuarter = (currentMonth - 1) / 3 * 3 + 1;
 
     LocalDateTime startOfQuarter = LocalDate.of(currentYear, firstMonthOfQuarter, 1).atStartOfDay();
     LocalDateTime now = LocalDateTime.now();

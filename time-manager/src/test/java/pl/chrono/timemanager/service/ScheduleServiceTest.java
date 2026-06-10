@@ -16,6 +16,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.OperationLog;
 import pl.chrono.dbmanager.model.User;
@@ -24,6 +25,8 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.OperationLogRepository;
+import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.timemanager.event.LawViolationEvent;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduleServiceTest {
@@ -36,6 +39,10 @@ class ScheduleServiceTest {
   private OvertimeService overtimeService;
   @Mock
   private ApplicationRepository applicationRepository;
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+  @Mock
+  private UserRepository userRepository;
 
   @InjectMocks
   private ScheduleService scheduleService;
@@ -46,6 +53,7 @@ class ScheduleServiceTest {
     WorkLog mockWorkLog = mock(WorkLog.class);
     User mockUser = mock(User.class);
 
+    lenient().when(mockWorkLog.getWorkLogId()).thenReturn(1);
     lenient().when(mockWorkLog.getUser()).thenReturn(mockUser);
     lenient().when(mockUser.getUserId()).thenReturn(1);
     lenient().when(mockWorkLog.getStartTime()).thenReturn(LocalDateTime.now().minusHours(10));
@@ -89,7 +97,7 @@ class ScheduleServiceTest {
     verify(mockWorkLog).forceClose(any(LocalDateTime.class));
     verify(mockWorkLog).setSettled(true);
     verify(timeData).saveWorkLog(mockWorkLog);
-    verify(logRepository).save(any(OperationLog.class));
+    verify(eventPublisher).publishEvent(any(LawViolationEvent.class));
   }
 
   @Test
@@ -202,5 +210,17 @@ class ScheduleServiceTest {
 
     verify(overtimeService, never()).registerDebt(any(), any());
     verify(overtimeService, never()).changeOvertimeStatus(any(), any());
+  }
+
+  @Test
+  void processOvertimeExpirationsTest() {
+    User user = new User();
+    user.setUserId(1);
+    when(userRepository.findAll()).thenReturn(List.of(user));
+
+    scheduleService.processOvertimeExpirations();
+
+    verify(overtimeService).expireUnusedOvertime(1);
+    verify(logRepository).save(any(OperationLog.class));
   }
 }
