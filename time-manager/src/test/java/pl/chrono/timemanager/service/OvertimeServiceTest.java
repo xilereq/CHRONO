@@ -14,16 +14,21 @@ import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.verification.VerificationMode;
+import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
+import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
+import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
@@ -35,6 +40,12 @@ class OvertimeServiceTest {
 
   @Mock
   private OvertimeMapper overtimeMapper;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
+  @Mock
+  private UserRepository userRepository;
 
   @InjectMocks
   private OvertimeService overtimeService;
@@ -201,7 +212,7 @@ class OvertimeServiceTest {
   }
 
   @Test
-  void changeOvertimeStatus_shouldChangeToUsed_whenLockedRecordExists() {
+  void changeOvertimeStatusLockedToUsedTest() {
     Application app = createApplication(10L, 3600, new User());
     WorkLog workLog = createWorkLog(new User());
 
@@ -232,7 +243,7 @@ class OvertimeServiceTest {
   }
 
   @Test
-  void getOvertimeHistory_shouldReturnMappedDtos() {
+  void getOvertimeHistoryTest() {
     OvertimeArchive archive1 = new OvertimeArchive();
     OvertimeArchive archive2 = new OvertimeArchive();
 
@@ -248,5 +259,118 @@ class OvertimeServiceTest {
     assertEquals(2, result.size());
     assertTrue(result.contains(dto1));
     assertTrue(result.contains(dto2));
+  }
+
+  @Test
+  void grantOvertimeNoPublishEventTest() {
+    User user = new User();
+    user.setUserId(1);
+    WorkLog workLog = createWorkLog(user);
+    Application app = createApplication(10L, 3600, user);
+
+    when(overtimeData.sumEarnedOvertimeBetween(any(), any(), any())).thenReturn(36000);
+
+    overtimeService.grantOvertime(app, workLog);
+
+    verify(overtimeData).saveOvertimeRecord(any());
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  void grantOvertimePublishEventTest() {
+    User user = new User();
+    user.setUserId(1);
+    WorkLog workLog = createWorkLog(user);
+    Application app = createApplication(10L, 3600, user);
+
+    int limit = 150 * 3600;
+
+    when(overtimeData.sumEarnedOvertimeBetween(any(), any(), any())).thenReturn(limit - 1800);
+
+    overtimeService.grantOvertime(app, workLog);
+
+    ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(LawViolationEvent.class);
+    verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
+
+    LawViolationEvent firedEvent = eventCaptor.getValue();
+    assertEquals(1, firedEvent.userId());
+    assertEquals("VIOLATION_YEARLY_OVERTIME", firedEvent.violationType());
+    assertEquals(10L, firedEvent.referenceId());
+    assertEquals("APPLICATION", firedEvent.referenceType());
+    assertTrue(firedEvent.message().contains("150 overtime hours"));
+  }
+
+  @Test
+  void grantOvertimeLimitAlreadyCrossedTest() {
+    User user = new User();
+    user.setUserId(1);
+    WorkLog workLog = createWorkLog(user);
+    Application app = createApplication(10L, 3600, user);
+
+    int limit = 150 * 3600;
+
+    when(overtimeData.sumEarnedOvertimeBetween(any(), any(), any())).thenReturn(limit + 1800);
+
+    overtimeService.grantOvertime(app, workLog);
+
+    verify(overtimeData).saveOvertimeRecord(any());
+    verify(eventPublisher, never()).publishEvent(any());
+  }
+
+  @Test
+  void nullBalanceExpireOvertimeTest() {
+    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(null);
+
+    overtimeService.expireUnusedOvertime(1);
+
+    verify(userRepository, never()).findById(any());
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void zeroOrNegativeBalanceExpireOvertimeTest() {
+    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(0);
+    overtimeService.expireUnusedOvertime(1);
+
+    when(overtimeData.getUserOvertimeBalance(2)).thenReturn(-3600);
+    overtimeService.expireUnusedOvertime(2);
+
+    verify(userRepository, never()).findById(any());
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void expireOvertimeNoUserExceptionTest() {
+    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(3600);
+    when(userRepository.findById(1)).thenReturn(Optional.empty());
+
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> overtimeService.expireUnusedOvertime(1)
+    );
+
+    assertEquals("User not found", exception.getMessage());
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void properExpireForPositiveBalanceTest() {
+    User user = new User();
+    user.setUserId(1);
+
+    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(7200);
+    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+    overtimeService.expireUnusedOvertime(1);
+
+    ArgumentCaptor<OvertimeArchive> captor = ArgumentCaptor.forClass(OvertimeArchive.class);
+    verify(overtimeData).saveOvertimeRecord(captor.capture());
+
+    OvertimeArchive saved = captor.getValue();
+    assertEquals(user, saved.getUser());
+    assertEquals(OvertimeType.EXPIRED, saved.getType());
+    assertEquals(7200, saved.getDurationSeconds());
+    assertNotNull(saved.getValidUntil());
+    assertTrue(saved.getNote().contains("Automatically expired unused overtime for quarter:"));
   }
 }

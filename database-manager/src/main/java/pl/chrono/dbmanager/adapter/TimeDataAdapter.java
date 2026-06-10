@@ -61,4 +61,9 @@ public class TimeDataAdapter implements I_TimeData {
   public List<WorkLog> findUnsettledWorkLogs() {
     return workLogRepository.findByEndTimeIsNotNullAndSettledFalse();
   }
+
+  @Override
+  public Optional<WorkLog> findLastClosedWorkLog(Integer userId) {
+    return workLogRepository.findTopByUser_UserIdAndEndTimeIsNotNullOrderByEndTimeDesc(userId);
+  }
 }

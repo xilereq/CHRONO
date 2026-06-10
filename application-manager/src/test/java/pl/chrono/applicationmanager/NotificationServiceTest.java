@@ -40,7 +40,7 @@ class NotificationServiceTest {
     Notification mockNotification = new Notification();
     when(notificationRepository.save(any(Notification.class))).thenReturn(mockNotification);
 
-    notificationService.sendNotification(1, "Message", 100L, "TYPE");
+    notificationService.sendNotification(1, "Message", 100L, "APPLICATION", "TYPE");
 
     verify(notificationRepository, times(1)).save(any(Notification.class));
   }
@@ -50,7 +50,7 @@ class NotificationServiceTest {
     notificationService.subscribe(2);
     when(notificationRepository.save(any(Notification.class))).thenReturn(new Notification());
 
-    assertDoesNotThrow(() -> notificationService.sendNotification(2, "Test", 1L, "TYPE"));
+    assertDoesNotThrow(() -> notificationService.sendNotification(2, "Test", 1L, "APPLICATION", "TYPE"));
   }
 
   @Test

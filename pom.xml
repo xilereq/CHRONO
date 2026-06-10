@@ -183,6 +183,7 @@
                             <exclude>**/dto/**</exclude>
                             <exclude>**/request/**</exclude>
                             <exclude>**/response/**</exclude>
+                            <exclude>**/event/**</exclude>
 
                             <exclude>**/enums/**</exclude>
 
