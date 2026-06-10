@@ -306,4 +306,61 @@ class WorkLogTest {
 
     assertThat(effectiveTime).isEqualTo(9 * 3600);
   }
+
+  @Test
+  void nullDateNightSecondsTest() {
+    assertThat(workLog.calculateNightSeconds(null, null)).isZero();
+    assertThat(workLog.calculateNightSeconds(null, LocalDateTime.of(2026, 6, 9, 8, 0))).isZero();
+    assertThat(workLog.calculateNightSeconds(LocalDateTime.of(2026, 6, 9, 8, 0), null)).isZero();
+  }
+
+  @Test
+  void nightSecondsCalculationTest() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 22, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 10, 6, 0);
+
+    long nightSeconds = workLog.calculateNightSeconds(start, end);
+
+    assertThat(nightSeconds).isEqualTo(8 * 3600);
+  }
+
+  @Test
+  void nightSecondsStartBeforeNightTest() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 20, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 10, 4, 0);
+
+    long nightSeconds = workLog.calculateNightSeconds(start, end);
+
+    assertThat(nightSeconds).isEqualTo(7 * 3600);
+  }
+
+  @Test
+  void nightSecondsEndAfterNightTest() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 23, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 10, 8, 0);
+
+    long nightSeconds = workLog.calculateNightSeconds(start, end);
+
+    assertThat(nightSeconds).isEqualTo(8 * 3600);
+  }
+
+  @Test
+  void nightSecondsNoNightTest() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 8, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 9, 16, 0);
+
+    long nightSeconds = workLog.calculateNightSeconds(start, end);
+
+    assertThat(nightSeconds).isZero();
+  }
+
+  @Test
+  void wrongLogNightSecondsTest() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 23, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 9, 22, 0);
+
+    long nightSeconds = workLog.calculateNightSeconds(start, end);
+
+    assertThat(nightSeconds).isZero();
+  }
 }
