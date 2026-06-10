@@ -21,6 +21,7 @@ public class NotificationListener {
           event.managerId(),
           message,
           event.applicationId(),
+          "APPLICATION",
           "APPLICATION_CREATED"
       );
 
@@ -31,6 +32,7 @@ public class NotificationListener {
           event.employeeId(),
           message,
           event.applicationId(),
+          "APPLICATION",
           "APPLICATION_STATUS_CHANGED"
       );
     }
