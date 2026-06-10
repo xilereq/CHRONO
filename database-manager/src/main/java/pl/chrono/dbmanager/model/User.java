@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -115,9 +116,10 @@ public class User implements UserDetails {
     }
     LocalDate now = LocalDate.now();
     return this.userPolicies.stream()
-        .filter(up -> (up.getValidFrom() == null || !now.isBefore(up.getValidFrom())) &&
-                      (up.getValidTo() == null || !now.isAfter(up.getValidTo())))
+        .filter(up -> up.getValidFrom() != null && !now.isBefore(up.getValidFrom())
+            && (up.getValidTo() == null || !now.isAfter(up.getValidTo())))
         .map(UsersPolicy::getPolicy)
+        .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }

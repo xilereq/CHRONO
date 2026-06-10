@@ -15,7 +15,7 @@ public interface OvertimeArchiveRepository extends JpaRepository<OvertimeArchive
             SUM(CASE\s
                 WHEN o.type IN ('EARNED', 'MANUAL_ADDITION', 'REFUNDED') THEN o.durationSeconds\s
                 WHEN o.type IN ('LOCKED', 'EXPIRED',\s
-                   'MANUAL_DEDUCTION', 'DEBT', 'USED') THEN -o.durationSeconds\s
+                   'MANUAL_SUBTRACTION', 'DEBT', 'USED') THEN -o.durationSeconds\s
                 ELSE 0\s
             END), 0
         )\s

@@ -184,9 +184,9 @@
                             <exclude>**/request/**</exclude>
                             <exclude>**/response/**</exclude>
 
-                            <exclude>**/model/**</exclude>
-                            <exclude>**/entity/**</exclude>
                             <exclude>**/enums/**</exclude>
+
+                            <exclude>**/adapter/**</exclude>
 
                             <exclude>**/exception/**</exclude>
                             <exclude>**/exceptions/**</exclude>
