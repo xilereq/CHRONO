@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Application;
@@ -11,7 +12,9 @@ import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
+import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
+import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
@@ -20,6 +23,8 @@ import pl.chrono.timemanager.mapper.OvertimeMapper;
 public class OvertimeService {
   private final I_OvertimeData overtimeData;
   private final OvertimeMapper overtimeMapper;
+  private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional(readOnly = true)
   public Integer getOvertimeBalance(Integer userId) {
@@ -61,10 +66,25 @@ public class OvertimeService {
   @Transactional
   public void grantOvertime(Application application, WorkLog workLog) {
     int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
-
     if (duration <= 0) {
       return;
     }
+
+    int currentYear = LocalDate.now().getYear();
+    LocalDateTime startOfYear = LocalDateTime.of(currentYear, 1, 1, 0, 0);
+    LocalDateTime endOfYear = LocalDateTime.of(currentYear, 12, 31, 23, 59, 59);
+
+    long yearlyOvertime = overtimeData.sumEarnedOvertimeBetween(
+        application.getEmployee().getUserId(), startOfYear, endOfYear);
+    int yearlyLimit = 150 * 3600;
+    if (yearlyOvertime + duration > yearlyLimit && yearlyOvertime < yearlyLimit) {
+      eventPublisher.publishEvent(new LawViolationEvent(
+          application.getEmployee().getUserId(), "VIOLATION_YEARLY_OVERTIME",
+          application.getId(), "APPLICATION",
+          "WARNING: You have excedeed yearly limit of 150 overtime hours in year " + currentYear
+      ));
+    }
+
     OvertimeArchive archive = new OvertimeArchive();
     archive.setUser(workLog.getUser());
     archive.setType(OvertimeType.EARNED);
@@ -110,17 +130,33 @@ public class OvertimeService {
     int currentMonth = now.getMonthValue();
     int year = now.getYear();
     int quarterEndMonth = ((currentMonth - 1) / 3 + 1) * 3;
-    LocalDate lastDayOfQuarter = LocalDate.of(year, quarterEndMonth, 1)
-        .plusMonths(1).minusDays(1);
+    LocalDate lastDayOfQuarter = LocalDate.of(year, quarterEndMonth, 1).plusMonths(1).minusDays(1);
     return lastDayOfQuarter.atTime(23, 59, 59);
+  }
+
+  @Transactional
+  public void expireUnusedOvertime(Integer userId) {
+    Integer currentBalance = getOvertimeBalance(userId);
+
+    if (currentBalance == null || currentBalance <= 0) {
+      return;
+    }
+
+    OvertimeArchive archive = new OvertimeArchive();
+    archive.setUser(userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found")));
+    archive.setType(OvertimeType.EXPIRED);
+    archive.setDurationSeconds(currentBalance);
+    archive.setValidUntil(LocalDateTime.now());
+    archive.setNote("Automatically expired unused overtime for quarter: " + (((LocalDate.now()
+        .getMonthValue() - 1) / 3) + 1) + " of year " + LocalDate.now().getYear());
+    overtimeData.saveOvertimeRecord(archive);
   }
 
   @Transactional(readOnly = true)
   public List<OvertimeRecordDto> getOvertimeHistory(Integer userId) {
     List<OvertimeArchive> historyEntities = overtimeData.findUserOvertimeHistory(userId);
 
-    return historyEntities.stream()
-        .map(overtimeMapper::toDto)
-        .toList();
+    return historyEntities.stream().map(overtimeMapper::toDto).toList();
   }
 }

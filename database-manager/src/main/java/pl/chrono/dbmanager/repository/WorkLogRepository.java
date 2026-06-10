@@ -27,4 +27,6 @@ public interface WorkLogRepository extends JpaRepository<WorkLog, Integer> {
       LocalDateTime startOfDay,
       LocalDateTime endOfDay
   );
+
+  Optional<WorkLog> findTopByUser_UserIdAndEndTimeIsNotNullOrderByEndTimeDesc(Integer userId);
 }
