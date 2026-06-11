@@ -1,6 +1,6 @@
 import {handleApiResponse} from "../utils/errorHandler";
 
-const API_URL = 'http://localhost:8080/api/work-log';
+const API_URL = '../api/work-log';
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',
