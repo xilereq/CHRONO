@@ -181,6 +181,7 @@ public class ApplicationService implements I_UserApplication {
         application.getDecisionDateTime(),
         application.getDecisionReason(),
         application.getEmployee().getUserId(),
+        application.getEmployee().getEmail(),
         application.getReviewer() != null ? application.getReviewer().getUserId() : null,
         application.getReviewer() != null ? application.getReviewer().getEmail() : null
     );

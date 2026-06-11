@@ -27,6 +27,8 @@ const getDuration = (request) => {
     return `${days} dni`;
 };
 
+const ITEMS_PER_PAGE = 10;
+
 const ApprovalList = ({ userRole }) => {
 
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -34,6 +36,7 @@ const ApprovalList = ({ userRole }) => {
     const [activeAction, setActiveAction] = useState({ id: null, type: null });
     const [actionReason, setActionReason] = useState('');
     const [processingId, setProcessingId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const loadRequests = async () => {
         setLoading(true);
@@ -60,6 +63,11 @@ const ApprovalList = ({ userRole }) => {
         }
     }, [userRole]);
 
+    // Resetuj stronę do 1 po każdym załadowaniu danych
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [pendingRequests]);
+
     const initiateAction = (id, type) => {
         setActiveAction({ id, type });
         setActionReason('');
@@ -79,6 +87,19 @@ const ApprovalList = ({ userRole }) => {
             setProcessingId(null);
         }
     };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        setActiveAction({ id: null, type: null });
+    };
+
+    const totalPages = Math.ceil(pendingRequests.length / ITEMS_PER_PAGE);
+    const pageItems = pendingRequests.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    const colSpan = userRole === 'MANAGER' ? 6 : 5;
 
     return (
         <div className="requests-container">
@@ -100,17 +121,19 @@ const ApprovalList = ({ userRole }) => {
                                 <th>Okres / Data</th>
                                 <th>Liczba Dni</th>
                                 <th>Powód</th>
+                                <th>E-mail wnioskodawcy</th>
                                 {userRole === 'MANAGER' && <th>Akcje</th>}
                             </tr>
                             </thead>
                             <tbody>
-                            {pendingRequests.map(r => (
+                            {pageItems.map(r => (
                                 <React.Fragment key={r.id}>
                                     <tr>
                                         <td className="request-card-title-cell">{translateType(r.type)}</td>
                                         <td>{r.startDate} - {r.endDate}</td>
                                         <td>{getDuration(r)}</td>
                                         <td>{r.reason || '-'}</td>
+                                        <td>{r.employeeEmail || '-'}</td>
 
                                         {userRole === 'MANAGER' && (
                                             <td>
@@ -136,7 +159,7 @@ const ApprovalList = ({ userRole }) => {
 
                                     {activeAction.id === r.id && userRole === 'MANAGER' && (
                                         <tr>
-                                            <td colSpan="5" className={`action-panel-td ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
+                                            <td colSpan={colSpan} className={`action-panel-td ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                 <div className="action-panel-container">
                                                     <span className={`action-panel-label ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                         {activeAction.type === 'APPROVED' ? 'Uwagi do akceptacji (opcjonalne):' : 'Powód odrzucenia (opcjonalne):'}
@@ -171,6 +194,32 @@ const ApprovalList = ({ userRole }) => {
                             ))}
                             </tbody>
                         </table>
+
+                        {totalPages > 1 && (
+                            <div className="pagination">
+                                <span
+                                    className={currentPage === 1 ? 'page-disabled' : 'page-btn'}
+                                    onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                                >
+                                    «
+                                </span>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                    <span
+                                        key={page}
+                                        className={page === currentPage ? 'page-active' : 'page-btn'}
+                                        onClick={() => handlePageChange(page)}
+                                    >
+                                        {page}
+                                    </span>
+                                ))}
+                                <span
+                                    className={currentPage === totalPages ? 'page-disabled' : 'page-btn'}
+                                    onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                                >
+                                    »
+                                </span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

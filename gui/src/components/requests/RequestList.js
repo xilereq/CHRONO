@@ -11,6 +11,14 @@ const RequestList = () => {
     const [filterType, setFilterType] = useState("");
     const [filterDate, setFilterDate] = useState("");
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+
+    // Resetuj stronę do 1 przy każdej zmianie filtrów
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus, filterType, filterDate]);
+
 
     const fetchRequests = async () => {
         setLoading(true);
@@ -126,17 +134,42 @@ const RequestList = () => {
                             </tr>
                             </thead>
                             <tbody>
-                            {/* 4. Mapowanie pofiltrowanej tablicy zamiast oryginalnej */}
-                            {filteredRequests.map(r => (
-                                <RequestCard key={r.id} request={r} />
-                            ))}
+                            {filteredRequests
+                                .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                                .map(r => (
+                                    <RequestCard key={r.id} request={r} />
+                                ))}
                             </tbody>
                         </table>
-                        <div className="pagination">
-                            <span className="page-active">1</span>
-                            <span>2</span>
-                            <span>3</span>
-                        </div>
+
+                        {Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) > 1 && (
+                            <div className="pagination">
+                                <span
+                                    className={currentPage === 1 ? 'page-disabled' : 'page-btn'}
+                                    onClick={() => currentPage > 1 && setCurrentPage(p => p - 1)}
+                                >
+                                    «
+                                </span>
+                                {Array.from(
+                                    { length: Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) },
+                                    (_, i) => i + 1
+                                ).map(page => (
+                                    <span
+                                        key={page}
+                                        className={page === currentPage ? 'page-active' : 'page-btn'}
+                                        onClick={() => setCurrentPage(page)}
+                                    >
+                                        {page}
+                                    </span>
+                                ))}
+                                <span
+                                    className={currentPage === Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) ? 'page-disabled' : 'page-btn'}
+                                    onClick={() => currentPage < Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) && setCurrentPage(p => p + 1)}
+                                >
+                                    »
+                                </span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
