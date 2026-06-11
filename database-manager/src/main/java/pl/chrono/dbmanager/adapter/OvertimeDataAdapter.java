@@ -6,6 +6,7 @@ import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
 import pl.chrono.dbmanager.repository.OvertimeArchiveRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +18,11 @@ public class OvertimeDataAdapter implements I_OvertimeData {
   @Override
   public Integer getUserOvertimeBalance(Integer userId) {
     return repository.calculateOvertimeBalanceSeconds(userId);
+  }
+
+  @Override
+  public Integer sumEarnedOvertimeBetween(Integer userId, LocalDateTime startOfYear, LocalDateTime endOfYear) {
+    return repository.sumEarnedOvertimeBetween(userId, startOfYear, endOfYear);
   }
 
   @Override

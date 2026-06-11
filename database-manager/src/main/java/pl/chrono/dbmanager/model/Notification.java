@@ -26,8 +26,11 @@ public class Notification {
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
 
-  @Column(name = "application_id")
-  private Long applicationId;
+  @Column(name = "reference_id")
+  private Long referenceId;
+
+  @Column(name = "reference_type", length = 50)
+  private String referenceType;
 
   @Column(name = "type", length = 50)
   private String type;

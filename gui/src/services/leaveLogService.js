@@ -1,3 +1,5 @@
+import {handleApiResponse} from "../utils/errorHandler";
+
 const API_URL = 'http://localhost:8080/api/leave-log';
 
 const getHeaders = () => ({
@@ -18,7 +20,7 @@ const leaveLogService = {
             headers: getHeaders(),
             body: JSON.stringify({ type: leaveType })
         });
-        if (!response.ok) throw new Error('Błąd podczas rozpoczynania przerwy');
+        if (!response.ok) return handleApiResponse(response);
         return response.json();
     },
     endLeave: async () => {
@@ -26,7 +28,7 @@ const leaveLogService = {
             method: 'POST',
             headers: getHeaders()
         });
-        if (!response.ok) throw new Error('Błąd podczas kończenia przerwy');
+        if (!response.ok) return handleApiResponse(response);
         return response.json();
     }
 };

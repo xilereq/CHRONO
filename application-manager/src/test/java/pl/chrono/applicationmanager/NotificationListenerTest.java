@@ -33,7 +33,7 @@ class NotificationListenerTest {
 
     String expectedMessage = "Złożono nowy wniosek (ID: 100) oczekujący na Twoją decyzję.";
     verify(notificationService, times(1)).sendNotification(
-        managerId, expectedMessage, applicationId, "APPLICATION_CREATED"
+        managerId, expectedMessage, applicationId, "APPLICATION", "APPLICATION_CREATED"
     );
   }
 
@@ -62,7 +62,7 @@ class NotificationListenerTest {
 
     String expectedMessage = "Twój wniosek (ID: 200) otrzymał nowy status: APPROVED od Jan Kowalski";
     verify(notificationService, times(1)).sendNotification(
-        employeeId, expectedMessage, applicationId, "APPLICATION_STATUS_CHANGED"
+        employeeId, expectedMessage, applicationId, "APPLICATION", "APPLICATION_STATUS_CHANGED"
     );
   }
 

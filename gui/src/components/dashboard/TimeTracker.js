@@ -96,7 +96,7 @@ const TimeTracker = () => {
             }
         } catch (error) {
             console.error(error);
-            alert("Wystąpił błąd komunikacji z serwerem.");
+            alert(error.message);
         } finally {
             setIsLoading(false);
         }
@@ -115,7 +115,7 @@ const TimeTracker = () => {
 
             } catch (error) {
                 console.error(error);
-                alert("Błąd podczas kończenia przerwy.");
+                alert(error.message);
             } finally {
                 setIsLoading(false);
             }
@@ -132,7 +132,7 @@ const TimeTracker = () => {
             setIsOnBreak(true);
         } catch (error) {
             console.error(error);
-            alert("Błąd podczas rozpoczynania przerwy.");
+            alert(error.message);
         } finally {
             setIsLoading(false);
         }
