@@ -18,6 +18,7 @@ import pl.chrono.usermanager.dto.request.RegisterRequest;
 import pl.chrono.usermanager.dto.response.AuthResponse;
 import pl.chrono.usermanager.dto.response.RegisterResponse;
 import pl.chrono.usermanager.event.PasswordResetEvent;
+import pl.chrono.usermanager.event.UserLoginEvent;
 import pl.chrono.usermanager.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -41,6 +42,8 @@ public class AuthService {
 
     var user = userData.findByEmail(request.email()).orElseThrow(
         () -> new IllegalArgumentException("User not found"));
+
+    eventPublisher.publishEvent(new UserLoginEvent(user.getUserId(), user.getEmail()));
 
     var jwtToken = jwtService.generateToken(user);
 

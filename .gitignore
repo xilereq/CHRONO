@@ -35,3 +35,7 @@ build/
 .vscode/
 
 application-local.properties
+
+# Keystore files
+*.p12
+*.jks
