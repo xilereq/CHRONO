@@ -98,4 +98,15 @@ public class ApplicationController extends BaseController {
     List<ApplicationResponse> applications = applicationService.getAllApplications();
     return ResponseEntity.ok(applications);
   }
+
+  @PatchMapping("/{applicationId}/cancel")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
+  public ResponseEntity<ApplicationResponse> cancelOwnApplication(
+      @RequestHeader("Authorization") String token,
+      @PathVariable Long applicationId) {
+
+    Integer userId = extractId(token);
+    ApplicationResponse cancelled = applicationService.cancelApplication(applicationId, userId);
+    return ResponseEntity.ok(cancelled);
+  }
 }

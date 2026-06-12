@@ -13,4 +13,6 @@ public interface OperationLogRepository extends JpaRepository<OperationLog, Long
   @Modifying
   @Query("DELETE FROM OperationLog o WHERE o.timestamp < :cutoffDate")
   int deleteOlderThan(@Param("cutoffDate") LocalDateTime cutoffDate);
+
+  boolean existsByActionAndTimestampBetween(String action, LocalDateTime start, LocalDateTime end);
 }

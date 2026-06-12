@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/api/applications';
+const API_URL = '../api/applications';
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -20,17 +20,32 @@ const applicationService = {
             headers: getHeaders(),
             body: JSON.stringify(applicationData)
         });
-        if (!response.ok) throw new Error('Błąd podczas składania wniosku');
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            if (errorBody?.code === 'INSUFFICIENT_BALANCE') {
+                const timeMatch = errorBody.message?.match(/(\d+h:\d+m)/);
+                const time = timeMatch ? timeMatch[1] : '0h:00m';
+                throw new Error(`Niewystarczające saldo nadgodzin. Aktualnie masz ${time} do wykorzystania.`);
+            }
+            throw new Error(errorBody?.message || 'Błąd podczas składania wniosku');
+        }
         return response.json();
     },
 
-    // Sekcja zaktualizowana: wysyłamy JSON-a w polu body
+    cancelApplication: async (applicationId) => {
+        const response = await fetch(`${API_URL}/${applicationId}/cancel`, {
+            method: 'PATCH',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Błąd podczas anulowania wniosku');
+        return response.json();
+    },
+
     changeStatus: async (applicationId, newStatus, decisionReason) => {
         const payload = {
             newStatus: newStatus,
             decisionReason: decisionReason || ""
         };
-
         const response = await fetch(`${API_URL}/${applicationId}/status`, {
             method: 'PATCH',
             headers: getHeaders(),

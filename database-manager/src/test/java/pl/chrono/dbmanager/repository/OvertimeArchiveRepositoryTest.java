@@ -13,6 +13,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.User;
+import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
@@ -88,6 +89,83 @@ class OvertimeArchiveRepositoryTest {
     Integer balance = repository.calculateOvertimeBalanceSeconds(user1.getUserId());
 
     assertThat(balance).isEqualTo(3600);
+  }
+
+  @Test
+  void sumEarnedOvertimeBetweenDateRangeTest() {
+    LocalDateTime startOfYear = LocalDateTime.of(2026, 1, 1, 0, 0);
+    LocalDateTime endOfYear = LocalDateTime.of(2026, 12, 31, 23, 59, 59);
+
+    WorkLog wl1 = persistWorkLog(user1, LocalDateTime.of(2026, 5, 10, 15, 0));
+    WorkLog wl2 = persistWorkLog(user1, LocalDateTime.of(2026, 8, 20, 10, 0));
+    WorkLog wl3 = persistWorkLog(user1, LocalDateTime.of(2025, 12, 31, 23, 0));
+
+    persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 3600, wl1); // +
+    persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 7200, wl2); // +
+    persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 1800, wl3);
+    em.flush();
+
+    Integer sum = repository.sumEarnedOvertimeBetween(user1.getUserId(), startOfYear, endOfYear);
+    assertThat(sum).isEqualTo(10800);
+  }
+
+  @Test
+  void sumEarnedOvertimeBetweenOtherOvertimeTypesTest() {
+    LocalDateTime startOfYear = LocalDateTime.of(2026, 1, 1, 0, 0);
+    LocalDateTime endOfYear = LocalDateTime.of(2026, 12, 31, 23, 59, 59);
+
+    WorkLog wl1 = persistWorkLog(user1, LocalDateTime.of(2026, 5, 10, 15, 0));
+    WorkLog wl2 = persistWorkLog(user1, LocalDateTime.of(2026, 8, 20, 10, 0));
+    WorkLog wl3 = persistWorkLog(user1, LocalDateTime.of(2026, 12, 31, 23, 0));
+
+    persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 3600, wl1); // +
+    persistOvertimeWithWorkLog(user1, OvertimeType.MANUAL_ADDITION, 7200, wl2);
+    persistOvertimeWithWorkLog(user1, OvertimeType.DEBT, 1800, wl3);
+    em.flush();
+
+    Integer sum = repository.sumEarnedOvertimeBetween(user1.getUserId(), startOfYear, endOfYear);
+    assertThat(sum).isEqualTo(3600);
+  }
+
+  @Test
+  void sumEarnedOvertimeBetweenDateRangeNoRecordsTest() {
+    LocalDateTime startOfYear = LocalDateTime.of(2026, 1, 1, 0, 0);
+    LocalDateTime endOfYear = LocalDateTime.of(2026, 12, 31, 23, 59, 59);
+
+    Integer sum = repository.sumEarnedOvertimeBetween(user1.getUserId(), startOfYear, endOfYear);
+    assertThat(sum).isZero();
+  }
+
+  @Test
+  void sumEarnedOvertimeBetweenDateRangeNoEarnedRecordsTest() {
+    LocalDateTime startOfYear = LocalDateTime.of(2026, 1, 1, 0, 0);
+    LocalDateTime endOfYear = LocalDateTime.of(2026, 12, 31, 23, 59, 59);
+
+    WorkLog wl1 = persistWorkLog(user1, LocalDateTime.of(2026, 5, 10, 15, 0));
+    WorkLog wl2 = persistWorkLog(user1, LocalDateTime.of(2026, 8, 20, 10, 0));
+
+    persistOvertimeWithWorkLog(user1, OvertimeType.MANUAL_ADDITION, 7200, wl1);
+    persistOvertimeWithWorkLog(user1, OvertimeType.DEBT, 1800, wl2);
+    em.flush();
+
+    Integer sum = repository.sumEarnedOvertimeBetween(user1.getUserId(), startOfYear, endOfYear);
+    assertThat(sum).isZero();
+  }
+
+  @Test
+  void sumEarnedOvertimeBetweenDateRangeOtherUserRecordsTest() {
+    LocalDateTime startOfYear = LocalDateTime.of(2026, 1, 1, 0, 0);
+    LocalDateTime endOfYear = LocalDateTime.of(2026, 12, 31, 23, 59, 59);
+
+    WorkLog wl1 = persistWorkLog(user1, LocalDateTime.of(2026, 5, 10, 15, 0));
+    WorkLog wl2 = persistWorkLog(user2, LocalDateTime.of(2026, 8, 20, 10, 0));
+
+    persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 3600, wl1); // +
+    persistOvertimeWithWorkLog(user2, OvertimeType.EARNED, 7200, wl2);
+    em.flush();
+
+    Integer sum = repository.sumEarnedOvertimeBetween(user1.getUserId(), startOfYear, endOfYear);
+    assertThat(sum).isEqualTo(3600);
   }
 
   @Test
@@ -185,6 +263,21 @@ class OvertimeArchiveRepositoryTest {
     archive.setDurationSeconds(durationSeconds);
     archive.setValidUntil(LocalDateTime.now().plusYears(1));
     archive.setApplication(application);
+    return em.persist(archive);
+  }
+
+  private WorkLog persistWorkLog(User user, LocalDateTime startTime) {
+    WorkLog workLog = new WorkLog();
+    workLog.setUser(user);
+    workLog.setStartTime(startTime);
+    return em.persist(workLog);
+  }
+
+  private OvertimeArchive persistOvertimeWithWorkLog(User user, OvertimeType type,
+                                                     int durationSeconds,
+                                                     WorkLog workLog) {
+    OvertimeArchive archive = persistOvertime(user, type, durationSeconds);
+    archive.setWorkLog(workLog);
     return em.persist(archive);
   }
 }

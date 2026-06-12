@@ -29,11 +29,13 @@ public class NotificationService {
   }
 
   @Transactional
-  public void sendNotification(Integer userId, String message, Long applicationId, String type) {
+  public void sendNotification(Integer userId, String message, Long referenceId,
+                               String referenceType, String type) {
     Notification notification = new Notification();
     notification.setUserId(userId);
     notification.setMessage(message);
-    notification.setApplicationId(applicationId);
+    notification.setReferenceId(referenceId);
+    notification.setReferenceType(referenceType);
     notification.setType(type);
     Notification saved = notificationRepository.save(notification);
 

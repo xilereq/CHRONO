@@ -7,7 +7,9 @@ const translateType = (type) => {
     switch (type) {
         case 'HOLIDAY_LEAVE': return 'Urlop wypoczynkowy';
         case 'SICK_LEAVE': return 'Zwolnienie lekarskie';
-        case 'OVERTIME': return 'Odbiór nadgodzin';
+        case 'EARLY_EXIT': return 'Wyjście wcześniejsze';
+        case 'OVERTIME_EARN': return 'Zgłoszenie nadgodzin';
+        case 'OVERTIME_TAKE': return 'Odbiór nadgodzin';
         default: return type || 'Inny';
     }
 };
@@ -17,6 +19,7 @@ const translateStatus = (status) => {
         case 'APPROVED': return 'Zatwierdzony';
         case 'PENDING': return 'Oczekujący';
         case 'REJECTED': return 'Odrzucony';
+        case 'CANCELLED': return 'Anulowany';
         default: return status;
     }
 };
@@ -64,7 +67,7 @@ const RecentRequests = () => {
                     requests.map((req) => (
                         <tr key={req.id}>
                             <td>{translateType(req.type)}</td>
-                            <td>{req.createdAt || '-'}</td>
+                            <td>{req.creationDateTime ? new Date(req.creationDateTime).toLocaleDateString('pl-PL') : '-'}</td>
                             <td>{req.startDate} - {req.endDate}</td>
                             <td><Badge status={translateStatus(req.status)} /></td>
                         </tr>

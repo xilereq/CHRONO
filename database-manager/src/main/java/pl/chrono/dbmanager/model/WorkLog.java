@@ -116,4 +116,36 @@ public class WorkLog {
     return exactWorkTime;
   }
 
+  public long calculateNightSeconds(LocalDateTime start, LocalDateTime end) {
+    if (start == null || end == null) return 0;
+    long nightSeconds = 0;
+    LocalDateTime current = start;
+
+    while (current.isBefore(end)) {
+      LocalDateTime nextDay = current.toLocalDate().plusDays(1).atStartOfDay();
+      LocalDateTime chunkEnd = end.isBefore(nextDay) ? end : nextDay;
+
+      LocalDateTime nightStart = current.toLocalDate().atTime(21, 0);
+      LocalDateTime nightEnd = current.toLocalDate().plusDays(1).atTime(7, 0);
+
+      LocalDateTime morningNightStart = current.toLocalDate().atStartOfDay();
+      LocalDateTime morningNightEnd = current.toLocalDate().atTime(7, 0);
+
+      nightSeconds += getOverlapSeconds(current, chunkEnd, morningNightStart, morningNightEnd);
+      nightSeconds += getOverlapSeconds(current, chunkEnd, nightStart, nightEnd);
+
+      current = chunkEnd;
+    }
+    return nightSeconds;
+  }
+
+  private long getOverlapSeconds(LocalDateTime workStart, LocalDateTime workEnd,
+                                 LocalDateTime nightStart, LocalDateTime nightEnd) {
+    LocalDateTime overlapStart = workStart.isAfter(nightStart) ? workStart : nightStart;
+    LocalDateTime overlapEnd = workEnd.isBefore(nightEnd) ? workEnd : nightEnd;
+    if (overlapStart.isBefore(overlapEnd)) {
+      return Duration.between(overlapStart, overlapEnd).getSeconds();
+    }
+    return 0;
+  }
 }

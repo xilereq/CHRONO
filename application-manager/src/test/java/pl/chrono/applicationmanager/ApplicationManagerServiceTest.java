@@ -455,4 +455,38 @@ class ApplicationManagerServiceTest {
     List<ApplicationResponse> result = applicationService.getUserApplications(employeeId, requesterId);
     assertNotNull(result);
   }
+
+  @Test
+  void getAllApllications_ShouldReturnAllAlplication_WhenRequesterIsAdmin() {
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setEmail("pracownik@chrono.pl");
+
+    Application mockApp1 = new Application();
+    mockApp1.setId(10L);
+    mockApp1.setEmployee(mockEmployee);
+    mockApp1.setType(ApplicationType.HOLIDAY_LEAVE);
+    mockApp1.setStatus(ApplicationStatus.PENDING);
+
+    Application mockApp2 = new Application();
+    mockApp2.setId(11L);
+    mockApp2.setEmployee(mockEmployee);
+    mockApp2.setType(ApplicationType.SICK_LEAVE);
+    mockApp2.setStatus(ApplicationStatus.APPROVED);
+
+    when(applicationRepository.findAll()).thenReturn(List.of(mockApp1, mockApp2));
+
+    List<ApplicationResponse> result = applicationService.getAllApplications();
+
+    assertNotNull(result);
+    assertEquals(2, result.size());
+    assertEquals(10L, result.get(0).id());
+    assertEquals("HOLIDAY_LEAVE", result.get(0).type());
+    assertEquals("PENDING", result.get(0).status());
+    assertEquals(11L, result.get(1).id());
+    assertEquals("SICK_LEAVE", result.get(1).type());
+    assertEquals("APPROVED", result.get(1).status());
+
+    verify(applicationRepository, times(1)).findAll();
+  }
 }

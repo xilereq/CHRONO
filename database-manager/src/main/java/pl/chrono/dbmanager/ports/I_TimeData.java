@@ -24,4 +24,6 @@ public interface I_TimeData {
   Optional<LeaveLog> findActiveLeaveLog(Integer userId);
 
   List<WorkLog> findUnsettledWorkLogs();
+
+  Optional<WorkLog> findLastClosedWorkLog(Integer userId);
 }
