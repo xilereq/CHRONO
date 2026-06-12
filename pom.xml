@@ -22,6 +22,7 @@
         <module>application-manager</module>
         <module>log-manager</module>
         <module>report-manager</module>
+        <module>notification-manager</module>
     </modules>
 
 	<properties>

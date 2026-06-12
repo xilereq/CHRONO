@@ -1,4 +1,4 @@
-package pl.chrono.applicationmanager.service;
+package pl.chrono.notificationmanager.service;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +14,7 @@ import pl.chrono.dbmanager.repository.NotificationRepository;
 @RequiredArgsConstructor
 public class NotificationService {
   private final NotificationRepository notificationRepository;
+  private final EmailNotificationService emailNotificationService;
 
   private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
 
@@ -47,6 +48,8 @@ public class NotificationService {
         emitters.remove(userId);
       }
     }
+
+    emailNotificationService.sendEmailNotification(userId, message, type);
   }
 
   @Transactional(readOnly = true)

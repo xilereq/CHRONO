@@ -1,10 +1,10 @@
-package pl.chrono.applicationmanager.listener;
+package pl.chrono.notificationmanager.listener;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
-import pl.chrono.applicationmanager.service.NotificationService;
+import pl.chrono.notificationmanager.service.NotificationService;
 
 @Component
 @RequiredArgsConstructor
