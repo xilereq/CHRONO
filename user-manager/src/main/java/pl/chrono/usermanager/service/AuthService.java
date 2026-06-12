@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import pl.chrono.usermanager.dto.request.ChangePasswordRequest;
 import pl.chrono.usermanager.dto.request.RegisterRequest;
 import pl.chrono.usermanager.dto.response.AuthResponse;
 import pl.chrono.usermanager.dto.response.RegisterResponse;
+import pl.chrono.usermanager.event.PasswordResetEvent;
 import pl.chrono.usermanager.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -27,6 +29,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
+  private final ApplicationEventPublisher eventPublisher;
 
   public AuthResponse login(AuthRequest request) {
     authenticationManager.authenticate(
@@ -117,7 +120,7 @@ public class AuthService {
       userData.save(user);
 
       //To w przyszłości będzie trzeba podmienić na wywołanie logiki wysyłania maili do użytkownika
-      System.out.println("LINK DO RESETU HASŁA: http://localhost:3000/reset-password?token=" + token);
+      eventPublisher.publishEvent(new PasswordResetEvent(user.getUserId(), user.getEmail(), token));
     });
   }
 

@@ -44,6 +44,7 @@ public class EmailNotificationService {
       case "APPLICATION_CREATED" -> "Nowy wniosek oczekuje na Twoją decyzję";
       case "APPLICATION_STATUS_CHANGED" -> "Zmiana statusu Twojego wniosku";
       case "VIOLATION_REST", "VIOLATION_MAX_WORK" -> "Ostrzeżenie o naruszeniu czasu pracy";
+      case "PASSWORD_RESET" -> "Resetowanie hasła w systemie Chrono";
       default -> "Nowe powiadomienie systemowe - Chrono";
     };
   }

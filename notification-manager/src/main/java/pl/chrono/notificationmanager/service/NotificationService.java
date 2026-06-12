@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import pl.chrono.dbmanager.model.Notification;
 import pl.chrono.dbmanager.repository.NotificationRepository;
+import pl.chrono.usermanager.event.PasswordResetEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -64,4 +66,15 @@ public class NotificationService {
       notificationRepository.save(n);
     });
   }
+
+  @EventListener
+  public void handlePasswordRequestNotification(PasswordResetEvent event){
+    String resetLink = "http://localhost:3000/reset-password?token=" + event.resetToken();
+    String message = "Otrzymaliśmy prośbę o reset hasła. Aby ustawić nowe hasło, kliknij w poniższy link:\n\n" + resetLink;
+
+    emailNotificationService.sendEmailNotification(
+        event.userId(),
+        message,
+        "PASSWORD_RESET"
+    );}
 }
