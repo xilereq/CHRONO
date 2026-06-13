@@ -5,5 +5,6 @@ public enum ApplicationType {
   SICK_LEAVE,
   EARLY_EXIT,
   OVERTIME_EARN,
-  OVERTIME_TAKE
+  OVERTIME_TAKE,
+  HOME_OFFICE
 }

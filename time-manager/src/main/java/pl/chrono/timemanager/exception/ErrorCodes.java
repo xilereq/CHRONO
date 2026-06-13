@@ -28,4 +28,7 @@ public final class ErrorCodes {
   public static final String OVERLAPPING_WORKLOG = "OVERLAPPING_WORKLOG";
 
   public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
+
+  public static final String APPLICATION_DAILY_LIMIT_EXCEEDED = "APPLICATION_DAILY_LIMIT_EXCEEDED";
+  public static final String REQUESTED_TIME_EXCEEDS_SCHEDULED = "REQUESTED_TIME_EXCEEDS_SCHEDULED";
 }

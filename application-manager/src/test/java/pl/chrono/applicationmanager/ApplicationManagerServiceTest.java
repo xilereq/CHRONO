@@ -28,6 +28,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.timemanager.service.ApplicationValidationService;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationManagerServiceTest {
@@ -40,6 +41,9 @@ class ApplicationManagerServiceTest {
 
   @Mock
   private ApplicationEventPublisher eventPublisher;
+
+  @Mock
+  private ApplicationValidationService applicationValidationService;
 
   @InjectMocks
   private ApplicationService applicationService;

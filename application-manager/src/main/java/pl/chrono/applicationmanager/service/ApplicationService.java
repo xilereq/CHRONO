@@ -19,6 +19,7 @@ import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.service.OvertimeService;
+import pl.chrono.timemanager.service.ApplicationValidationService;
 
 
 @Service
@@ -30,6 +31,7 @@ public class ApplicationService implements I_UserApplication {
   private final ApplicationEventPublisher eventPublisher;
 
   private final OvertimeService overtimeService;
+  private final ApplicationValidationService applicationValidationService;
 
   @Override
   @Transactional
@@ -38,9 +40,18 @@ public class ApplicationService implements I_UserApplication {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
 
+    ApplicationType type = ApplicationType.valueOf(request.type());
+
+    applicationValidationService.validateApplicationLimits(
+        employeeId,
+        request.startDate(),
+        type,
+        request.durationSeconds()
+    );
+
     Application application = new Application();
     application.setEmployee(employee);
-    application.setType(ApplicationType.valueOf(request.type()));
+    application.setType(type);
     application.setStartDate(request.startDate());
     application.setEndDate(request.endDate());
     application.setReason(request.reason());
