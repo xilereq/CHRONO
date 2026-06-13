@@ -31,10 +31,9 @@ public class ApplicationService implements I_UserApplication {
 
   private final OvertimeService overtimeService;
 
-  // sekcja tworzenia wniosku
   @Override
   @Transactional
-  @LogActivity(action = "CREATE_APPLICATION", details = "Pracownik złożył nowy wniosek")
+  @LogActivity(action = "CREATE_APPLICATION", details = "The employee submitted a new application")
   public ApplicationResponse createApplication(CreateApplicationRequest request, Integer employeeId) {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
@@ -82,7 +81,7 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
-  @LogActivity(action = "CHANGE_APPLICATION_STATUS", details = "Zmiana statusu wniosku pracownika")
+  @LogActivity(action = "CHANGE_APPLICATION_STATUS", details = "Changing the status of an employee's application")
   public ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
     Application application = applicationRepository.findById(applicationId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
@@ -189,7 +188,7 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   @Transactional
-  @LogActivity(action = "CANCEL_APPLICATION", details = "Pracownik anulował własny wniosek")
+  @LogActivity(action = "CANCEL_APPLICATION", details = "The employee canceled his own application")
   public ApplicationResponse cancelApplication(Long applicationId, Integer userId) {
     Application application = applicationRepository.findById(applicationId)
         .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
