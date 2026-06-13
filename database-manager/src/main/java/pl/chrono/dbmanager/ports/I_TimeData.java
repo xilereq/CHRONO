@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.WorkLog;
+import pl.chrono.dbmanager.model.WorkLogRequest;
 
 public interface I_TimeData {
   boolean isUserWorking(Integer userId);
@@ -26,4 +27,19 @@ public interface I_TimeData {
   List<WorkLog> findUnsettledWorkLogs();
 
   Optional<WorkLog> findLastClosedWorkLog(Integer userId);
+
+  Optional<WorkLog> findWorkLogById(Integer workLogId);
+
+  WorkLogRequest saveWorkLogRequest(WorkLogRequest request);
+
+  Optional<WorkLogRequest> findWorkLogRequestById(Long requestId);
+
+  List<WorkLogRequest> findWorkLogRequestsByEmployee(Integer employeeId);
+
+  List<WorkLogRequest> findPendingWorkLogRequestsForManager(Integer managerId);
+
+  List<WorkLog> findWorkLogsByUserAndDate(Integer userId, LocalDateTime startOfDay,
+                                          LocalDateTime endOfDay);
+
+  List<WorkLogRequest> findAllPendingWorkLogRequests();
 }

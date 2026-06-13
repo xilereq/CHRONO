@@ -34,6 +34,17 @@ public class WorkLogService {
   private final ApplicationRepository applicationRepository;
   private final ApplicationEventPublisher eventPublisher;
 
+  @Transactional(readOnly = true)
+  public List<WorkLogDto> getWorkLogsByDate(Integer userId, LocalDate date) {
+    LocalDateTime startOfDay = date.atStartOfDay();
+    LocalDateTime endOfDay = date.plusDays(1).atStartOfDay().minusNanos(1);
+
+    return timeData.findWorkLogsByUserAndDate(userId, startOfDay, endOfDay)
+        .stream()
+        .map(workLogMapper::toDto)
+        .toList();
+  }
+
   @Transactional
   public WorkLogDto startWork(Integer userId) {
     if (isUserWorking(userId)) {

@@ -7,15 +7,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.WorkLog;
+import pl.chrono.dbmanager.model.WorkLogRequest;
+import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.LeaveLogRepository;
 import pl.chrono.dbmanager.repository.WorkLogRepository;
+import pl.chrono.dbmanager.repository.WorkLogRequestRepository;
 
 @Component
 @RequiredArgsConstructor
 public class TimeDataAdapter implements I_TimeData {
   private final WorkLogRepository workLogRepository;
   private final LeaveLogRepository leaveLogRepository;
+  private final WorkLogRequestRepository requestRepository;
 
   @Override
   public boolean isUserWorking(Integer userId) {
@@ -65,5 +69,43 @@ public class TimeDataAdapter implements I_TimeData {
   @Override
   public Optional<WorkLog> findLastClosedWorkLog(Integer userId) {
     return workLogRepository.findTopByUser_UserIdAndEndTimeIsNotNullOrderByEndTimeDesc(userId);
+  }
+
+  @Override
+  public Optional<WorkLog> findWorkLogById(Integer workLogId) {
+    return workLogRepository.findById(workLogId);
+  }
+
+  @Override
+  public WorkLogRequest saveWorkLogRequest(WorkLogRequest request) {
+    return requestRepository.save(request);
+  }
+
+  @Override
+  public Optional<WorkLogRequest> findWorkLogRequestById(Long requestId) {
+    return requestRepository.findById(requestId);
+  }
+
+  @Override
+  public List<WorkLogRequest> findWorkLogRequestsByEmployee(Integer employeeId) {
+    return requestRepository.findAllByEmployeeUserIdOrderByCreatedAtDesc(employeeId);
+  }
+
+  @Override
+  public List<WorkLogRequest> findPendingWorkLogRequestsForManager(Integer managerId) {
+    return requestRepository.findAllByEmployeeManagerUserIdAndStatus(
+        managerId, WorkLogRequestStatus.PENDING);
+  }
+
+  @Override
+  public List<WorkLog> findWorkLogsByUserAndDate(Integer userId, LocalDateTime startOfDay,
+                                                 LocalDateTime endOfDay) {
+    return workLogRepository.findByUser_UserIdAndStartTimeBetweenOrderByStartTimeAsc(
+        userId, startOfDay, endOfDay);
+  }
+
+  @Override
+  public List<WorkLogRequest> findAllPendingWorkLogRequests() {
+    return requestRepository.findAllByStatus(WorkLogRequestStatus.PENDING);
   }
 }

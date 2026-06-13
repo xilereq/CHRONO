@@ -124,6 +124,19 @@ public class User implements UserDetails {
         .orElse(null);
   }
 
+  public Policy getPolicyForDate(LocalDate date) {
+    if (this.userPolicies == null || this.userPolicies.isEmpty() || date == null) {
+      return null;
+    }
+    return this.userPolicies.stream()
+        .filter(up -> up.getValidFrom() != null && !date.isBefore(up.getValidFrom())
+            && (up.getValidTo() == null || !date.isAfter(up.getValidTo())))
+        .map(UsersPolicy::getPolicy)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
   @Override
   public boolean isEnabled() {
     return this.isActive;

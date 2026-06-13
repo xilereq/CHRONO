@@ -22,11 +22,13 @@ public interface WorkLogRepository extends JpaRepository<WorkLog, Integer> {
 
   List<WorkLog> findByEndTimeIsNotNullAndSettledFalse();
 
-  Optional<WorkLog> findByUserUserIdAndStartTimeBetween(
-      Integer employeeId,
-      LocalDateTime startOfDay,
-      LocalDateTime endOfDay
-  );
+  Optional<WorkLog> findByUserUserIdAndStartTimeBetween(Integer employeeId,
+                                                        LocalDateTime startOfDay,
+                                                        LocalDateTime endOfDay);
 
   Optional<WorkLog> findTopByUser_UserIdAndEndTimeIsNotNullOrderByEndTimeDesc(Integer userId);
+
+  List<WorkLog> findByUser_UserIdAndStartTimeBetweenOrderByStartTimeAsc(Integer userId,
+                                                                        LocalDateTime startOfDay,
+                                                                        LocalDateTime endOfDay);
 }
