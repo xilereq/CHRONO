@@ -81,24 +81,21 @@ const TimeTracker = () => {
         setIsLoading(true);
         try {
             if (isWorking) {
-                if (isHO) {
-                    setIsWorking(false);
-                    setIsHO(false);
+                if (isOnBreak) {
+                    await leaveLogService.endLeave();
                     setIsOnBreak(false);
-                    setStartTime(null);
-                    alert("Zakończono czas pracy HO");
-                } else {
-                    if (isOnBreak) {
-                        await leaveLogService.endLeave();
-                        setIsOnBreak(false);
-                    }
-                    await workLogService.endWork();
-                    setIsWorking(false);
-                    setStartTime(null);
-                    alert("Zakończono czas pracy");
                 }
+
+                await workLogService.endWork();
+
+                setIsWorking(false);
+                setIsHO(false);
+                setStartTime(null);
+                alert("Zakończono czas pracy");
             } else {
-                await workLogService.startWork();
+                const request = { locationType: "OFFICE" };
+                await workLogService.startWork(request);
+
                 const nowStart = new Date();
                 setIsWorking(true);
                 setIsHO(false);
@@ -112,11 +109,23 @@ const TimeTracker = () => {
         }
     };
 
-    const handleToggleWorkHO = () => {
+    const handleToggleWorkHO = async () => {
         if (isLoading || isWorking) return;
-        setIsWorking(true);
-        setIsHO(true);
-        setStartTime(new Date());
+        setIsLoading(true);
+
+        try {
+            const request = { locationType: "HOME_OFFICE" };
+            await workLogService.startWork(request);
+
+            setIsWorking(true);
+            setIsHO(true);
+            setStartTime(new Date());
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleToggleBreak = async () => {
@@ -132,7 +141,7 @@ const TimeTracker = () => {
                     setIsOnBreak(false);
                     await syncActiveTime();
                 } else {
-                    await leaveLogService.startLeave('OTHER');
+                    await leaveLogService.startLeave();
                     setIsOnBreak(true);
                 }
             }

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { applicationService } from '../../services';
+import { workLogRequestService } from '../../services';
 import { Button } from '../../components';
-import './dashboard.css';
+import '../requests/requests.css';
 
 const ScheduleChangeForm = ({ onCancel, onSuccess }) => {
     const [loading, setLoading] = useState(false);
@@ -27,20 +27,20 @@ const ScheduleChangeForm = ({ onCancel, onSuccess }) => {
         setLoading(true);
 
         try {
-            const payload = {
-                type: 'SCHEDULE_CHANGE',
-                startDate: formData.date,
-                endDate: formData.date,
-                title: 'Wniosek o zmianę godzin pracy',
-                reason: formData.reason,
-                startTime: formData.newStartTime,
-                endTime: formData.newEndTime,
-                oldStartTime: formData.oldStartTime,
-                oldEndTime: formData.oldEndTime
+            const formatDateTime = (dateStr, timeStr) => {
+                const formattedTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+                return `${dateStr}T${formattedTime}`;
             };
 
-            await applicationService.createApplication(payload);
-            alert('Prośba o zmianę godzin została wysłana do akceptacji!');
+            const payload = {
+                proposedStartTime: formatDateTime(formData.date, formData.newStartTime),
+                proposedEndTime: formatDateTime(formData.date, formData.newEndTime),
+                date: formData.date,
+                reason: formData.reason
+            };
+            await workLogRequestService.submitRequest(payload);
+
+            alert('Prośba o zmianę godzin została pomyślnie wysłana!');
             if (onSuccess) onSuccess();
         } catch (err) {
             setError(err.message || 'Wystąpił błąd podczas wysyłania prośby.');
@@ -67,17 +67,6 @@ const ScheduleChangeForm = ({ onCancel, onSuccess }) => {
                             required
                         />
                     </label>
-
-                    <div className="field-row" style={{ gridColumn: 'span 2' }}>
-                        <label className="field field-flex">
-                            <span className="field-label">Jakie były (Od)</span>
-                            <input className="field-input" type="time" name="oldStartTime" value={formData.oldStartTime} onChange={handleChange} required />
-                        </label>
-                        <label className="field field-flex">
-                            <span className="field-label">Jakie były (Do)</span>
-                            <input className="field-input" type="time" name="oldEndTime" value={formData.oldEndTime} onChange={handleChange} required />
-                        </label>
-                    </div>
 
                     <div className="field-row" style={{ gridColumn: 'span 2', marginTop: '-0.5rem' }}>
                         <label className="field field-flex">
