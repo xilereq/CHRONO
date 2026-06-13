@@ -21,6 +21,7 @@ import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
+import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
 import pl.chrono.timemanager.mapper.LeaveLogMapper;
 
@@ -76,7 +77,7 @@ class LeaveLogServiceTest {
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
     assertThrows(
-        IllegalArgumentException.class, () -> leaveLogService.startLeave(userId));
+        UserException.NotFound.class, () -> leaveLogService.startLeave(userId));
   }
 
   @Test

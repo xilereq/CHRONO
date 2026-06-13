@@ -16,6 +16,8 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
 import pl.chrono.timemanager.dto.response.WorkLogRequestDto;
+import pl.chrono.timemanager.exception.UserException;
+import pl.chrono.timemanager.exception.WorkLogRequestException;
 import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
 
 @Service
@@ -32,18 +34,33 @@ public class WorkLogRequestService {
     LocalDateTime proposedEnd = requestDto.proposedEndTime();
 
     if (proposedStart.isAfter(proposedEnd) || proposedStart.isEqual(proposedEnd)) {
-      throw new IllegalArgumentException("Proposed start time must be before end time.");
+      throw new WorkLogRequestException.InvalidTimeRange();
     }
 
     User employee = userRepository.findById(employeeId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new UserException.NotFound(employeeId));
 
+    LocalDateTime searchStart = proposedStart.toLocalDate().atStartOfDay();
+    LocalDateTime searchEnd = proposedEnd.toLocalDate().plusDays(1).atStartOfDay().minusNanos(1);
+
+    List<WorkLog> existingLogs = timeData.findWorkLogsByUserAndDate(employeeId, searchStart, searchEnd);
+
+    for (WorkLog existingLog : existingLogs) {
+      if (requestDto.type() == WorkLogRequestType.UPDATE &&
+          existingLog.getWorkLogId().equals(requestDto.targetWorkLogId())) {
+        continue;
+      }
+      boolean overlaps = areLogsColliding(existingLog, proposedEnd, proposedStart);
+      if (overlaps) {
+        throw new WorkLogRequestException.OverlappingWorkLog();
+      }
+    }
+    
     Policy policy = employee.getPolicyForDate(proposedStart.toLocalDate());
     if (policy != null) {
       long requestedSeconds = java.time.Duration.between(proposedStart, proposedEnd).getSeconds();
       if (requestedSeconds > policy.getMaxAllowedSeconds()) {
-        throw new IllegalArgumentException(
-            "Requested work time exceeds maximum allowed daily hours (" + policy.getMaxDailyHours() + "h).");
+        throw new WorkLogRequestException.DailyLimitExceeded(policy.getMaxDailyHours());
       }
     }
 
@@ -57,20 +74,34 @@ public class WorkLogRequestService {
 
     if (requestDto.type() == WorkLogRequestType.UPDATE) {
       if (requestDto.targetWorkLogId() == null) {
-        throw new IllegalArgumentException("Target WorkLog ID is required for UPDATE requests.");
+        throw new WorkLogRequestException.MissingTargetWorkLog();
       }
 
       WorkLog targetLog = timeData.findWorkLogById(requestDto.targetWorkLogId())
-          .orElseThrow(() -> new IllegalArgumentException("Target WorkLog not found"));
+          .orElseThrow(WorkLogRequestException.TargetWorkLogNotFound::new);
 
       if (!targetLog.getUser().getUserId().equals(employeeId)) {
-        throw new IllegalArgumentException("You cannot request changes to another user's WorkLog.");
+        throw new WorkLogRequestException.UnauthorizedWorkLogAccess();
       }
 
       request.setTargetWorkLog(targetLog);
     }
 
     timeData.saveWorkLogRequest(request);
+  }
+
+  private static boolean areLogsColliding(WorkLog existingLog, LocalDateTime proposedEnd,
+                                    LocalDateTime proposedStart) {
+    LocalDateTime eStart = existingLog.getStartTime();
+    LocalDateTime eEnd = existingLog.getEndTime();
+
+    boolean overlaps;
+    if (eEnd == null) {
+      overlaps = proposedEnd.isAfter(eStart);
+    } else {
+      overlaps = proposedStart.isBefore(eEnd) && proposedEnd.isAfter(eStart);
+    }
+    return overlaps;
   }
 
   @Transactional
@@ -114,24 +145,22 @@ public class WorkLogRequestService {
 
   @Transactional(readOnly = true)
   public List<WorkLogRequestDto> getAllPendingRequests() {
-    return timeData.findAllPendingWorkLogRequests()
-        .stream().map(mapper::toDto).toList();
+    return timeData.findAllPendingWorkLogRequests().stream().map(mapper::toDto).toList();
   }
 
   private void validateDirectManager(WorkLogRequest request, Integer managerId) {
     User employee = request.getEmployee();
     if (employee.getManager() == null || !employee.getManager().getUserId().equals(managerId)) {
-      throw new SecurityException(
-          "Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.");
+      throw new WorkLogRequestException.UnauthorizedManager();
     }
   }
 
   private WorkLogRequest getPendingRequest(Long requestId) {
     WorkLogRequest request = timeData.findWorkLogRequestById(requestId)
-        .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+        .orElseThrow(() -> new WorkLogRequestException.NotFound(requestId));
 
     if (request.getStatus() != WorkLogRequestStatus.PENDING) {
-      throw new IllegalStateException("Only PENDING requests can be processed.");
+      throw new WorkLogRequestException.InvalidState();
     }
     return request;
   }
@@ -139,7 +168,7 @@ public class WorkLogRequestService {
   private void executeApproval(WorkLogRequest request, Integer reviewerId,
                                WorkLogResolveRequest resolveDto) {
     User reviewer = userRepository.findById(reviewerId)
-        .orElseThrow(() -> new IllegalArgumentException("Reviewer not found"));
+        .orElseThrow(() -> new UserException.NotFound(reviewerId));
 
     if (request.getType() == WorkLogRequestType.CREATE) {
       WorkLog newWorkLog = new WorkLog();
@@ -170,7 +199,7 @@ public class WorkLogRequestService {
   private void executeRejection(WorkLogRequest request, Integer reviewerId,
                                 WorkLogResolveRequest resolveDto) {
     User reviewer = userRepository.findById(reviewerId)
-        .orElseThrow(() -> new IllegalArgumentException("Reviewer not found"));
+        .orElseThrow(() -> new UserException.NotFound(reviewerId));
 
     request.setStatus(WorkLogRequestStatus.REJECTED);
     request.setManager(reviewer);

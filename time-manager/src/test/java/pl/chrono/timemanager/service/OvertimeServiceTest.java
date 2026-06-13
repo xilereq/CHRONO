@@ -30,6 +30,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
+import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -344,12 +345,11 @@ class OvertimeServiceTest {
     when(overtimeData.getUserOvertimeBalance(1)).thenReturn(3600);
     when(userRepository.findById(1)).thenReturn(Optional.empty());
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
+    assertThrows(
+        UserException.NotFound.class,
         () -> overtimeService.expireUnusedOvertime(1)
     );
 
-    assertEquals("User not found", exception.getMessage());
     verify(overtimeData, never()).saveOvertimeRecord(any());
   }
 

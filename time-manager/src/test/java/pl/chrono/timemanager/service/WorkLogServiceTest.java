@@ -37,6 +37,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.event.LawViolationEvent;
+import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
 import pl.chrono.timemanager.mapper.WorkLogMapper;
 
@@ -111,7 +112,7 @@ class WorkLogServiceTest {
   void startWorkUserNotFoundTest() {
     when(timeData.isUserWorking(1)).thenReturn(false);
     when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(IllegalArgumentException.class, () -> workLogService.startWork(1));
+    assertThrows(UserException.NotFound.class, () -> workLogService.startWork(1));
   }
 
   @Test
@@ -291,7 +292,7 @@ class WorkLogServiceTest {
   @Test
   void getMonthlyStatsUserNotFoundTest() {
     when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(IllegalArgumentException.class, () -> workLogService.getMonthlyStats(1));
+    assertThrows(UserException.NotFound.class, () -> workLogService.getMonthlyStats(1));
   }
 
   @Test
@@ -400,7 +401,7 @@ class WorkLogServiceTest {
   @Test
   void getTodayTargetUserNotFoundExceptionTest() {
     when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(IllegalArgumentException.class, () -> workLogService.getTodayTarget(1));
+    assertThrows(UserException.NotFound.class, () -> workLogService.getTodayTarget(1));
   }
 
   @Test

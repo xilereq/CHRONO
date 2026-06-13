@@ -16,6 +16,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
+import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @Service
@@ -144,7 +145,7 @@ public class OvertimeService {
 
     OvertimeArchive archive = new OvertimeArchive();
     archive.setUser(userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found")));
+        .orElseThrow(() -> new UserException.NotFound(userId)));
     archive.setType(OvertimeType.EXPIRED);
     archive.setDurationSeconds(currentBalance);
     archive.setValidUntil(LocalDateTime.now());

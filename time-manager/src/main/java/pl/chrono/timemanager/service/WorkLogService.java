@@ -21,6 +21,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.event.LawViolationEvent;
+import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
 import pl.chrono.timemanager.mapper.WorkLogMapper;
 
@@ -63,7 +64,7 @@ public class WorkLogService {
 
     WorkLog workLog = new WorkLog();
     workLog.setUser(userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found")));
+        .orElseThrow(() -> new UserException.NotFound(userId)));
     workLog.setStartTime(LocalDateTime.now());
     WorkLog saved = timeData.saveWorkLog(workLog);
     return workLogMapper.toDto(saved);
@@ -168,7 +169,7 @@ public class WorkLogService {
   @Transactional(readOnly = true)
   public WorkStats getMonthlyStats(Integer userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new UserException.NotFound(userId));
 
     LocalDate today = LocalDate.now();
     Policy policy = user.getActivePolicy();
@@ -218,7 +219,7 @@ public class WorkLogService {
   @Transactional(readOnly = true)
   public String getTodayTarget(Integer userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new UserException.NotFound(userId));
     LocalDate today = LocalDate.now();
 
     int baseRequiredSeconds = user.getActivePolicy() != null ? user.getActivePolicy()

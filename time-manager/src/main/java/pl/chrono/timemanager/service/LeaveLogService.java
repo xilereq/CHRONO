@@ -8,6 +8,7 @@ import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
+import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
 import pl.chrono.timemanager.mapper.LeaveLogMapper;
 
@@ -29,7 +30,7 @@ public class LeaveLogService {
 
     LeaveLog leaveLog = new LeaveLog();
     leaveLog.setUser(userRepository.findById(userId).orElseThrow(
-        () -> new IllegalArgumentException("User not found")));
+        () -> new UserException.NotFound(userId)));
     leaveLog.setStartTime(LocalDateTime.now());
     leaveLog.setWorkLog(activeWorkLog);
     LeaveLog saved = timeData.saveLeaveLog(leaveLog);
