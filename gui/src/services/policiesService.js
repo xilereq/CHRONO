@@ -1,7 +1,7 @@
 import {handleApiResponse} from "../utils/errorHandler";
 
-const API_URL = 'http://localhost:8080/api/policies';
-const HOLIDAYS_API_URL = 'http://localhost:8080/api/holidays';
+const API_URL = '../api/policies';
+const HOLIDAYS_API_URL = '../api/holidays';
 
 const getHeaders = () => ({
     'Content-Type': 'application/json',

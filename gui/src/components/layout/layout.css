@@ -219,3 +219,75 @@
     .sidebar-logo { width: 40px;
         height: auto; }
 }
+
+/* Style dla GUI Powiadomień */
+.notification-dropdown {
+    position: absolute;
+    top: 45px;
+    right: -10px;
+    width: 400px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    z-index: 1000;
+    overflow: hidden;
+    color: var(--text-main);
+    cursor: default;
+}
+
+.notification-dropdown-header {
+    background: var(--bg-main);
+    padding: 15px 25px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notification-dropdown-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.notification-empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+.notification-item {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--bg-main);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-message {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.notification-read-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+}
+
+.notification-read-btn:hover {
+    text-decoration: underline;
+}

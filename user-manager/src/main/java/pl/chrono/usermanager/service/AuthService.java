@@ -80,7 +80,7 @@ public class AuthService {
     newUser.getRoles().add(role);
     newUser.setForcePasswordChange(true);
 
-    if(request.managerEmail() != null && request.managerEmail().isBlank()) {
+    if(request.managerEmail() != null && !request.managerEmail().isBlank()) {
       User manager = userData.findByEmail(request.managerEmail())
           .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
 
