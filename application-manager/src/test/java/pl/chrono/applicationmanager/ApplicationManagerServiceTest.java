@@ -21,6 +21,9 @@ import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.applicationmanager.service.ApplicationService;
+import pl.chrono.applicationmanager.exception.ApplicationException;
+import pl.chrono.applicationmanager.exception.ApplicationSecurityException;
+import pl.chrono.applicationmanager.exception.ApplicationUserException;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.Role;
@@ -195,7 +198,9 @@ class ApplicationManagerServiceTest {
     RuntimeException exception = assertThrows(RuntimeException.class, () ->
         applicationService.createApplication(requestDto, employeeId)
     );
-    assertEquals("Nie znaleziono pracownika o ID: 999", exception.getMessage());
+    assertThrows(ApplicationUserException.NotFound.class, () ->
+        applicationService.createApplication(requestDto, employeeId)
+    );
   }
 
   @Test
@@ -207,10 +212,9 @@ class ApplicationManagerServiceTest {
 
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
 
-    IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+    assertThrows(ApplicationException.AlreadyProcessed.class, () ->
         applicationService.changeStatus(applicationId, "REJECTED", 2, "Reason", false)
     );
-    assertNotNull(exception.getMessage());
   }
 
   @Test
@@ -227,10 +231,9 @@ class ApplicationManagerServiceTest {
 
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
 
-    SecurityException exception = assertThrows(SecurityException.class, () ->
+    assertThrows(ApplicationSecurityException.UnauthorizedManager.class, () ->
         applicationService.changeStatus(applicationId, "APPROVED", 2, "Reason", false)
     );
-    assertEquals("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.", exception.getMessage());
   }
 
   @Test
@@ -253,10 +256,9 @@ class ApplicationManagerServiceTest {
 
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
 
-    SecurityException exception = assertThrows(SecurityException.class, () ->
+    assertThrows(ApplicationSecurityException.UnauthorizedManager.class, () ->
         applicationService.changeStatus(applicationId, "APPROVED", fakeReviewerId, "Reason", false)
     );
-    assertNotNull(exception.getMessage());
   }
 
   @Test
@@ -275,10 +277,9 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockEmployee));
     when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
 
-    SecurityException exception = assertThrows(SecurityException.class, () ->
+    assertThrows(ApplicationSecurityException.UnauthorizedAccess.class, () ->
         applicationService.getUserApplications(employeeId, requesterId)
     );
-    assertNotNull(exception.getMessage());
   }
 
   @Test
@@ -395,16 +396,15 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
     when(userRepository.findById(reviewerId)).thenReturn(Optional.empty());
 
-    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+    assertThrows(ApplicationUserException.NotFound.class, () ->
         applicationService.changeStatus(applicationId, "APPROVED", reviewerId, "Reason", false)
     );
-    assertNotNull(exception.getMessage());
   }
 
   @Test
   void getUserApplications_ShouldThrowException_WhenEmployeeNotFound() {
     when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(RuntimeException.class, () -> applicationService.getUserApplications(1, 2));
+    assertThrows(ApplicationUserException.NotFound.class, () -> applicationService.getUserApplications(1, 2));
   }
 
   @Test
@@ -413,7 +413,7 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(1)).thenReturn(Optional.of(employee));
     when(userRepository.findById(2)).thenReturn(Optional.empty());
 
-    assertThrows(RuntimeException.class, () -> applicationService.getUserApplications(1, 2));
+    assertThrows(ApplicationUserException.NotFound.class, () -> applicationService.getUserApplications(1, 2));
   }
 
   @Test

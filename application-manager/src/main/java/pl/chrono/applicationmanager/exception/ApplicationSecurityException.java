@@ -37,4 +37,14 @@ public class ApplicationSecurityException extends ApplicationManagerException {
       );
     }
   }
+
+  public static class UnauthorizedCreation extends ApplicationSecurityException {
+    public UnauthorizedCreation() {
+      super(
+          ErrorCodes.UNAUTHORIZED_ACCESS,
+          "Access denied. You can only create applications for yourself or your subordinates.",
+          HttpStatus.FORBIDDEN
+      );
+    }
+  }
 }

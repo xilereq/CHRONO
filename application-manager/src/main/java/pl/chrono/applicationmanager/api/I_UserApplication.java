@@ -7,6 +7,8 @@ import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 public interface I_UserApplication {
   ApplicationResponse createApplication(CreateApplicationRequest request, Integer employeeId);
 
+  ApplicationResponse createApplicationForEmployee(CreateApplicationRequest request, Integer targetEmployeeId, Integer managerId);
+
   ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason, Boolean isAdmin);
 
   List<ApplicationResponse> getUserApplications(Integer employeeId, Integer requesterId);

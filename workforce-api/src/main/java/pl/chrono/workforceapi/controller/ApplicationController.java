@@ -1,6 +1,7 @@
 package pl.chrono.workforceapi.controller;
 
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -29,14 +30,27 @@ public class ApplicationController extends BaseController {
   }
 
   @PostMapping("/employee")
-  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN', 'HR')")
   public ResponseEntity<ApplicationResponse> createApplication(
       @RequestHeader("Authorization") String token,
       @RequestBody CreateApplicationRequest request) {
 
     Integer employeeId = extractId(token);
     ApplicationResponse createdApplication = applicationService.createApplication(request, employeeId);
-    return ResponseEntity.ok(createdApplication);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdApplication);
+  }
+
+  @PostMapping("/employee/{targetEmployeeId}")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'HR')")
+  public ResponseEntity<ApplicationResponse> createApplicationForEmployee(
+      @RequestHeader("Authorization") String token,
+      @PathVariable Integer targetEmployeeId,
+      @RequestBody CreateApplicationRequest request) {
+
+    Integer managerId = extractId(token);
+    ApplicationResponse createdApplication = applicationService.createApplicationForEmployee(request, targetEmployeeId, managerId);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdApplication);
   }
 
   @GetMapping("/my")

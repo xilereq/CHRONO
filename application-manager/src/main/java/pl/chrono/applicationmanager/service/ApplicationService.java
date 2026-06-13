@@ -43,10 +43,38 @@ public class ApplicationService implements I_UserApplication {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new ApplicationUserException.NotFound(employeeId));
 
+    return internalCreateApplication(request, employee, ApplicationStatus.PENDING);
+  }
+
+  @Override
+  @Transactional
+  @LogActivity(action = "CREATE_APPLICATION_FOR_EMPLOYEE", details = "A manager submitted a new application for an employee")
+  public ApplicationResponse createApplicationForEmployee(CreateApplicationRequest request, Integer targetEmployeeId, Integer managerId) {
+    User manager = userRepository.findById(managerId)
+        .orElseThrow(() -> new ApplicationUserException.NotFound(managerId));
+    User employee = userRepository.findById(targetEmployeeId)
+        .orElseThrow(() -> new ApplicationUserException.NotFound(targetEmployeeId));
+
+    boolean hasGlobalAccess = manager.getRoles().stream()
+        .anyMatch(role -> role.getName().equals("ROLE_HR") || role.getName().equals("ROLE_ADMIN"));
+
+    boolean isDirectManager = employee.getManager() != null
+        && employee.getManager().getUserId().equals(managerId);
+
+    if (!hasGlobalAccess && !isDirectManager) {
+      throw new ApplicationSecurityException.UnauthorizedCreation();
+    }
+
+    ApplicationResponse response = internalCreateApplication(request, employee, ApplicationStatus.PENDING);
+
+    return changeStatus(response.id(), ApplicationStatus.APPROVED.name(), managerId, "Application submitted and approved automatically on behalf of the employee", true);
+  }
+
+  private ApplicationResponse internalCreateApplication(CreateApplicationRequest request, User employee, ApplicationStatus initialStatus) {
     ApplicationType type = ApplicationType.valueOf(request.type());
 
     applicationValidationService.validateApplicationLimits(
-        employeeId,
+        employee.getUserId(),
         request.startDate(),
         type,
         request.durationSeconds()
@@ -58,7 +86,7 @@ public class ApplicationService implements I_UserApplication {
     application.setStartDate(request.startDate());
     application.setEndDate(request.endDate());
     application.setReason(request.reason());
-    application.setStatus(ApplicationStatus.PENDING);
+    application.setStatus(initialStatus);
     application.setCreationDateTime(LocalDateTime.now());
     application.setDurationSeconds(request.durationSeconds());
 
@@ -68,7 +96,7 @@ public class ApplicationService implements I_UserApplication {
 
     Application savedApplication = applicationRepository.save(application);
 
-    if (savedApplication.getType() == ApplicationType.OVERTIME_TAKE) {
+    if (savedApplication.getType() == ApplicationType.OVERTIME_TAKE && initialStatus == ApplicationStatus.PENDING) {
       overtimeService.reserveOvertimeForApplication(savedApplication);
     }
 
@@ -78,12 +106,14 @@ public class ApplicationService implements I_UserApplication {
         employee.getUserId(),
         managerId,
         "CREATED",
-        "PENDING",
+        initialStatus.name(),
         null
     ));
 
     return mapToResponse(savedApplication);
   }
+
+
 
   @Override
   public List<ApplicationResponse> getAllApplications() {
