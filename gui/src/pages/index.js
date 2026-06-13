@@ -17,4 +17,8 @@ export {default as Policies} from './Policies/Policies'
 
 export {default as Logs} from './Logs/Logs'
 
+export {default as UserManagementPage} from './Users/UserManagementPage'
+
+export { default as ManagerSchedulePage } from './Manager/ManagerSchedulePage';
+
 

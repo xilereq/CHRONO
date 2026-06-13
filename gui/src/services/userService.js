@@ -25,6 +25,7 @@ const userService = {
     },
     getManagers: async () => {
         const response = await fetch(`${API_URL}/managers`, { headers: getHeaders() });
+        console.log('Response status:', response.status);
         if (!response.ok) throw new Error('Błąd pobierania kierowników');
         return response.json();
     },

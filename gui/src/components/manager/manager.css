@@ -1,0 +1,124 @@
+/* src/components/manager/manager.css */
+
+.manager-alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border: 1px solid #fecaca;
+}
+
+.manager-alert-success {
+    background: #f0fdf4;
+    color: #16a34a;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border: 1px solid #bbf7d0;
+}
+
+.manager-loading-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.manager-empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+}
+
+.manager-empty-icon {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.manager-empty-text {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.manager-request-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.manager-request-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.manager-request-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.05rem;
+    color: var(--text-main);
+}
+
+.manager-request-details {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.manager-request-reason {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.manager-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-reject {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.btn-reject:hover {
+    background: #fef2f2;
+}
+
+.btn-approve {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #22c55e;
+    border: none;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.btn-approve:hover {
+    background: #16a34a;
+}
