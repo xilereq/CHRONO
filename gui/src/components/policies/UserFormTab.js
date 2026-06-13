@@ -48,8 +48,6 @@ const UserFormTab = () => {
             payload.managerEmail = null;
         }
 
-        console.log(payload);
-
         try {
             const response = await authService.register(payload);
             const generatedPassword = response.temporaryPassword || '[Brak danych o haśle]';

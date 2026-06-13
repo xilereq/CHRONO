@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Coffee, Square, Hospital, CircleEllipsis, UserLock, Microchip } from 'lucide-react';
+import { Clock, Coffee, Square, Home } from 'lucide-react';
 import { Card, Button } from '../../components';
 import '../../pages/main.css';
 import './dashboard.css';
@@ -31,7 +31,8 @@ const TimeTracker = () => {
     const [isOnBreak, setIsOnBreak] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [startTime, setStartTime] = useState(null);
-    const [showBreakSelector, setShowBreakSelector] = useState(false);
+
+    const [isHO, setIsHO] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000);
@@ -59,6 +60,7 @@ const TimeTracker = () => {
 
                 setIsWorking(workStatus);
                 setIsOnBreak(breakStatus);
+                setIsHO(false);
 
                 if (workStatus) {
                     await syncActiveTime();
@@ -77,21 +79,29 @@ const TimeTracker = () => {
     const handleToggleWork = async () => {
         if (isLoading) return;
         setIsLoading(true);
-        setShowBreakSelector(false);
         try {
             if (isWorking) {
-                if (isOnBreak) {
-                    await leaveLogService.endLeave();
+                if (isHO) {
+                    setIsWorking(false);
+                    setIsHO(false);
                     setIsOnBreak(false);
+                    setStartTime(null);
+                    alert("Zakończono czas pracy HO");
+                } else {
+                    if (isOnBreak) {
+                        await leaveLogService.endLeave();
+                        setIsOnBreak(false);
+                    }
+                    await workLogService.endWork();
+                    setIsWorking(false);
+                    setStartTime(null);
+                    alert("Zakończono czas pracy");
                 }
-                await workLogService.endWork();
-                setIsWorking(false);
-                setStartTime(null);
-                alert("Zakończono czas pracy");
             } else {
                 await workLogService.startWork();
                 const nowStart = new Date();
                 setIsWorking(true);
+                setIsHO(false);
                 setStartTime(nowStart);
             }
         } catch (error) {
@@ -102,34 +112,30 @@ const TimeTracker = () => {
         }
     };
 
-    const handleToggleBreak = async () => {
-        if (isLoading || !isWorking) return;
-
-        if (isOnBreak) {
-            setIsLoading(true);
-            try {
-                await leaveLogService.endLeave();
-                setIsOnBreak(false);
-
-                await syncActiveTime();
-
-            } catch (error) {
-                console.error(error);
-                alert(error.message);
-            } finally {
-                setIsLoading(false);
-            }
-        } else {
-            setShowBreakSelector(!showBreakSelector);
-        }
+    const handleToggleWorkHO = () => {
+        if (isLoading || isWorking) return;
+        setIsWorking(true);
+        setIsHO(true);
+        setStartTime(new Date());
     };
 
-    const startSpecificBreak = async (leaveType) => {
+    const handleToggleBreak = async () => {
+        if (isLoading || !isWorking) return;
         setIsLoading(true);
-        setShowBreakSelector(false);
+
         try {
-            await leaveLogService.startLeave(leaveType);
-            setIsOnBreak(true);
+            if (isHO) {
+                setIsOnBreak(!isOnBreak);
+            } else {
+                if (isOnBreak) {
+                    await leaveLogService.endLeave();
+                    setIsOnBreak(false);
+                    await syncActiveTime();
+                } else {
+                    await leaveLogService.startLeave('OTHER');
+                    setIsOnBreak(true);
+                }
+            }
         } catch (error) {
             console.error(error);
             alert(error.message);
@@ -148,22 +154,56 @@ const TimeTracker = () => {
 
     return (
         <Card>
-            <button
-                className={`time-display time-display-btn ${isLoading ? 'loading' : ''} ${isWorking ? 'working' : 'stopped'}`}
-                onClick={handleToggleWork}
-                disabled={isLoading}
-            >
-                <div className="time-header">
-                    {isWorking ? <Square size={20} /> : <Clock size={20} />}
-                    <span className="time-header-text">
-                        {isLoading ? "ŁADOWANIE..." : (isWorking ? "ZAKOŃCZ PRACĘ" : "ROZPOCZNIJ PRACĘ")}
-                    </span>
-                </div>
+            {!isWorking ? (
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    <button
+                        className={`time-display time-display-btn ${isLoading ? 'loading' : 'stopped'}`}
+                        style={{ flex: 1 }}
+                        onClick={handleToggleWork}
+                        disabled={isLoading}
+                    >
+                        <div className="time-header">
+                            <Clock size={20} />
+                            <span className="time-header-text">
+                                {isLoading ? "ŁADOWANIE..." : "ROZPOCZNIJ PRACĘ"}
+                            </span>
+                        </div>
+                        <div className="time-clock">{timeString}</div>
+                    </button>
 
-                <div className="time-clock">
-                    {isOnBreak ? "W TRAKCIE PRZERWY" : (isWorking ? elapsedString : timeString)}
+                    <button
+                        className={`time-display time-display-btn ${isLoading ? 'loading' : 'stopped'}`}
+                        style={{ flex: 1 }}
+                        onClick={handleToggleWorkHO}
+                        disabled={isLoading}
+                    >
+                        <div className="time-header">
+                            <Home size={20} />
+                            <span className="time-header-text">
+                                {isLoading ? "ŁADOWANIE..." : "HO Start"}
+                            </span>
+                        </div>
+                        <div className="time-clock">{timeString}</div>
+                    </button>
                 </div>
-            </button>
+            ) : (
+                <button
+                    className={`time-display time-display-btn ${isLoading ? 'loading' : 'working'}`}
+                    onClick={handleToggleWork}
+                    disabled={isLoading}
+                >
+                    <div className="time-header">
+                        <Square size={20} />
+                        <span className="time-header-text">
+                            {isLoading ? "ŁADOWANIE..." : "ZAKOŃCZ PRACĘ"}
+                        </span>
+                    </div>
+
+                    <div className="time-clock">
+                        {isOnBreak ? "W TRAKCIE PRZERWY" : elapsedString}
+                    </div>
+                </button>
+            )}
 
             <div className="time-actions-wrapper">
                 <Button
@@ -175,51 +215,6 @@ const TimeTracker = () => {
                     <Coffee size={18} />
                     {isOnBreak ? "ZAKOŃCZ PRZERWĘ" : "PRZERWA"}
                 </Button>
-
-                {showBreakSelector && !isOnBreak && (
-                    <div className="break-selector-panel">
-                        <div className="break-selector-title">
-                            Wybierz rodzaj przerwy:
-                        </div>
-                        <div className="break-selector-grid">
-                            <Button
-                                variant="outline"
-                                className="btn-break-type"
-                                onClick={() => startSpecificBreak('LUNCH')}
-                            >
-                                <Coffee size={16}/> LUNCH
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="btn-break-type"
-                                onClick={() => startSpecificBreak('PRIVATE_LEAVE')}
-                            >
-                                <UserLock size={16}/> PRIVATE_LEAVE
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="btn-break-type"
-                                onClick={() => startSpecificBreak('MEDICAL')}
-                            >
-                                <Hospital size={16}/> MEDICAL
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="btn-break-type"
-                                onClick={() => startSpecificBreak('TECHNICAL')}
-                            >
-                                <Microchip size={16}/> TECHNICAL
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="btn-break-type full-width"
-                                onClick={() => startSpecificBreak('OTHER')}
-                            >
-                                <CircleEllipsis size={16}/> OTHER
-                            </Button>
-                        </div>
-                    </div>
-                )}
             </div>
         </Card>
     );
