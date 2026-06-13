@@ -11,6 +11,9 @@ import pl.chrono.applicationmanager.api.I_UserApplication;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
+import pl.chrono.applicationmanager.exception.ApplicationException;
+import pl.chrono.applicationmanager.exception.ApplicationSecurityException;
+import pl.chrono.applicationmanager.exception.ApplicationUserException;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
@@ -38,7 +41,7 @@ public class ApplicationService implements I_UserApplication {
   @LogActivity(action = "CREATE_APPLICATION", details = "The employee submitted a new application")
   public ApplicationResponse createApplication(CreateApplicationRequest request, Integer employeeId) {
     User employee = userRepository.findById(employeeId)
-        .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
+        .orElseThrow(() -> new ApplicationUserException.NotFound(employeeId));
 
     ApplicationType type = ApplicationType.valueOf(request.type());
 
@@ -98,7 +101,7 @@ public class ApplicationService implements I_UserApplication {
     User employee = application.getEmployee();
 
     if (!isAdmin && (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId))) {
-        throw new SecurityException("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.");
+        throw new ApplicationSecurityException.UnauthorizedManager();
     }
 
     return processStatusChange(application, newStatus, reviewerId, decisionReason);
@@ -106,11 +109,10 @@ public class ApplicationService implements I_UserApplication {
 
   private Application getApplicationAndValidatePending(Long applicationId) {
       Application application = applicationRepository.findById(applicationId)
-          .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
+          .orElseThrow(() -> new ApplicationException.NotFound(applicationId));
 
       if (application.getStatus() != ApplicationStatus.PENDING) {
-        throw new IllegalStateException("Wniosek został już rozpatrzony (status: "
-            + application.getStatus() + ") i nie można zmienić jego statusu.");
+        throw new ApplicationException.AlreadyProcessed(application.getStatus().name());
       }
 
       return application;
@@ -118,7 +120,7 @@ public class ApplicationService implements I_UserApplication {
 
   private ApplicationResponse processStatusChange(Application application, String newStatus, Integer reviewerId, String decisionReason) {
       User reviewer = userRepository.findById(reviewerId)
-          .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: " + reviewerId));
+          .orElseThrow(() -> new ApplicationUserException.NotFound(reviewerId));
 
       ApplicationStatus updatedStatus = ApplicationStatus.valueOf(newStatus);
       application.setStatus(updatedStatus);
@@ -152,9 +154,9 @@ public class ApplicationService implements I_UserApplication {
   public List<ApplicationResponse> getUserApplications(Integer employeeId, Integer requesterId) {
     if (!employeeId.equals(requesterId)) {
       User employee = userRepository.findById(employeeId)
-          .orElseThrow(() -> new RuntimeException("Nie znaleziono pracownika o ID: " + employeeId));
+          .orElseThrow(() -> new ApplicationUserException.NotFound(employeeId));
       User requester = userRepository.findById(requesterId)
-          .orElseThrow(() -> new RuntimeException("Nie znaleziono użytkownika żądającego o ID: " + requesterId));
+          .orElseThrow(() -> new ApplicationUserException.NotFound(requesterId));
 
       boolean hasGlobalAccess = requester.getRoles().stream()
           .anyMatch(role -> role.getName().equals("ROLE_HR") || role.getName().equals("ROLE_ADMIN"));
@@ -163,7 +165,7 @@ public class ApplicationService implements I_UserApplication {
           && employee.getManager().getUserId().equals(requesterId);
 
       if (!hasGlobalAccess && !isDirectManager) {
-        throw new SecurityException("Brak uprawnień. Możesz przeglądać tylko swoje wnioski lub wnioski swoich podwładnych.");
+        throw new ApplicationSecurityException.UnauthorizedAccess();
       }
     }
 
@@ -213,13 +215,13 @@ public class ApplicationService implements I_UserApplication {
   @LogActivity(action = "CANCEL_APPLICATION", details = "The employee canceled his own application")
   public ApplicationResponse cancelApplication(Long applicationId, Integer userId) {
     Application application = applicationRepository.findById(applicationId)
-        .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
+        .orElseThrow(() -> new ApplicationException.NotFound(applicationId));
 
     if (!application.getEmployee().getUserId().equals(userId)) {
-      throw new SecurityException("Możesz anulować tylko swoje własne wnioski.");
+      throw new ApplicationSecurityException.UnauthorizedCancellation();
     }
     if (application.getStatus() != ApplicationStatus.PENDING) {
-      throw new IllegalStateException("Można anulować tylko wniosek w statusie PENDING.");
+      throw new ApplicationException.NotPending();
     }
     if (application.getType() == ApplicationType.OVERTIME_TAKE) {
       overtimeService.refundOvertimeForApplication(application);
