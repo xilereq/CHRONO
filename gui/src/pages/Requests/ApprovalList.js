@@ -99,7 +99,18 @@ const ApprovalList = ({ userRole }) => {
         currentPage * ITEMS_PER_PAGE
     );
 
-    const colSpan = userRole === 'MANAGER' ? 6 : 5;
+    const translateStatus = (status) => {
+        switch (status) {
+            case 'APPROVED': return 'Zatwierdzony';
+            case 'PENDING':  return 'Oczekujący';
+            case 'REJECTED': return 'Odrzucony';
+            case 'CANCELLED': return 'Anulowany';
+            default: return status || '-';
+        }
+    };
+
+    const canActOn = (r) => r.status === 'PENDING';
+    const colSpan = userRole === 'ADMIN' ? 7 : 6;
 
     return (
         <div className="requests-container">
@@ -122,7 +133,8 @@ const ApprovalList = ({ userRole }) => {
                                 <th>Liczba Dni</th>
                                 <th>Powód</th>
                                 <th>E-mail wnioskodawcy</th>
-                                {userRole === 'MANAGER' && <th>Akcje</th>}
+                                {userRole === 'ADMIN' && <th>Status</th>}
+                                <th>Akcje</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -135,8 +147,15 @@ const ApprovalList = ({ userRole }) => {
                                         <td>{r.reason || '-'}</td>
                                         <td>{r.employeeEmail || '-'}</td>
 
-                                        {userRole === 'MANAGER' && (
+                                        {userRole === 'ADMIN' && (
                                             <td>
+                                                <span className={`status-dot ${r.status}`} style={{ marginRight: '6px' }} />
+                                                {translateStatus(r.status)}
+                                            </td>
+                                        )}
+
+                                        <td>
+                                            {canActOn(r) ? (
                                                 <div className="submit-actions-row">
                                                     <button
                                                         className="action-btn action-btn-approve"
@@ -153,11 +172,13 @@ const ApprovalList = ({ userRole }) => {
                                                         Odrzuć
                                                     </button>
                                                 </div>
-                                            </td>
-                                        )}
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>
+                                            )}
+                                        </td>
                                     </tr>
 
-                                    {activeAction.id === r.id && userRole === 'MANAGER' && (
+                                    {activeAction.id === r.id && (
                                         <tr>
                                             <td colSpan={colSpan} className={`action-panel-td ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                 <div className="action-panel-container">

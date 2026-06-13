@@ -23,6 +23,11 @@ const authService = {
             if (data.roleName) {
                 try { localStorage.setItem('userRoles', JSON.stringify([data.roleName])); } catch(e) {}
             }
+            if (data.forcePasswordChange) {
+                localStorage.setItem('forcePasswordChange', 'true');
+            } else {
+                localStorage.removeItem('forcePasswordChange');
+            }
         }
 
         return data;
@@ -33,6 +38,7 @@ const authService = {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userRoles');
+        localStorage.removeItem('forcePasswordChange');
         window.location.reload();
     },
 
@@ -42,6 +48,43 @@ const authService = {
 
     getUserEmail: () => {
         return localStorage.getItem('userEmail');
+    },
+
+    isForcePasswordChange: () => {
+        return localStorage.getItem('forcePasswordChange') === 'true';
+    },
+
+    changeFirstPassword: async (oldPassword, newPassword) => {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${API_URL}/change-first-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ oldPassword, newPassword }),
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Nie udało się zmienić hasła. Sprawdź poprawność tymczasowego hasła.');
+        }
+        localStorage.removeItem('forcePasswordChange');
+    },
+
+    changePassword: async (oldPassword, newPassword) => {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${API_URL}/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ oldPassword, newPassword }),
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Nie udało się zmienić hasła. Sprawdź poprawność obecnego hasła.');
+        }
     },
 
     requestPasswordReset: async (email) => {
