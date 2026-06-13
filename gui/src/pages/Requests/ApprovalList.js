@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { applicationService } from '../../services';
+import '../../components/requests/requests.css';
 import './ApprovalList.css';
 
 const translateType = (type) => {
@@ -27,8 +28,6 @@ const getDuration = (request) => {
     return `${days} dni`;
 };
 
-const ITEMS_PER_PAGE = 10;
-
 const ApprovalList = ({ userRole }) => {
 
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -37,6 +36,13 @@ const ApprovalList = ({ userRole }) => {
     const [actionReason, setActionReason] = useState('');
     const [processingId, setProcessingId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth <= 768 ? 5 : 10);
+
+    useEffect(() => {
+        const onResize = () => setItemsPerPage(window.innerWidth <= 768 ? 5 : 10);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     const loadRequests = async () => {
         setLoading(true);
@@ -63,10 +69,9 @@ const ApprovalList = ({ userRole }) => {
         }
     }, [userRole]);
 
-    // Resetuj stronę do 1 po każdym załadowaniu danych
     useEffect(() => {
         setCurrentPage(1);
-    }, [pendingRequests]);
+    }, [pendingRequests, itemsPerPage]);
 
     const initiateAction = (id, type) => {
         setActiveAction({ id, type });
@@ -93,13 +98,24 @@ const ApprovalList = ({ userRole }) => {
         setActiveAction({ id: null, type: null });
     };
 
-    const totalPages = Math.ceil(pendingRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(pendingRequests.length / itemsPerPage);
     const pageItems = pendingRequests.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
     );
 
-    const colSpan = userRole === 'MANAGER' ? 6 : 5;
+    const translateStatus = (status) => {
+        switch (status) {
+            case 'APPROVED': return 'Zatwierdzony';
+            case 'PENDING':  return 'Oczekujący';
+            case 'REJECTED': return 'Odrzucony';
+            case 'CANCELLED': return 'Anulowany';
+            default: return status || '-';
+        }
+    };
+
+    const canActOn = (r) => r.status === 'PENDING';
+    const colSpan = userRole === 'ADMIN' ? 7 : 6;
 
     return (
         <div className="requests-container">
@@ -119,10 +135,11 @@ const ApprovalList = ({ userRole }) => {
                             <tr>
                                 <th>Typ Wniosku</th>
                                 <th>Okres / Data</th>
-                                <th>Liczba Dni</th>
-                                <th>Powód</th>
+                                <th className="col-hide-mobile">Liczba Dni</th>
+                                <th className="col-hide-mobile">Powód</th>
                                 <th>E-mail wnioskodawcy</th>
-                                {userRole === 'MANAGER' && <th>Akcje</th>}
+                                {userRole === 'ADMIN' && <th>Status</th>}
+                                <th>Akcje</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -131,12 +148,19 @@ const ApprovalList = ({ userRole }) => {
                                     <tr>
                                         <td className="request-card-title-cell">{translateType(r.type)}</td>
                                         <td>{r.startDate} - {r.endDate}</td>
-                                        <td>{getDuration(r)}</td>
-                                        <td>{r.reason || '-'}</td>
+                                        <td className="col-hide-mobile">{getDuration(r)}</td>
+                                        <td className="col-hide-mobile">{r.reason || '-'}</td>
                                         <td>{r.employeeEmail || '-'}</td>
 
-                                        {userRole === 'MANAGER' && (
+                                        {userRole === 'ADMIN' && (
                                             <td>
+                                                <span className={`status-dot ${r.status}`} style={{ marginRight: '6px' }} />
+                                                {translateStatus(r.status)}
+                                            </td>
+                                        )}
+
+                                        <td>
+                                            {canActOn(r) ? (
                                                 <div className="submit-actions-row">
                                                     <button
                                                         className="action-btn action-btn-approve"
@@ -153,11 +177,13 @@ const ApprovalList = ({ userRole }) => {
                                                         Odrzuć
                                                     </button>
                                                 </div>
-                                            </td>
-                                        )}
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>
+                                            )}
+                                        </td>
                                     </tr>
 
-                                    {activeAction.id === r.id && userRole === 'MANAGER' && (
+                                    {activeAction.id === r.id && (
                                         <tr>
                                             <td colSpan={colSpan} className={`action-panel-td ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                 <div className="action-panel-container">

@@ -3,6 +3,7 @@ import { Sidebar, Topbar } from './components';
 import { Grafik, Dashboard, Requests, RequestDetail, Policies, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Settings, Logs, UserManagementPage, ManagerSchedulePage } from './pages';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService, userService } from './services';
+import ChangePasswordModal from './components/ui/ChangePasswordModal';
 import './index.css';
 
 const App = () => {
@@ -12,6 +13,7 @@ const App = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isHr, setIsHr] = useState(false);
     const [isManager, setIsManager] = useState(false);
+    const [forcePasswordChange, setForcePasswordChange] = useState(false);
 
     useEffect(() => {
         const initApp = async () => {
@@ -20,6 +22,7 @@ const App = () => {
 
             if (authStatus) {
                 setUserEmail(authService.getUserEmail());
+                setForcePasswordChange(authService.isForcePasswordChange());
                 try {
                     const response = await userService.getMyRole();
                     setIsHr(response.role === "ROLE_HR");
@@ -38,9 +41,12 @@ const App = () => {
     const handleLoginSuccess = async () => {
         setIsAuthenticated(true);
         setUserEmail(authService.getUserEmail());
+        setForcePasswordChange(authService.isForcePasswordChange());
         try {
             const response = await userService.getMyRole();
             setIsAdmin(response.role === "ROLE_ADMIN");
+            setIsHr(response.role === "ROLE_HR");
+            setIsManager(response.role === "ROLE_MANAGER");
         } catch (error) {
             console.error("Błąd weryfikacji roli po logowaniu:", error);
         }
@@ -53,6 +59,7 @@ const App = () => {
         setIsAdmin(false);
         setIsHr(false);
         setIsManager(false);
+        setForcePasswordChange(false);
     };
 
     if (isLoading) {
@@ -68,6 +75,8 @@ const App = () => {
                     <Route path="/reset-password" element={<ForgotPasswordReset />} />
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
+            ) : forcePasswordChange ? (
+                <ChangePasswordModal onPasswordChanged={() => setForcePasswordChange(false)} />
             ) : (
                 <div className="app-container">
                     <Sidebar />

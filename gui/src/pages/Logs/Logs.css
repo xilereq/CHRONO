@@ -20,3 +20,20 @@
     max-height: 600px;
     overflow-y: auto;
 }
+
+@media (max-width: 768px) {
+    .logs-table-scroll {
+        max-height: 420px;
+    }
+
+    /* Kolumny mniej ważne ukryj na mobile */
+    .requests-table .log-hide-mobile {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .logs-table-scroll {
+        max-height: 340px;
+    }
+}

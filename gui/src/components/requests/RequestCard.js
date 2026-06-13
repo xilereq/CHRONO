@@ -50,8 +50,8 @@ const RequestCard = ({ request }) => {
         <tr>
             <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{translateType(request.type)}</td>
             <td>{request.startDate} - {request.endDate}</td>
-            <td>{getDuration(request)}</td>
-            <td>{formatDate(request.creationDateTime)}</td>
+            <td className="col-hide-mobile">{getDuration(request)}</td>
+            <td className="col-hide-mobile">{formatDate(request.creationDateTime)}</td>
             <td>
                 <div className="status-cell">
                     <span className={`status-dot ${request.status}`}></span>

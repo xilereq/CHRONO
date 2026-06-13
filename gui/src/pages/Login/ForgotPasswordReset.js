@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
 function useQuery() {
@@ -15,6 +16,8 @@ const ForgotPasswordReset = () => {
     const [token, setToken] = useState(tokenFromQuery);
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -73,12 +76,46 @@ const ForgotPasswordReset = () => {
 
                     <label className="field">
                         <span className="field-label">Nowe hasło</span>
-                        <input className="field-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+                        <div className="password-wrapper">
+                            <input
+                                className="field-input"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="new-password"
+                                placeholder="Minimum 6 znaków"
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword(v => !v)}
+                                aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </label>
 
                     <label className="field">
                         <span className="field-label">Potwierdź hasło</span>
-                        <input className="field-input" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+                        <div className="password-wrapper">
+                            <input
+                                className="field-input"
+                                type={showConfirm ? 'text' : 'password'}
+                                value={confirm}
+                                onChange={(e) => setConfirm(e.target.value)}
+                                autoComplete="new-password"
+                                placeholder="Powtórz nowe hasło"
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowConfirm(v => !v)}
+                                aria-label={showConfirm ? 'Ukryj hasło' : 'Pokaż hasło'}
+                            >
+                                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </label>
 
                     <button className="btn-primary" type="submit" disabled={loading}>

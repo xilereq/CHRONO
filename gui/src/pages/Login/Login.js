@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { authService } from '../../services';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
 const Login = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -61,15 +63,25 @@ const Login = ({ onLoginSuccess }) => {
 
                     <label className="field">
                         <span className="field-label">Hasło</span>
-                        <input
-                            className="field-input"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="current-password"
-                            placeholder="●●●●●●●"
-                            required
-                        />
+                        <div className="password-wrapper">
+                            <input
+                                className="field-input"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="current-password"
+                                placeholder="●●●●●●●"
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle"
+                                onClick={() => setShowPassword(v => !v)}
+                                aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </label>
 
                     <button className="btn-primary" type="submit" disabled={loading}>

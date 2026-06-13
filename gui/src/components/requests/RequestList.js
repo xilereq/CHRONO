@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RequestCard, RequestForm, Button } from '../../components';
 import { applicationService } from '../../services';
+import './requests.css';
 
 const RequestList = () => {
     const [requests, setRequests] = useState([]);
@@ -12,12 +13,17 @@ const RequestList = () => {
     const [filterDate, setFilterDate] = useState("");
 
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 10;
+    const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth <= 768 ? 5 : 10);
 
-    // Resetuj stronę do 1 przy każdej zmianie filtrów
+    useEffect(() => {
+        const onResize = () => setItemsPerPage(window.innerWidth <= 768 ? 5 : 10);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
     useEffect(() => {
         setCurrentPage(1);
-    }, [filterStatus, filterType, filterDate]);
+    }, [filterStatus, filterType, filterDate, itemsPerPage]);
 
 
     const fetchRequests = async () => {
@@ -126,8 +132,8 @@ const RequestList = () => {
                             <tr>
                                 <th>Typ Wniosku</th>
                                 <th>Okres / Data</th>
-                                <th>Liczba Dni/Godz.</th>
-                                <th>Data Złożenia</th>
+                                <th className="col-hide-mobile">Liczba Dni/Godz.</th>
+                                <th className="col-hide-mobile">Data Złożenia</th>
                                 <th>Status</th>
                                 <th>Zatwierdzający</th>
                                 <th>Akcje</th>
@@ -135,14 +141,14 @@ const RequestList = () => {
                             </thead>
                             <tbody>
                             {filteredRequests
-                                .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                 .map(r => (
                                     <RequestCard key={r.id} request={r} />
                                 ))}
                             </tbody>
                         </table>
 
-                        {Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) > 1 && (
+                        {Math.ceil(filteredRequests.length / itemsPerPage) > 1 && (
                             <div className="pagination">
                                 <span
                                     className={currentPage === 1 ? 'page-disabled' : 'page-btn'}
@@ -151,7 +157,7 @@ const RequestList = () => {
                                     «
                                 </span>
                                 {Array.from(
-                                    { length: Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) },
+                                    { length: Math.ceil(filteredRequests.length / itemsPerPage) },
                                     (_, i) => i + 1
                                 ).map(page => (
                                     <span
@@ -163,8 +169,8 @@ const RequestList = () => {
                                     </span>
                                 ))}
                                 <span
-                                    className={currentPage === Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) ? 'page-disabled' : 'page-btn'}
-                                    onClick={() => currentPage < Math.ceil(filteredRequests.length / ITEMS_PER_PAGE) && setCurrentPage(p => p + 1)}
+                                    className={currentPage === Math.ceil(filteredRequests.length / itemsPerPage) ? 'page-disabled' : 'page-btn'}
+                                    onClick={() => currentPage < Math.ceil(filteredRequests.length / itemsPerPage) && setCurrentPage(p => p + 1)}
                                 >
                                     »
                                 </span>
