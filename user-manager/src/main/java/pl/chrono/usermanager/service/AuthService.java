@@ -122,7 +122,6 @@ public class AuthService {
       user.setResetTokenExpiration(LocalDateTime.now().plusMinutes(15));
       userData.save(user);
 
-      //To w przyszłości będzie trzeba podmienić na wywołanie logiki wysyłania maili do użytkownika
       eventPublisher.publishEvent(new PasswordResetEvent(user.getUserId(), user.getEmail(), token));
     });
   }
@@ -149,7 +148,7 @@ public class AuthService {
     User user = userData.findByEmail(email)
         .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
 
-    if(passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
+    if(!passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
       throw new IllegalArgumentException("Podane aktualne hasło jest niepoprawne.");
     }
 

@@ -40,7 +40,7 @@ public class UserController extends BaseController{
   }
 
   @GetMapping("/managers")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<List<UserDto>> getAllManagers(){
 
     List<UserDto> managers = userService.getAllManagers();
@@ -49,7 +49,7 @@ public class UserController extends BaseController{
   }
 
   @GetMapping("/employees")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<List<UserDto>> getAllEmployees(){
 
     List<UserDto> employees = userService.getAllEmployees();
@@ -59,7 +59,7 @@ public class UserController extends BaseController{
 
 
   @GetMapping("/admins")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<List<UserDto>> getAllAdmins(){
 
     List<UserDto> admins = userService.getAllAdmins();
@@ -69,7 +69,7 @@ public class UserController extends BaseController{
 
 
   @GetMapping("/hrs")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<List<UserDto>> getAllHrs(){
 
     List<UserDto> hrs = userService.getAllHrs();
@@ -89,7 +89,7 @@ public class UserController extends BaseController{
   }
 
   @GetMapping("/users")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<List<UserDto>> getAllUsers(){
 
     List<UserDto> users = userService.getAllUsers();
@@ -98,7 +98,7 @@ public class UserController extends BaseController{
   }
 
   @PostMapping("/set-manager")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<Void> getUser(@RequestBody SetManagerRequest request){
     userService.setManager(request.email(), request.managerEmail());
     return ResponseEntity.ok().build();
