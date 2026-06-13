@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { applicationService } from '../../services';
+import '../../components/requests/requests.css';
 import './ApprovalList.css';
 
 const translateType = (type) => {
@@ -27,8 +28,6 @@ const getDuration = (request) => {
     return `${days} dni`;
 };
 
-const ITEMS_PER_PAGE = 10;
-
 const ApprovalList = ({ userRole }) => {
 
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -37,6 +36,13 @@ const ApprovalList = ({ userRole }) => {
     const [actionReason, setActionReason] = useState('');
     const [processingId, setProcessingId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth <= 768 ? 5 : 10);
+
+    useEffect(() => {
+        const onResize = () => setItemsPerPage(window.innerWidth <= 768 ? 5 : 10);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     const loadRequests = async () => {
         setLoading(true);
@@ -63,10 +69,9 @@ const ApprovalList = ({ userRole }) => {
         }
     }, [userRole]);
 
-    // Resetuj stronę do 1 po każdym załadowaniu danych
     useEffect(() => {
         setCurrentPage(1);
-    }, [pendingRequests]);
+    }, [pendingRequests, itemsPerPage]);
 
     const initiateAction = (id, type) => {
         setActiveAction({ id, type });
@@ -93,10 +98,10 @@ const ApprovalList = ({ userRole }) => {
         setActiveAction({ id: null, type: null });
     };
 
-    const totalPages = Math.ceil(pendingRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(pendingRequests.length / itemsPerPage);
     const pageItems = pendingRequests.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
     );
 
     const translateStatus = (status) => {
@@ -130,8 +135,8 @@ const ApprovalList = ({ userRole }) => {
                             <tr>
                                 <th>Typ Wniosku</th>
                                 <th>Okres / Data</th>
-                                <th>Liczba Dni</th>
-                                <th>Powód</th>
+                                <th className="col-hide-mobile">Liczba Dni</th>
+                                <th className="col-hide-mobile">Powód</th>
                                 <th>E-mail wnioskodawcy</th>
                                 {userRole === 'ADMIN' && <th>Status</th>}
                                 <th>Akcje</th>
@@ -143,8 +148,8 @@ const ApprovalList = ({ userRole }) => {
                                     <tr>
                                         <td className="request-card-title-cell">{translateType(r.type)}</td>
                                         <td>{r.startDate} - {r.endDate}</td>
-                                        <td>{getDuration(r)}</td>
-                                        <td>{r.reason || '-'}</td>
+                                        <td className="col-hide-mobile">{getDuration(r)}</td>
+                                        <td className="col-hide-mobile">{r.reason || '-'}</td>
                                         <td>{r.employeeEmail || '-'}</td>
 
                                         {userRole === 'ADMIN' && (

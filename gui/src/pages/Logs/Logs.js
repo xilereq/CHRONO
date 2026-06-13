@@ -105,29 +105,38 @@ const Logs = () => {
                     ))}
                 </select>
 
-                <input
-                    type="date"
-                    className="filter-input"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                    title="Filtruj po dacie"
-                />
-
-                <input
-                    type="time"
-                    className="filter-input"
-                    value={filterTimeFrom}
-                    onChange={(e) => setFilterTimeFrom(e.target.value)}
-                    title="Godzina od"
-                />
-
-                <input
-                    type="time"
-                    className="filter-input"
-                    value={filterTimeTo}
-                    onChange={(e) => setFilterTimeTo(e.target.value)}
-                    title="Godzina do"
-                />
+                <div className="filters-date-row">
+                    <input
+                        type="date"
+                        className="filter-input"
+                        value={filterDate}
+                        onChange={(e) => setFilterDate(e.target.value)}
+                        title="Filtruj po dacie"
+                    />
+                    <input
+                        type="time"
+                        className="filter-input"
+                        value={filterTimeFrom}
+                        max={filterTimeTo || undefined}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setFilterTimeFrom(val);
+                            if (filterTimeTo && val > filterTimeTo) setFilterTimeTo('');
+                        }}
+                        title="Godzina od"
+                    />
+                    <input
+                        type="time"
+                        className="filter-input"
+                        value={filterTimeTo}
+                        min={filterTimeFrom || undefined}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (!filterTimeFrom || val >= filterTimeFrom) setFilterTimeTo(val);
+                        }}
+                        title="Godzina do"
+                    />
+                </div>
 
                 <button
                     className="action-btn"
@@ -148,21 +157,21 @@ const Logs = () => {
                         <table className="requests-table">
                             <thead>
                             <tr>
-                                <th>ID</th>
+                                <th className="log-hide-mobile">ID</th>
                                 <th>Data i czas</th>
                                 <th>Użytkownik</th>
                                 <th>Akcja</th>
-                                <th>Szczegóły</th>
+                                <th className="log-hide-mobile">Szczegóły</th>
                             </tr>
                             </thead>
                             <tbody>
                             {filteredLogs.map(log => (
                                 <tr key={log.logID}>
-                                    <td style={{ fontWeight: 600 }}>#{log.logID}</td>
+                                    <td className="log-hide-mobile" style={{ fontWeight: 600 }}>#{log.logID}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(log.timestamp)}</td>
                                     <td className="log-user-email">{log.userEmail || 'Brak danych'}</td>
                                     <td className="log-action">{log.action}</td>
-                                    <td>{log.details}</td>
+                                    <td className="log-hide-mobile">{log.details}</td>
                                 </tr>
                             ))}
                             </tbody>

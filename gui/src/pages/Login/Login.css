@@ -152,3 +152,43 @@
 .login-forgot-link:hover {
     color: var(--primary-color);
 }
+
+@media (max-width: 520px) {
+    .login-page {
+        padding: 1rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+
+    .login-card {
+        padding: 1.5rem 1.25rem;
+        border-radius: 10px;
+    }
+
+    .brand-wrap {
+        margin-top: -28px;
+        margin-bottom: 4px;
+    }
+
+    .brand-icon {
+        width: 52px;
+        height: 52px;
+    }
+
+    .login-title {
+        font-size: 1rem;
+    }
+
+    .login-subtitle {
+        font-size: 0.82rem;
+    }
+
+    .field-input {
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        height: 48px;
+        font-size: 1rem;
+    }
+}

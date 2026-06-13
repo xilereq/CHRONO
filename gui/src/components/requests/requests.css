@@ -287,6 +287,11 @@
 /* =========================================
    8. RESPONSYWNOŚĆ (MEDIA QUERIES)
 ========================================= */
+
+.filters-date-row {
+    display: contents;
+}
+
 @media (max-width: 900px) {
     .filters-bar {
         flex-direction: column;
@@ -299,6 +304,18 @@
         width: 100%;
     }
 
+    .filters-date-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .filters-date-row .filter-input {
+        width: 100%;
+        min-width: unset;
+    }
+
     .requests-table th,
     .requests-table td {
         padding: 0.75rem 0.4rem;
@@ -306,10 +323,26 @@
     }
 }
 
+@media (max-width: 768px) {
+    .col-hide-mobile {
+        display: none;
+    }
+}
+
 @media (max-width: 600px) {
     .requests-container { padding: 0.5rem; }
     .section-panel { padding: 0.9rem; }
     .requests-table { font-size: 0.85rem; }
+
+    .filters-date-row {
+        grid-template-columns: 1fr;
+    }
+
+    /* Zapobiega auto-zoom na iOS */
+    .filter-select,
+    .filter-input {
+        font-size: 1rem;
+    }
 
     .request-form-grid {
         grid-template-columns: 1fr;

@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { authService } from '../../services';
+import { Eye, EyeOff } from 'lucide-react';
 import '../../pages/Login/Login.css';
 
 const ChangePasswordModal = ({ onPasswordChanged }) => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showOld, setShowOld] = useState(false);
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -59,42 +63,57 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                 <form className="login-form" onSubmit={handleSubmit} noValidate>
                     <label className="field">
                         <span className="field-label">Tymczasowe hasło</span>
-                        <input
-                            className="field-input"
-                            type="password"
-                            value={oldPassword}
-                            onChange={(e) => setOldPassword(e.target.value)}
-                            autoComplete="current-password"
-                            placeholder="Wprowadź tymczasowe hasło"
-                            required
-                            autoFocus
-                        />
+                        <div className="password-wrapper">
+                            <input
+                                className="field-input"
+                                type={showOld ? 'text' : 'password'}
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                                autoComplete="current-password"
+                                placeholder="Wprowadź tymczasowe hasło"
+                                required
+                                autoFocus
+                            />
+                            <button type="button" className="password-toggle" onClick={() => setShowOld(v => !v)} aria-label={showOld ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                                {showOld ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </label>
 
                     <label className="field">
                         <span className="field-label">Nowe hasło</span>
-                        <input
-                            className="field-input"
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            autoComplete="new-password"
-                            placeholder="Minimum 8 znaków"
-                            required
-                        />
+                        <div className="password-wrapper">
+                            <input
+                                className="field-input"
+                                type={showNew ? 'text' : 'password'}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                autoComplete="new-password"
+                                placeholder="Minimum 8 znaków"
+                                required
+                            />
+                            <button type="button" className="password-toggle" onClick={() => setShowNew(v => !v)} aria-label={showNew ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                                {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </label>
 
                     <label className="field">
                         <span className="field-label">Powtórz nowe hasło</span>
-                        <input
-                            className="field-input"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            autoComplete="new-password"
-                            placeholder="Powtórz nowe hasło"
-                            required
-                        />
+                        <div className="password-wrapper">
+                            <input
+                                className="field-input"
+                                type={showConfirm ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                autoComplete="new-password"
+                                placeholder="Powtórz nowe hasło"
+                                required
+                            />
+                            <button type="button" className="password-toggle" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </label>
 
                     <button className="btn-primary" type="submit" disabled={loading}>
