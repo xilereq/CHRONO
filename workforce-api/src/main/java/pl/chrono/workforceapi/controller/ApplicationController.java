@@ -3,6 +3,7 @@ package pl.chrono.workforceapi.controller;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,11 +65,16 @@ public class ApplicationController extends BaseController {
   public ResponseEntity<ApplicationResponse> changeStatus(
       @RequestHeader("Authorization") String token,
       @PathVariable Long applicationId,
-      @RequestBody ChangeApplicationStatusRequest request) {
+      @RequestBody ChangeApplicationStatusRequest request,
+      Authentication authentication) {
 
     Integer reviewerId = extractId(token);
+
+    Boolean isAdmin = authentication.getAuthorities().stream()
+        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
     ApplicationResponse updatedApplication = applicationService.changeStatus(
-        applicationId, request.newStatus(), reviewerId, request.decisionReason());
+        applicationId, request.newStatus(), reviewerId, request.decisionReason(), isAdmin);
     return ResponseEntity.ok(updatedApplication);
   }
 

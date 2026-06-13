@@ -82,48 +82,59 @@ public class ApplicationService implements I_UserApplication {
   @Override
   @Transactional
   @LogActivity(action = "CHANGE_APPLICATION_STATUS", details = "Changing the status of an employee's application")
-  public ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason) {
-    Application application = applicationRepository.findById(applicationId)
-        .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
-
-    if (application.getStatus() != ApplicationStatus.PENDING) {
-      throw new IllegalStateException("Wniosek został już rozpatrzony (status: "
-          + application.getStatus() + ") i nie można zmienić jego statusu.");
-    }
-
+  public ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason, Boolean isAdmin) {
+    Application application = getApplicationAndValidatePending(applicationId);
     User employee = application.getEmployee();
 
-    if (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId)) {
-      throw new SecurityException("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.");
+    if (!isAdmin && (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId))) {
+        throw new SecurityException("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.");
     }
 
-    User reviewer = userRepository.findById(reviewerId)
-        .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: "
-            + reviewerId));
+    return processStatusChange(application, newStatus, reviewerId, decisionReason);
+  }
 
-    ApplicationStatus updatedStatus = ApplicationStatus.valueOf(newStatus);
-    application.setStatus(updatedStatus);
-    application.setReviewer(reviewer);
-    application.setDecisionReason(decisionReason);
-    application.setDecisionDateTime(LocalDateTime.now());
+  private Application getApplicationAndValidatePending(Long applicationId) {
+      Application application = applicationRepository.findById(applicationId)
+          .orElseThrow(() -> new RuntimeException("Nie znaleziono wniosku o ID: " + applicationId));
 
-    Application updatedApplication = applicationRepository.save(application);
+      if (application.getStatus() != ApplicationStatus.PENDING) {
+        throw new IllegalStateException("Wniosek został już rozpatrzony (status: "
+            + application.getStatus() + ") i nie można zmienić jego statusu.");
+      }
 
-    if (updatedApplication.getType() == ApplicationType.OVERTIME_TAKE
-        && updatedStatus == ApplicationStatus.REJECTED) {
-      overtimeService.refundOvertimeForApplication(updatedApplication);
-    }
+      return application;
+  }
 
-    eventPublisher.publishEvent(new ApplicationNotificationEvent(
-        updatedApplication.getId(),
-        employee.getUserId(),
-        employee.getManager().getUserId(),
-        "STATUS_CHANGED",
-        newStatus,
-        reviewer.getName() + " " + reviewer.getSurname()
-    ));
+  private ApplicationResponse processStatusChange(Application application, String newStatus, Integer reviewerId, String decisionReason) {
+      User reviewer = userRepository.findById(reviewerId)
+          .orElseThrow(() -> new RuntimeException("Nie znaleziono osoby rozpatrującej o ID: " + reviewerId));
 
-    return mapToResponse(updatedApplication);
+      ApplicationStatus updatedStatus = ApplicationStatus.valueOf(newStatus);
+      application.setStatus(updatedStatus);
+      application.setReviewer(reviewer);
+      application.setDecisionReason(decisionReason);
+      application.setDecisionDateTime(LocalDateTime.now());
+
+      Application updatedApplication = applicationRepository.save(application);
+
+      if (updatedApplication.getType() == ApplicationType.OVERTIME_TAKE
+          && updatedStatus == ApplicationStatus.REJECTED) {
+        overtimeService.refundOvertimeForApplication(updatedApplication);
+      }
+
+      Integer managerId = application.getEmployee().getManager() != null ?
+          application.getEmployee().getManager().getUserId() : null;
+
+      eventPublisher.publishEvent(new ApplicationNotificationEvent(
+          updatedApplication.getId(),
+          application.getEmployee().getUserId(),
+          managerId,
+          "STATUS_CHANGED",
+          newStatus,
+          reviewer.getName() + " " + reviewer.getSurname()
+      ));
+
+      return mapToResponse(updatedApplication);
   }
 
   @Override

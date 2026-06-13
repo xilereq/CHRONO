@@ -116,7 +116,7 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
     when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
 
-    ApplicationResponse result = applicationService.changeStatus(applicationId, newStatus, reviewerId, decisionReason);
+    ApplicationResponse result = applicationService.changeStatus(applicationId, newStatus, reviewerId, decisionReason, false);
 
     assertNotNull(result);
     assertEquals(newStatus, result.status());
@@ -204,7 +204,7 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
 
     IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-        applicationService.changeStatus(applicationId, "REJECTED", 2, "Reason")
+        applicationService.changeStatus(applicationId, "REJECTED", 2, "Reason", false)
     );
     assertNotNull(exception.getMessage());
   }
@@ -224,7 +224,7 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
 
     SecurityException exception = assertThrows(SecurityException.class, () ->
-        applicationService.changeStatus(applicationId, "APPROVED", 2, "Reason")
+        applicationService.changeStatus(applicationId, "APPROVED", 2, "Reason", false)
     );
     assertEquals("Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.", exception.getMessage());
   }
@@ -250,7 +250,7 @@ class ApplicationManagerServiceTest {
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
 
     SecurityException exception = assertThrows(SecurityException.class, () ->
-        applicationService.changeStatus(applicationId, "APPROVED", fakeReviewerId, "Reason")
+        applicationService.changeStatus(applicationId, "APPROVED", fakeReviewerId, "Reason", false)
     );
     assertNotNull(exception.getMessage());
   }
@@ -392,7 +392,7 @@ class ApplicationManagerServiceTest {
     when(userRepository.findById(reviewerId)).thenReturn(Optional.empty());
 
     RuntimeException exception = assertThrows(RuntimeException.class, () ->
-        applicationService.changeStatus(applicationId, "APPROVED", reviewerId, "Reason")
+        applicationService.changeStatus(applicationId, "APPROVED", reviewerId, "Reason", false)
     );
     assertNotNull(exception.getMessage());
   }
@@ -488,5 +488,41 @@ class ApplicationManagerServiceTest {
     assertEquals("APPROVED", result.get(1).status());
 
     verify(applicationRepository, times(1)).findAll();
+  }
+
+  @Test
+  void changeStatus_ShouldUpdateStatus_WhenUserIsAdminAndNotManager() {
+    Long applicationId = 1L;
+    Integer adminId = 99;
+    String newStatus = "APPROVED";
+    String decisionReason = "Admin override";
+
+    User mockAdmin = new User();
+    mockAdmin.setUserId(adminId);
+    mockAdmin.setName("Admin");
+    mockAdmin.setSurname("Testowy");
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setManager(null);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.HOLIDAY_LEAVE);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+    when(userRepository.findById(adminId)).thenReturn(Optional.of(mockAdmin));
+    when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
+
+    ApplicationResponse result = applicationService.changeStatus(applicationId, newStatus, adminId, decisionReason, true);
+
+    assertNotNull(result);
+    assertEquals(newStatus, result.status());
+    assertEquals(adminId, result.reviewerId());
+
+    verify(applicationRepository, times(1)).save(mockApplication);
+    verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
   }
 }
