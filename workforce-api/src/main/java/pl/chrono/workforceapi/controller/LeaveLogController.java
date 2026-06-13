@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.service.LeaveLogService;
 import pl.chrono.usermanager.service.AuthService;
-import pl.chrono.timemanager.dto.request.LeaveStartRequest;
 
 @RestController
 @RequestMapping("/api/leave-log")
@@ -30,11 +29,8 @@ public class LeaveLogController extends BaseController {
   }
 
   @PostMapping("/start")
-  public ResponseEntity<LeaveLogDto> startWork(@RequestHeader("Authorization") String token,
-                                               @RequestBody LeaveStartRequest request) {
-    return new ResponseEntity<>(
-        leaveLogService.startLeave(extractId(token), request.type()),
-        HttpStatus.CREATED);
+  public ResponseEntity<LeaveLogDto> startWork(@RequestHeader("Authorization") String token) {
+    return new ResponseEntity<>(leaveLogService.startLeave(extractId(token)), HttpStatus.CREATED);
   }
 
   @PostMapping("/end")

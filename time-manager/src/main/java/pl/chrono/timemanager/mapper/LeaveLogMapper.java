@@ -9,7 +9,6 @@ import pl.chrono.timemanager.dto.response.LeaveLogDto;
 public interface LeaveLogMapper {
 
   @Mapping(source = "user.userId", target = "userId")
-  @Mapping(source = "type", target = "leaveType")
   @Mapping(source = "workLog.workLogId", target = "workLog")
   LeaveLogDto toDto(LeaveLog leaveLog);
 

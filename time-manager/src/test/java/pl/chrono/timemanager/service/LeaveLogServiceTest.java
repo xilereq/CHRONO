@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
-import pl.chrono.dbmanager.model.enums.LeaveType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
@@ -47,7 +46,7 @@ class LeaveLogServiceTest {
 
     assertThrows(
         WorkException.NoActiveWork.class,
-        () -> leaveLogService.startLeave(userId, LeaveType.LUNCH)
+        () -> leaveLogService.startLeave(userId)
     );
 
     verifyNoInteractions(userRepository, leaveLogMapper);
@@ -63,7 +62,7 @@ class LeaveLogServiceTest {
 
     assertThrows(
         WorkException.LeaveStarted.class,
-        () -> leaveLogService.startLeave(userId, LeaveType.LUNCH)
+        () -> leaveLogService.startLeave(userId)
     );
   }
 
@@ -77,13 +76,12 @@ class LeaveLogServiceTest {
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
     assertThrows(
-        IllegalArgumentException.class, () -> leaveLogService.startLeave(userId, LeaveType.LUNCH));
+        IllegalArgumentException.class, () -> leaveLogService.startLeave(userId));
   }
 
   @Test
   void startLeaveSuccessTest() {
     Integer userId = 1;
-    LeaveType type = LeaveType.LUNCH;
     WorkLog workLog = new WorkLog();
     User user = new User();
     LeaveLog savedLeaveLog = new LeaveLog();
@@ -95,7 +93,7 @@ class LeaveLogServiceTest {
     when(timeData.saveLeaveLog(any(LeaveLog.class))).thenReturn(savedLeaveLog);
     when(leaveLogMapper.toDto(savedLeaveLog)).thenReturn(expectedDto);
 
-    LeaveLogDto result = leaveLogService.startLeave(userId, type);
+    LeaveLogDto result = leaveLogService.startLeave(userId);
 
     assertEquals(expectedDto, result);
     verify(timeData).saveLeaveLog(any(LeaveLog.class));

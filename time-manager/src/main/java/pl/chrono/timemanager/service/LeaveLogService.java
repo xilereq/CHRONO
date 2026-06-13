@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.LeaveLog;
-import pl.chrono.dbmanager.model.enums.LeaveType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
@@ -20,7 +19,7 @@ public class LeaveLogService {
   private final LeaveLogMapper leaveLogMapper;
 
   @Transactional
-  public LeaveLogDto startLeave(Integer userId, LeaveType type) {
+  public LeaveLogDto startLeave(Integer userId) {
     var activeWorkLog = timeData.findActiveWorkLog(userId)
         .orElseThrow(() -> new WorkException.NoActiveWork(userId));
 
@@ -32,7 +31,6 @@ public class LeaveLogService {
     leaveLog.setUser(userRepository.findById(userId).orElseThrow(
         () -> new IllegalArgumentException("User not found")));
     leaveLog.setStartTime(LocalDateTime.now());
-    leaveLog.setType(type);
     leaveLog.setWorkLog(activeWorkLog);
     LeaveLog saved = timeData.saveLeaveLog(leaveLog);
     return leaveLogMapper.toDto(saved);
