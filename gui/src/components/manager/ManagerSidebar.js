@@ -5,7 +5,7 @@ const ManagerSidebar = ({ activeTab, setActiveTab }) => {
     return (
         <aside className="policies-sidebar">
             <div className="policies-sidebar-header">
-                <h2>Narzędzia Managera</h2>
+                <h2>Narzędzia</h2>
             </div>
             <nav className="policies-nav">
 

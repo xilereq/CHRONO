@@ -14,11 +14,10 @@ const leaveLogService = {
         return response.json();
     },
 
-    startLeave: async (leaveType = 'BREAK') => {
+    startLeave: async () => {
         const response = await fetch(`${API_URL}/start`, {
             method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ type: leaveType })
+            headers: getHeaders()
         });
         if (!response.ok) return handleApiResponse(response);
         return response.json();

@@ -13,10 +13,11 @@ const workLogService = {
         if (!response.ok) throw new Error('Błąd pobierania statusu pracy');
         return response.json();
     },
-    startWork: async () => {
+    startWork: async (request) => {
         const response = await fetch(`${API_URL}/start`, {
             method: 'POST',
-            headers: getHeaders()
+            headers: getHeaders(),
+            body: JSON.stringify(request)
         });
         return handleApiResponse(response);
     },
