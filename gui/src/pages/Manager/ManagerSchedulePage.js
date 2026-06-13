@@ -1,0 +1,32 @@
+import React, { useState } from 'react';
+import ManagerSidebar from '../../components/manager/ManagerSidebar';
+import ScheduleChangeTab from '../../components/manager/ScheduleChangeTab';
+import ManagerRequestTab from '../../components/manager/ManagerRequestTab';
+
+import '../main.css';
+import '../Policies/policies.css';
+
+const ManagerSchedulePage = () => {
+    const [activeTab, setActiveTab] = useState('schedule');
+
+    return (
+        <div className="page-container">
+            <div className="policies-page-wrapper">
+
+                <ManagerSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+                <div className="policies-content">
+
+                    <div className="policies-scrollable-content" style={{ marginTop: '1.5rem' }}>
+                        {activeTab === 'schedule' && <ScheduleChangeTab />}
+
+                        {activeTab === 'team-requests' && <ManagerRequestTab />}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
+export default ManagerSchedulePage;

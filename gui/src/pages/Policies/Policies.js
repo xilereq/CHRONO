@@ -17,7 +17,6 @@ const Policies = () => {
                     {activeTab === 'policyList' && <PolicyListTab />}
                     {activeTab === 'assignPolicy' && <AssignPolicyTab />}
                     {activeTab === 'holidays' && <HolidayTabs />}
-                    {activeTab === 'users' && <UserManagementTab />}
                 </div>
 
             </div>

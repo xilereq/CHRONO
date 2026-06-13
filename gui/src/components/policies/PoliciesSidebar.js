@@ -80,13 +80,6 @@ const PoliciesSidebar = ({ activeTab, setActiveTab }) => {
                 >
                     <Calendar size={18} /> Święta globalne
                 </button>
-
-                <button
-                    className={`policies-nav-item ${activeTab === 'users' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('users')}
-                >
-                    <Users size={18} /> Zarządzanie Użytkownikami
-                </button>
             </nav>
         </div>
     );

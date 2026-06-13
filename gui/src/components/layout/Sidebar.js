@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings, Shield, Terminal } from 'lucide-react';
+import { Clock, LayoutGrid, FileText, BarChart2, Calendar, Settings, Shield, Terminal, Users } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { userService } from '../../services';
-
 import './layout.css';
 
 const Sidebar = () => {
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isHr, setIsHr] = useState(false);
+    const [isManager, setIsManager] = useState(false);
 
     useEffect(() => {
         const fetchRole = async () => {
             try {
                 const response = await userService.getMyRole();
-                if (response.role === "ROLE_ADMIN") {
-                    setIsAdmin(true);
-                }
+                if (response.role === "ROLE_ADMIN") setIsAdmin(true);
+                if (response.role === "ROLE_HR") setIsHr(true);
+                if (response.role === "ROLE_MANAGER") setIsManager(true);
             } catch (error) {
                 console.error("Nie udało się pobrać roli", error);
             }
         };
-
         fetchRole();
     }, []);
+
     return (
         <aside className="sidebar">
             <div className="sidebar-logo">
@@ -40,20 +41,33 @@ const Sidebar = () => {
                     <BarChart2 size={24} />
                     <span>Raporty</span>
                 </NavLink>
+
+                {(isHr || isAdmin) && (
+                    <NavLink to="/users" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                        <Users size={24} />
+                        <span style={{ textAlign: 'center' }}>Zarządzanie Użytkownikami</span>
+                    </NavLink>
+                )}
+
+                {(isManager || isAdmin) && (
+                    <NavLink to="/manager" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                        <Clock size={24} />
+                        <span style={{ textAlign: 'center' }}>Czas pracy zespołu</span>
+                    </NavLink>
+                )}
+
                 {isAdmin && (
                     <>
                         <NavLink to="/policies" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                             <Shield size={24} />
                             <span style={{ textAlign: 'center' }}>Panel Administratora</span>
                         </NavLink>
-
                         <NavLink to="/logs" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                             <Terminal size={24} />
                             <span style={{ textAlign: 'center' }}>Logi Systemowe</span>
                         </NavLink>
                     </>
                 )}
-
                 <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
                     <Settings size={24} />
                     <span>Ustawienia</span>
@@ -61,6 +75,6 @@ const Sidebar = () => {
             </nav>
         </aside>
     );
-}
+};
 
 export default Sidebar;
