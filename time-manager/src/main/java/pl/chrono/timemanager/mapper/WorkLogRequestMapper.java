@@ -14,7 +14,6 @@ public interface WorkLogRequestMapper {
   @Mapping(source = "manager.userId", target = "managerId")
   @Mapping(expression = "java(entity.getManager() != null ? entity.getManager().getName() + \" \"" +
       " + entity.getManager().getSurname() : null)", target = "managerName")
-  @Mapping(source = "targetWorkLog.workLogId", target = "targetWorkLogId")
   WorkLogRequestDto toDto(WorkLogRequest entity);
 
 }

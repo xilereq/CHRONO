@@ -1,5 +1,6 @@
 package pl.chrono.timemanager.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +10,11 @@ import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.WorkLogRequest;
+import pl.chrono.dbmanager.model.enums.ApplicationType;
+import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
-import pl.chrono.dbmanager.model.enums.WorkLogRequestType;
 import pl.chrono.dbmanager.ports.I_TimeData;
+import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
@@ -26,6 +29,7 @@ public class WorkLogRequestService {
 
   private final UserRepository userRepository;
   private final I_TimeData timeData;
+  private final ApplicationRepository applicationRepository;
   private final WorkLogRequestMapper mapper;
 
   @Transactional
@@ -40,22 +44,6 @@ public class WorkLogRequestService {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
-    LocalDateTime searchStart = proposedStart.toLocalDate().atStartOfDay();
-    LocalDateTime searchEnd = proposedEnd.toLocalDate().plusDays(1).atStartOfDay().minusNanos(1);
-
-    List<WorkLog> existingLogs = timeData.findWorkLogsByUserAndDate(employeeId, searchStart, searchEnd);
-
-    for (WorkLog existingLog : existingLogs) {
-      if (requestDto.type() == WorkLogRequestType.UPDATE &&
-          existingLog.getWorkLogId().equals(requestDto.targetWorkLogId())) {
-        continue;
-      }
-      boolean overlaps = areLogsColliding(existingLog, proposedEnd, proposedStart);
-      if (overlaps) {
-        throw new WorkLogRequestException.OverlappingWorkLog();
-      }
-    }
-    
     Policy policy = employee.getPolicyForDate(proposedStart.toLocalDate());
     if (policy != null) {
       long requestedSeconds = java.time.Duration.between(proposedStart, proposedEnd).getSeconds();
@@ -66,70 +54,62 @@ public class WorkLogRequestService {
 
     WorkLogRequest request = new WorkLogRequest();
     request.setEmployee(employee);
-    request.setType(requestDto.type());
     request.setProposedStartTime(proposedStart);
     request.setProposedEndTime(proposedEnd);
     request.setReason(requestDto.reason());
     request.setStatus(WorkLogRequestStatus.PENDING);
 
-    if (requestDto.type() == WorkLogRequestType.UPDATE) {
-      if (requestDto.targetWorkLogId() == null) {
-        throw new WorkLogRequestException.MissingTargetWorkLog();
-      }
+    timeData.saveWorkLogRequest(request);
+  }
 
-      WorkLog targetLog = timeData.findWorkLogById(requestDto.targetWorkLogId())
-          .orElseThrow(WorkLogRequestException.TargetWorkLogNotFound::new);
+  @Transactional
+  public void approveRequest(Long requestId, Integer reviewerId, WorkLogResolveRequest resolveDto) {
+    WorkLogRequest request = getPendingRequest(requestId);
+    User reviewer = getUserAndValidateAccess(reviewerId, request);
 
-      if (!targetLog.getUser().getUserId().equals(employeeId)) {
-        throw new WorkLogRequestException.UnauthorizedWorkLogAccess();
-      }
+    LocalDate targetDate = request.getProposedStartTime().toLocalDate();
+    LocalDateTime startOfDay = targetDate.atStartOfDay();
+    LocalDateTime endOfDay = targetDate.plusDays(1).atStartOfDay().minusNanos(1);
 
-      request.setTargetWorkLog(targetLog);
+    List<WorkLog> existingLogs = timeData.findWorkLogsByUserAndDate(
+        request.getEmployee().getUserId(), startOfDay, endOfDay);
+
+    for (WorkLog log : existingLogs) {
+      timeData.deleteWorkLog(log);
     }
+
+    WorkLog newWorkLog = new WorkLog();
+    newWorkLog.setUser(request.getEmployee());
+    newWorkLog.setStartTime(request.getProposedStartTime());
+    newWorkLog.setEndTime(request.getProposedEndTime());
+
+    boolean hasHoApplication = applicationRepository.findApprovedByEmployeeAndDate(
+            request.getEmployee().getUserId(), targetDate).stream()
+        .anyMatch(app -> app.getType() == ApplicationType.HOME_OFFICE);
+    newWorkLog.setLocationType(
+        hasHoApplication ? WorkLocationType.HOME_OFFICE : WorkLocationType.OFFICE);
+
+    timeData.saveWorkLog(newWorkLog);
+
+    request.setStatus(WorkLogRequestStatus.APPROVED);
+    request.setManager(reviewer);
+    request.setManagerComment(resolveDto != null ? resolveDto.managerComment() : null);
+    request.setResolvedAt(LocalDateTime.now());
 
     timeData.saveWorkLogRequest(request);
   }
 
-  private static boolean areLogsColliding(WorkLog existingLog, LocalDateTime proposedEnd,
-                                    LocalDateTime proposedStart) {
-    LocalDateTime eStart = existingLog.getStartTime();
-    LocalDateTime eEnd = existingLog.getEndTime();
-
-    boolean overlaps;
-    if (eEnd == null) {
-      overlaps = proposedEnd.isAfter(eStart);
-    } else {
-      overlaps = proposedStart.isBefore(eEnd) && proposedEnd.isAfter(eStart);
-    }
-    return overlaps;
-  }
-
   @Transactional
-  public void approveRequest(Long requestId, Integer managerId, WorkLogResolveRequest resolveDto) {
+  public void rejectRequest(Long requestId, Integer reviewerId, WorkLogResolveRequest resolveDto) {
     WorkLogRequest request = getPendingRequest(requestId);
-    validateDirectManager(request, managerId);
-    executeApproval(request, managerId, resolveDto);
-  }
+    User reviewer = getUserAndValidateAccess(reviewerId, request);
 
-  @Transactional
-  public void rejectRequest(Long requestId, Integer managerId, WorkLogResolveRequest resolveDto) {
-    WorkLogRequest request = getPendingRequest(requestId);
-    validateDirectManager(request, managerId);
-    executeRejection(request, managerId, resolveDto);
-  }
+    request.setStatus(WorkLogRequestStatus.REJECTED);
+    request.setManager(reviewer);
+    request.setManagerComment(resolveDto != null ? resolveDto.managerComment() : null);
+    request.setResolvedAt(LocalDateTime.now());
 
-  @Transactional
-  public void adminApproveRequest(Long requestId, Integer adminId,
-                                  WorkLogResolveRequest resolveDto) {
-    WorkLogRequest request = getPendingRequest(requestId);
-    executeApproval(request, adminId, resolveDto);
-  }
-
-  @Transactional
-  public void adminRejectRequest(Long requestId, Integer adminId,
-                                 WorkLogResolveRequest resolveDto) {
-    WorkLogRequest request = getPendingRequest(requestId);
-    executeRejection(request, adminId, resolveDto);
+    timeData.saveWorkLogRequest(request);
   }
 
   @Transactional(readOnly = true)
@@ -138,20 +118,18 @@ public class WorkLogRequestService {
   }
 
   @Transactional(readOnly = true)
-  public List<WorkLogRequestDto> getPendingRequestsForManager(Integer managerId) {
-    return timeData.findPendingWorkLogRequestsForManager(managerId).stream().map(mapper::toDto)
-        .toList();
-  }
+  public List<WorkLogRequestDto> getPendingRequestsForReviewer(Integer reviewerId) {
+    User reviewer = userRepository.findById(reviewerId)
+        .orElseThrow(() -> new UserException.NotFound(reviewerId));
 
-  @Transactional(readOnly = true)
-  public List<WorkLogRequestDto> getAllPendingRequests() {
-    return timeData.findAllPendingWorkLogRequests().stream().map(mapper::toDto).toList();
-  }
+    boolean isAdmin = reviewer.getRoles().stream()
+        .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
 
-  private void validateDirectManager(WorkLogRequest request, Integer managerId) {
-    User employee = request.getEmployee();
-    if (employee.getManager() == null || !employee.getManager().getUserId().equals(managerId)) {
-      throw new WorkLogRequestException.UnauthorizedManager();
+    if (isAdmin) {
+      return timeData.findAllPendingWorkLogRequests().stream().map(mapper::toDto).toList();
+    } else {
+      return timeData.findPendingWorkLogRequestsForManager(reviewerId).stream().map(mapper::toDto)
+          .toList();
     }
   }
 
@@ -165,47 +143,19 @@ public class WorkLogRequestService {
     return request;
   }
 
-  private void executeApproval(WorkLogRequest request, Integer reviewerId,
-                               WorkLogResolveRequest resolveDto) {
+  private User getUserAndValidateAccess(Integer reviewerId, WorkLogRequest request) {
     User reviewer = userRepository.findById(reviewerId)
         .orElseThrow(() -> new UserException.NotFound(reviewerId));
 
-    if (request.getType() == WorkLogRequestType.CREATE) {
-      WorkLog newWorkLog = new WorkLog();
-      newWorkLog.setUser(request.getEmployee());
-      newWorkLog.setStartTime(request.getProposedStartTime());
-      newWorkLog.setEndTime(request.getProposedEndTime());
-      timeData.saveWorkLog(newWorkLog);
+    boolean isAdmin = reviewer.getRoles().stream()
+        .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
 
-    } else if (request.getType() == WorkLogRequestType.UPDATE) {
-      WorkLog targetLog = request.getTargetWorkLog();
-      targetLog.setStartTime(request.getProposedStartTime());
-      targetLog.setEndTime(request.getProposedEndTime());
-
-      if (targetLog.getLeaveLogs() != null) {
-        targetLog.getLeaveLogs().clear();
+    if (!isAdmin) {
+      User employee = request.getEmployee();
+      if (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId)) {
+        throw new WorkLogRequestException.UnauthorizedManager();
       }
-      timeData.saveWorkLog(targetLog);
     }
-
-    request.setStatus(WorkLogRequestStatus.APPROVED);
-    request.setManager(reviewer);
-    request.setManagerComment(resolveDto != null ? resolveDto.managerComment() : null);
-    request.setResolvedAt(LocalDateTime.now());
-
-    timeData.saveWorkLogRequest(request);
-  }
-
-  private void executeRejection(WorkLogRequest request, Integer reviewerId,
-                                WorkLogResolveRequest resolveDto) {
-    User reviewer = userRepository.findById(reviewerId)
-        .orElseThrow(() -> new UserException.NotFound(reviewerId));
-
-    request.setStatus(WorkLogRequestStatus.REJECTED);
-    request.setManager(reviewer);
-    request.setManagerComment(resolveDto != null ? resolveDto.managerComment() : null);
-    request.setResolvedAt(LocalDateTime.now());
-
-    timeData.saveWorkLogRequest(request);
+    return reviewer;
   }
 }

@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
-import pl.chrono.dbmanager.model.enums.WorkLogRequestType;
 
 @Entity
 @Table(name = "work_log_request")
@@ -38,10 +37,6 @@ public class WorkLogRequest {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "target_work_log_id")
   private WorkLog targetWorkLog;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private WorkLogRequestType type;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)

@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -23,7 +22,6 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.WorkLogRequest;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
-import pl.chrono.dbmanager.model.enums.WorkLogRequestType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
@@ -89,7 +87,6 @@ class WorkLogRequestServiceTest {
 
     WorkLogRequest request = new WorkLogRequest();
     request.setStatus(WorkLogRequestStatus.PENDING);
-    request.setType(WorkLogRequestType.UPDATE);
     request.setEmployee(employee);
     request.setTargetWorkLog(targetLog);
     request.setProposedStartTime(LocalDateTime.now().minusHours(8));
@@ -132,35 +129,6 @@ class WorkLogRequestServiceTest {
   }
 
   @Test
-  void adminApproveRequestBypassesManagerCheckTest() {
-    Long requestId = 1L;
-    Integer adminId = 999;
-    WorkLogResolveRequest resolveDto = new WorkLogResolveRequest("Admin Override");
-
-    User employee = new User();
-
-    User admin = new User();
-    admin.setUserId(adminId);
-
-    WorkLogRequest request = new WorkLogRequest();
-    request.setStatus(WorkLogRequestStatus.PENDING);
-    request.setType(WorkLogRequestType.CREATE);
-    request.setEmployee(employee);
-    request.setProposedStartTime(LocalDateTime.now().minusHours(8));
-    request.setProposedEndTime(LocalDateTime.now());
-
-    when(timeData.findWorkLogRequestById(requestId)).thenReturn(Optional.of(request));
-    when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
-
-    requestService.adminApproveRequest(requestId, adminId, resolveDto);
-
-    assertEquals(WorkLogRequestStatus.APPROVED, request.getStatus());
-    assertEquals("Admin Override", request.getManagerComment());
-    verify(timeData).saveWorkLog(any(WorkLog.class));
-    verify(timeData).saveWorkLogRequest(request);
-  }
-
-  @Test
   void getPendingRequestInvalidStateExceptionTest() {
     Long requestId = 1L;
     WorkLogRequest request = new WorkLogRequest();
@@ -190,21 +158,4 @@ class WorkLogRequestServiceTest {
     verify(mapper).toDto(request);
   }
 
-  @Test
-  void getAllPendingRequestsTest() {
-    WorkLogRequest req1 = new WorkLogRequest();
-    WorkLogRequest req2 = new WorkLogRequest();
-    WorkLogRequestDto mockDto1 = mock(WorkLogRequestDto.class);
-    WorkLogRequestDto mockDto2 = mock(WorkLogRequestDto.class);
-
-    when(timeData.findAllPendingWorkLogRequests()).thenReturn(List.of(req1, req2));
-    when(mapper.toDto(req1)).thenReturn(mockDto1);
-    when(mapper.toDto(req2)).thenReturn(mockDto2);
-
-    List<WorkLogRequestDto> result = requestService.getAllPendingRequests();
-
-    assertEquals(2, result.size());
-    verify(timeData).findAllPendingWorkLogRequests();
-    verify(mapper, times(2)).toDto(any(WorkLogRequest.class));
-  }
 }
