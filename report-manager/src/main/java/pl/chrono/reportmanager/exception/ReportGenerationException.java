@@ -15,7 +15,7 @@ public class ReportGenerationException extends ReportException {
   public static class UnsupportedFormat extends ReportGenerationException {
     public UnsupportedFormat(String format) {
       super(
-          "UNSUPPORTED_REPORT_FORMAT",
+          ErrorCodes.UNSUPPORTED_REPORT_FORMAT,
           "Export to " + format + " is currently not supported. Missing required library.",
           HttpStatus.BAD_REQUEST
       );
@@ -25,7 +25,7 @@ public class ReportGenerationException extends ReportException {
   public static class Failed extends ReportGenerationException {
     public Failed(String format, Throwable cause) {
       super(
-          "REPORT_GENERATION_FAILED",
+          ErrorCodes.REPORT_GENERATION_FAILED,
           "An error occurred while generating the report in format: " + format,
           HttpStatus.INTERNAL_SERVER_ERROR,
           cause

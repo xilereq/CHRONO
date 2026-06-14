@@ -10,7 +10,7 @@ public class ReportUserException extends ReportException {
 
   public static class NotFound extends ReportUserException {
     public NotFound(Integer userId) {
-      super("USER_NOT_FOUND", "User with ID " + userId + " not found.", HttpStatus.NOT_FOUND);
+      super(ErrorCodes.USER_NOT_FOUND, "User with ID " + userId + " not found.", HttpStatus.NOT_FOUND);
     }
   }
 }
