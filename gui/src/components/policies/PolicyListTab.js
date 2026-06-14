@@ -7,7 +7,8 @@ const PolicyListTab = () => {
     const [globalHolidays, setGlobalHolidays] = useState([]);
     const [expandedPolicyId, setExpandedPolicyId] = useState(null);
     const [policyHolidays, setPolicyHolidays] = useState([]);
-    const [selectedHolidayId, setSelectedHolidayId] = useState('');
+
+    const [selectedHolidayIds, setSelectedHolidayIds] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -41,10 +42,12 @@ const PolicyListTab = () => {
     const toggleExpand = async (policyId) => {
         if (expandedPolicyId === policyId) {
             setExpandedPolicyId(null);
+            setSelectedHolidayIds([]);
             return;
         }
         setExpandedPolicyId(policyId);
         setLoading(true);
+        setSelectedHolidayIds([]);
         try {
             const holidays = await policiesService.getHolidaysForPolicy(policyId);
             setPolicyHolidays(holidays);
@@ -55,15 +58,24 @@ const PolicyListTab = () => {
         }
     };
 
+    const handleHolidaySelectChange = (e) => {
+        const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+        setSelectedHolidayIds(selectedOptions);
+    };
+
     const handleAssignHoliday = async () => {
-        if (!selectedHolidayId) return;
+        if (selectedHolidayIds.length === 0) return;
         try {
-            await policiesService.assignHolidayToPolicy(expandedPolicyId, { holidayId: selectedHolidayId });
+            await policiesService.assignHolidaysToPolicyBulk(expandedPolicyId, {
+                holidayIds: selectedHolidayIds.map(id => parseInt(id))
+            });
+
             const updatedHolidays = await policiesService.getHolidaysForPolicy(expandedPolicyId);
             setPolicyHolidays(updatedHolidays);
-            setSelectedHolidayId('');
+
+            setSelectedHolidayIds([]);
         } catch (error) {
-            alert("Błąd przypisywania święta: " + error.message);
+            alert("Błąd przypisywania świąt: " + error.message);
         }
     };
 
@@ -91,7 +103,6 @@ const PolicyListTab = () => {
                     ) : (
                         policies.map(policy => (
                             <div key={policy.id} style={{ border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
-                                {/* Główny pasek polityki */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', background: expandedPolicyId === policy.id ? '#f8f9fa' : 'transparent' }}>
                                     <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleExpand(policy.id)}>
                                         <strong style={{ fontSize: '15px', color: 'var(--text-main)' }}>{policy.name}</strong>
@@ -130,15 +141,35 @@ const PolicyListTab = () => {
                                             </ul>
                                         )}
 
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <select className="form-input" value={selectedHolidayId} onChange={(e) => setSelectedHolidayId(e.target.value)} style={{ flex: 1 }}>
-                                                <option value="">-- Wybierz święto z globalnej listy --</option>
-                                                {globalHolidays.map(gh => (
-                                                    <option key={gh.id || gh.holidayId} value={gh.id || gh.holidayId}>{gh.name} ({gh.date})</option>
-                                                ))}
-                                            </select>
-                                            <button className="btn-yellow" onClick={handleAssignHoliday} style={{ padding: '0.4rem 1rem', fontSize: '13px' }}>
-                                                <PlusCircle size={14} style={{ marginRight: '5px' }} /> Przypisz
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginTop: '1rem' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <select
+                                                    multiple
+                                                    size="4"
+                                                    className="form-input"
+                                                    value={selectedHolidayIds}
+                                                    onChange={handleHolidaySelectChange}
+                                                    style={{ width: '100%', padding: '8px', minHeight: '100px' }}
+                                                >
+                                                    {globalHolidays.map(gh => (
+                                                        <option key={gh.id || gh.holidayId} value={gh.id || gh.holidayId} style={{ padding: '4px' }}>
+                                                            {gh.name} ({gh.date})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <span style={{ fontSize: '0.75rem', color: '#666', marginTop: '4px', display: 'block' }}>
+                                                    Zaznaczono: {selectedHolidayIds.length} (Przytrzymaj Ctrl/Cmd, aby zaznaczyć wiele)
+                                                </span>
+                                            </div>
+
+                                            <button
+                                                className="btn-yellow"
+                                                onClick={handleAssignHoliday}
+                                                disabled={selectedHolidayIds.length === 0}
+                                                style={{ padding: '0.6rem 1rem', fontSize: '13px', height: 'fit-content' }}
+                                            >
+                                                <PlusCircle size={14} style={{ marginRight: '5px' }} />
+                                                Przypisz ({selectedHolidayIds.length})
                                             </button>
                                         </div>
                                     </div>

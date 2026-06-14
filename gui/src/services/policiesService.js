@@ -122,7 +122,30 @@ const policiesService = {
         if (!response.ok) throw new Error('Błąd podczas usuwania święta');
         if (response.status === 204) return { success: true };
         return response.json();
-    }
+    },
+
+    assignPolicyBulk: async (payload) => {
+        const response = await fetch(`${API_URL}/assign-bulk`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Błąd podczas masowego przypisywania polityki.');
+        }
+        return true;
+    },
+    assignHolidaysToPolicyBulk: async (policyId, payload) => {
+        const response = await fetch(`${API_URL}/${policyId}/holidays/bulk`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error('Błąd podczas masowego dodawania świąt.');
+        return true;
+    },
+
 };
 
 export default policiesService;
