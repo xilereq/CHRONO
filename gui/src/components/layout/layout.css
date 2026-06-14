@@ -308,3 +308,30 @@
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.4);
 }
+
+.language-selector-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 1rem;
+    background-color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    color: #333;
+}
+
+.language-selector-select {
+    background: transparent;
+    border: none;
+    color: #0f172a;
+    font-size: 0.95rem;
+    cursor: pointer;
+    outline: none;
+    font-weight: 500;
+    padding-right: 4px;
+}
+
+.language-selector-pill:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}

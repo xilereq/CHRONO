@@ -1,11 +1,13 @@
 import React from 'react';
-
-import {TimeTracker, StatusCharts, QuickRequests, RecentRequests} from '../../components';
+import { TimeTracker, StatusCharts, QuickRequests, RecentRequests } from '../../components';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Dashboard = () => {
+    const { t } = useLanguage();
+
     return (
         <div className="dashboard">
-            <h2 className="dashboard-title">Ewidencja Czasu Pracy - Pulpit Pracownika</h2>
+            <h2 className="dashboard-title">{t('dashboard.mainTitle', 'Ewidencja Czasu Pracy - Pulpit Pracownika')}</h2>
             <div className="dashboard-grid">
                 <TimeTracker />
                 <StatusCharts />
