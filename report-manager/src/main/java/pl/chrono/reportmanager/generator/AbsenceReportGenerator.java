@@ -3,6 +3,7 @@ package pl.chrono.reportmanager.generator;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamAbsencesReport;
+import pl.chrono.reportmanager.exception.ReportGenerationException;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -12,8 +13,8 @@ public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesRep
   public byte[] generate(TeamAbsencesReport report, ReportFormat format) {
     return switch (format) {
       case CSV -> generateCsv(report);
-      case PDF -> throw new UnsupportedOperationException("Eksport do PDF wymaga dodania biblioteki");
-      case XLSX -> throw new UnsupportedOperationException("Eksport do XLSX wymaga dodania biblioteki");
+      case PDF -> throw new ReportGenerationException.UnsupportedFormat(format.name());
+      case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
     };
   }
 

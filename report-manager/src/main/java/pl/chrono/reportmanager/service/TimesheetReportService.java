@@ -18,6 +18,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.WorkLogRepository;
 import pl.chrono.reportmanager.dto.DailyTimesheetEntry;
 import pl.chrono.reportmanager.dto.EmployeeTimesheetReport;
+import pl.chrono.reportmanager.exception.ReportUserException;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class TimesheetReportService {
   @Transactional(readOnly = true)
   public EmployeeTimesheetReport generateTimesheet(Integer employeeId, LocalDate startDate, LocalDate endDate) {
     User user = userRepository.findById(employeeId)
-        .orElseThrow(() -> new IllegalArgumentException("No user with ID found: " + employeeId));
+        .orElseThrow(() -> new ReportUserException.NotFound(employeeId));
 
     List<DailyTimesheetEntry> dailyEntries = new ArrayList<>();
 
