@@ -108,4 +108,9 @@ public class TimeDataAdapter implements I_TimeData {
   public List<WorkLogRequest> findAllPendingWorkLogRequests() {
     return requestRepository.findAllByStatus(WorkLogRequestStatus.PENDING);
   }
+
+  @Override
+  public void deleteWorkLog(WorkLog workLog) {
+    workLogRepository.delete(workLog);
+  }
 }

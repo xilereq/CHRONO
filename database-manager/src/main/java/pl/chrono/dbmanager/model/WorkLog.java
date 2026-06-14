@@ -3,6 +3,8 @@ package pl.chrono.dbmanager.model;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
+import pl.chrono.dbmanager.model.enums.WorkLocationType;
 
 @Entity
 @Table(name = "work_log")
@@ -38,6 +41,10 @@ public class WorkLog {
 
   @Column(name = "is_settled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
   private boolean settled;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "location_type", nullable = false)
+  private WorkLocationType locationType = WorkLocationType.OFFICE;
 
   public long calculateWorkTime(LocalDateTime boundaryTime) {
     LocalDateTime endTime = this.getEndTime() != null ? this.getEndTime() : boundaryTime;

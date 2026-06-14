@@ -9,12 +9,15 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
+import pl.chrono.dbmanager.model.enums.ApplicationType;
+import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
@@ -24,6 +27,7 @@ import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
 import pl.chrono.timemanager.mapper.WorkLogMapper;
+import pl.chrono.usermanager.event.UserLoginEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -46,28 +50,56 @@ public class WorkLogService {
         .toList();
   }
 
+  @EventListener
   @Transactional
-  public WorkLogDto startWork(Integer userId) {
+  public void handleUserLoginEvent(UserLoginEvent event) {
+    if (!isUserWorking(event.userId())) {
+        startWork(event.userId(), null);
+    }
+  }
+
+  @Transactional
+  public WorkLogDto startWork(Integer userId, WorkLocationType location) {
     if (isUserWorking(userId)) {
       throw new WorkException.WorkStarted(userId);
     }
-
-    timeData.findLastClosedWorkLog(userId).ifPresent(lastLog -> {
-      long hoursPassed = Duration.between(lastLog.getEndTime(), LocalDateTime.now()).toHours();
-      if (hoursPassed < 11) {
-        eventPublisher.publishEvent(new LawViolationEvent(
-            userId, "VIOLATION_REST", lastLog.getWorkLogId().longValue(), "WORK_LOG",
-            "WARNING: You have worked less than 11 hours since your last shift (hours passed: " + hoursPassed + ")."
-        ));
-      }
-    });
 
     WorkLog workLog = new WorkLog();
     workLog.setUser(userRepository.findById(userId)
         .orElseThrow(() -> new UserException.NotFound(userId)));
     workLog.setStartTime(LocalDateTime.now());
+
+    boolean hasHoApplication = isHomeOffice(userId);
+    if (location != null) {
+      if (location == WorkLocationType.HOME_OFFICE && !hasHoApplication) {
+        throw new WorkException.NoHomeOfficeApplication();
+      }
+    } else {
+      location = hasHoApplication ? WorkLocationType.HOME_OFFICE : WorkLocationType.OFFICE;
+    }
+    workLog.setLocationType(location);
+
     WorkLog saved = timeData.saveWorkLog(workLog);
     return workLogMapper.toDto(saved);
+  }
+
+  private boolean isHomeOffice(Integer userId) {
+    return applicationRepository.findApprovedByEmployeeAndDate(userId, LocalDate.now())
+        .stream()
+        .anyMatch(app -> app.getType() == ApplicationType.HOME_OFFICE);
+  }
+
+  @Transactional
+  public void cancelWork(Integer userId) {
+    WorkLog workLog = timeData.findActiveWorkLog(userId)
+        .orElseThrow(() -> new WorkException.NoActiveWork(userId));
+
+    long minutesPassed = Duration.between(workLog.getStartTime(), LocalDateTime.now()).toMinutes();
+    if (minutesPassed > 15) {
+      throw new WorkException.CancellationExpired();
+    }
+
+    timeData.deleteWorkLog(workLog);
   }
 
   @Transactional()
@@ -90,23 +122,31 @@ public class WorkLogService {
 
     if (workTime > maxAllowedSeconds) {
       workLog.forceClose(now);
-      WorkLog saved = timeData.saveWorkLog(workLog);
-
       eventPublisher.publishEvent(new LawViolationEvent(
           userId, "VIOLATION_MAX_WORK", workLog.getWorkLogId().longValue(), "WORK_LOG",
           "Your work time has exceeded maximum work time for your policy (" + formatSecondsToTime(
               maxAllowedSeconds) + "). Log has been automatically closed."
       ));
-
-      checkWeeklyWorkLimit(saved, now, workLog.getUser().getActivePolicy());
-      return workLogMapper.toDto(saved);
-    }
-    if (workTime < (requiredSeconds - roundingSeconds)) {
+    } else if (workTime < (requiredSeconds - roundingSeconds)) {
       long missingSeconds = requiredSeconds - workTime;
       throw new WorkException.InsufficientWorkTime(formatSecondsToTime(missingSeconds));
+    } else {
+      workLog.setEndTime(now);
     }
-    workLog.setEndTime(LocalDateTime.now());
+
     WorkLog saved = timeData.saveWorkLog(workLog);
+
+    timeData.findLastClosedWorkLog(userId).ifPresent(lastLog -> {
+      if (!lastLog.getWorkLogId().equals(saved.getWorkLogId())) {
+        long hoursPassed = Duration.between(lastLog.getEndTime(), saved.getStartTime()).toHours();
+        if (hoursPassed < 11) {
+          eventPublisher.publishEvent(new LawViolationEvent(
+              userId, "VIOLATION_REST", saved.getWorkLogId().longValue(), "WORK_LOG",
+              "WARNING: You have worked less than 11 hours since your last shift (hours passed: " + hoursPassed + ")."
+          ));
+        }
+      }
+    });
     checkWeeklyWorkLimit(saved, now, workLog.getUser().getActivePolicy());
     return workLogMapper.toDto(saved);
   }

@@ -5,10 +5,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.chrono.dbmanager.model.enums.WorkLocationType;
+import pl.chrono.timemanager.dto.request.StartWorkRequest;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.service.WorkLogService;
@@ -40,8 +43,13 @@ public class WorkLogController extends BaseController {
   }
 
   @PostMapping("/start")
-  public ResponseEntity<WorkLogDto> startWork(@RequestHeader("Authorization") String token) {
-    return new ResponseEntity<>(workLogService.startWork(extractId(token)), HttpStatus.CREATED);
+  public ResponseEntity<WorkLogDto> startWork(
+      @RequestHeader("Authorization") String token,
+      @RequestBody(required = false) StartWorkRequest request) {
+
+    WorkLocationType type = (request != null) ? request.locationType() : null;
+
+    return new ResponseEntity<>(workLogService.startWork(extractId(token), type), HttpStatus.CREATED);
   }
 
   @PostMapping("/end")
@@ -62,5 +70,11 @@ public class WorkLogController extends BaseController {
   @GetMapping("/today-target")
   public ResponseEntity<String> getTodayTarget(@RequestHeader("Authorization") String token) {
     return ResponseEntity.ok(workLogService.getTodayTarget(extractId(token)));
+  }
+
+  @PostMapping("/cancel")
+  public ResponseEntity<Void> cancelWork(@RequestHeader("Authorization") String token) {
+    workLogService.cancelWork(extractId(token));
+    return ResponseEntity.ok().build();
   }
 }

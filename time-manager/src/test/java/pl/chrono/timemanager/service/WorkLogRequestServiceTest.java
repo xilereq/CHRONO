@@ -32,7 +32,7 @@ import pl.chrono.timemanager.exception.WorkLogRequestException;
 import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
 
 @ExtendWith(MockitoExtension.class)
-class WorkLogRequestServiceRequestTest {
+class WorkLogRequestServiceTest {
 
   @Mock
   private UserRepository userRepository;

@@ -12,6 +12,9 @@ public final class ErrorCodes {
   public static final String WORK_ALREADY_STARTED = "WORK_ALREADY_STARTED";
   public static final String INSUFFICIENT_WORK_TIME = "INSUFFICIENT_WORK_TIME";
   public static final String INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE";
+  public static final String CANCELLATION_EXPIRED = "CANCELLATION_EXPIRED";
+  public static final String NO_HO_APPLICATION = "NO_HO_APPLICATION";
+
 
   public static final String HOLIDAY_NOT_FOUND = "HOLIDAY_NOT_FOUND";
   public static final String HOLIDAY_ALREADY_ASSIGNED = "HOLIDAY_ALREADY_ASSIGNED";
