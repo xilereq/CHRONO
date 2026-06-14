@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.chrono.applicationmanager.exception.ApplicationManagerException;
 import pl.chrono.timemanager.exception.TimeManagerException;
+import pl.chrono.reportmanager.exception.ReportException;
 
 @RestControllerAdvice
 @SuppressWarnings("unused")
@@ -22,6 +23,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(ApplicationManagerException.class)
   public ResponseEntity<Object> handleApplicationManagerException(ApplicationManagerException ex) {
+    return buildErrorResponse(ex.getErrorCode(), ex.getMessage(), ex.getStatus());
+  }
+
+  @ExceptionHandler(ReportException.class)
+  public ResponseEntity<Object> handleReportException(ReportException ex) {
     return buildErrorResponse(ex.getErrorCode(), ex.getMessage(), ex.getStatus());
   }
 
