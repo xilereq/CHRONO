@@ -13,6 +13,7 @@ import pl.chrono.dbmanager.repository.PolicyRepository;
 import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
+import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.dto.response.PolicyDto;
 import pl.chrono.timemanager.exception.HolidayException;
@@ -109,5 +110,36 @@ public class PolicyConfigurationService {
     holidayPolicyRepository.deleteByPolicy(policy);
 
     policyRepository.delete(policy);
+  }
+
+  @Transactional
+  @LogActivity(action = "BULK_ASSIGN_HOLIDAYS", details = "Assigned multiple holidays to policy")
+  public void assignHolidaysToPolicyBulk(Integer policyId, MassAssignHolidayRequest request) {
+    Policy policy = policyRepository.findById(policyId)
+        .orElseThrow(() -> new PolicyException.NotFound(policyId));
+
+    List<Holiday> holidaysToAssign = holidayRepository.findAllById(request.holidayIds());
+    if (holidaysToAssign.isEmpty()) {
+      throw new IllegalArgumentException("No valid holidays found for provided IDs.");
+    }
+
+    List<HolidayPolicy> existingAssignments = holidayPolicyRepository.findByPolicy(policy);
+    java.util.Set<Integer> existingHolidayIds = existingAssignments.stream()
+        .map(hp -> hp.getHoliday().getHolidayId())
+        .collect(java.util.stream.Collectors.toSet());
+
+    List<HolidayPolicy> newAssignments = holidaysToAssign.stream()
+        .filter(holiday -> !existingHolidayIds.contains(holiday.getHolidayId()))
+        .map(holiday -> {
+          HolidayPolicy hp = new HolidayPolicy();
+          hp.setPolicy(policy);
+          hp.setHoliday(holiday);
+          return hp;
+        })
+        .toList();
+
+    if (!newAssignments.isEmpty()) {
+      holidayPolicyRepository.saveAll(newAssignments);
+    }
   }
 }

@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
+import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
+import pl.chrono.timemanager.dto.request.MassAssignPolicyRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.dto.response.PolicyDto;
 import pl.chrono.timemanager.service.PolicyConfigurationService;
@@ -97,4 +99,22 @@ public class PolicyController extends BaseController {
     return ResponseEntity.noContent().build();
   }
 
+  @PostMapping("/assign-bulk")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  public ResponseEntity<Void> assignPolicyBulk(
+      @Valid @RequestBody MassAssignPolicyRequest request) {
+
+    managementService.assignPolicyToUsersBulk(request);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{policyId}/holidays/bulk")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Void> assignHolidaysToPolicyBulk(
+      @PathVariable Integer policyId,
+      @Valid @RequestBody MassAssignHolidayRequest request) {
+
+    configService.assignHolidaysToPolicyBulk(policyId, request);
+    return ResponseEntity.noContent().build();
+  }
 }
