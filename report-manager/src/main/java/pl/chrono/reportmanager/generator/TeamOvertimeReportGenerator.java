@@ -1,10 +1,20 @@
 package pl.chrono.reportmanager.generator;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.ReportFormat;
+import pl.chrono.reportmanager.dto.TeamOvertimeEntry;
 import pl.chrono.reportmanager.dto.TeamOvertimeReport;
 import pl.chrono.reportmanager.exception.ReportGenerationException;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -12,11 +22,17 @@ public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOverti
 
   @Override
   public byte[] generate(TeamOvertimeReport report, ReportFormat format) {
-    return switch (format) {
-      case CSV -> generateCsv(report);
-      case PDF -> throw new ReportGenerationException.UnsupportedFormat(format.name());
-      case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
-    };
+    try {
+      return switch (format) {
+        case CSV -> generateCsv(report);
+        case PDF -> generatePdf(report);
+        case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
+      };
+    } catch (ReportGenerationException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new ReportGenerationException.Failed(format.name(), e);
+    }
   }
 
   private byte[] generateCsv(TeamOvertimeReport report) {
@@ -31,5 +47,36 @@ public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOverti
     });
 
     return "\uFEFF".getBytes(StandardCharsets.UTF_8);
+  }
+
+  private byte[] generatePdf(TeamOvertimeReport report) throws Exception {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    Document document = new Document();
+    PdfWriter.getInstance(document, out);
+    document.open();
+
+    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+
+    document.add(new Paragraph("Zbiorczy Raport Nadgodzin Zespolu: " + report.startDate() + " - " + report.endDate(), titleFont));
+    document.add(new Paragraph(" "));
+
+    PdfPTable table = new PdfPTable(3);
+    table.setWidthPercentage(100);
+
+    String[] headers = {"ID Pracownika", "Imie i Nazwisko", "Suma Nadgodzin"};
+    for (String header : headers) {
+      table.addCell(new PdfPCell(new Phrase(header, headerFont)));
+    }
+
+    for (TeamOvertimeEntry e : report.entries()) {
+      table.addCell(String.valueOf(e.employeeId()));
+      table.addCell(e.employeeFullName());
+      table.addCell(formatSeconds(e.totalOvertimeSeconds()));
+    }
+
+    document.add(table);
+    document.close();
+    return out.toByteArray();
   }
 }
