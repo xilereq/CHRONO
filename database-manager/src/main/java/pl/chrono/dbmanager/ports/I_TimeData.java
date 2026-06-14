@@ -42,4 +42,6 @@ public interface I_TimeData {
                                           LocalDateTime endOfDay);
 
   List<WorkLogRequest> findAllPendingWorkLogRequests();
+
+  void deleteWorkLog(WorkLog workLog);
 }

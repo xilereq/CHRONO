@@ -55,4 +55,24 @@ public class WorkException extends TimeManagerException {
       );
     }
   }
+
+  public static class CancellationExpired extends WorkException {
+    public CancellationExpired() {
+      super(
+          ErrorCodes.CANCELLATION_EXPIRED,
+          "You can cancel work only withing starting 15 minutes.",
+          HttpStatus.BAD_REQUEST
+      );
+    }
+  }
+
+  public static class NoHomeOfficeApplication extends WorkException {
+    public NoHomeOfficeApplication() {
+      super(
+          ErrorCodes.NO_HO_APPLICATION,
+          "You do not have approved application for home office for today.",
+          HttpStatus.FORBIDDEN
+      );
+    }
+  }
 }
