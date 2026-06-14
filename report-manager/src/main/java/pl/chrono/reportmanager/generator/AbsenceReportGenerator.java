@@ -8,6 +8,10 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamAbsenceEntry;
@@ -26,7 +30,8 @@ public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesRep
       return switch (format) {
         case CSV -> generateCsv(report);
         case PDF -> generatePdf(report);
-        case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
+        case XLSX -> generateXlsx(report);
+        default -> throw new ReportGenerationException.UnsupportedFormat(format.name());
       };
     } catch (ReportGenerationException e) {
       throw e;
@@ -87,5 +92,37 @@ public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesRep
     document.add(table);
     document.close();
     return out.toByteArray();
+  }
+
+  private byte[] generateXlsx(TeamAbsencesReport report) throws Exception {
+    try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+      Sheet sheet = workbook.createSheet("Absencje");
+
+      sheet.createRow(0).createCell(0).setCellValue("Raport Wnioskow i Absencji");
+      sheet.createRow(1).createCell(0).setCellValue("Od: " + report.startDate() + " Do: " + report.endDate());
+
+      Row headerRow = sheet.createRow(3);
+      String[] headers = {"Pracownik", "Typ Wniosku", "Status", "Data Od", "Data Do"};
+      for (int i = 0; i < headers.length; i++) {
+        headerRow.createCell(i).setCellValue(headers[i]);
+      }
+
+      int rowIdx = 4;
+      for (TeamAbsenceEntry e : report.entries()) {
+        Row row = sheet.createRow(rowIdx++);
+        row.createCell(0).setCellValue(e.employeeFullName());
+        row.createCell(1).setCellValue(e.applicationType());
+        row.createCell(2).setCellValue(e.status());
+        row.createCell(3).setCellValue(e.startDate().toString());
+        row.createCell(4).setCellValue(e.endDate().toString());
+      }
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+      }
+
+      workbook.write(out);
+      return out.toByteArray();
+    }
   }
 }

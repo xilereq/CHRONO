@@ -8,6 +8,10 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.EmployeeTimesheetReport;
 import pl.chrono.reportmanager.dto.DailyTimesheetEntry;
@@ -26,7 +30,8 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
       return switch (format) {
         case CSV -> generateCsv(report);
         case PDF -> generatePdf(report);
-        case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
+        case XLSX -> generateXlsx(report);
+        default -> throw new ReportGenerationException.UnsupportedFormat(format.name());
       };
     } catch (ReportGenerationException e) {
       throw e;
@@ -100,6 +105,45 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
     document.add(table);
     document.close();
     return out.toByteArray();
+  }
+
+  private byte[] generateXlsx(EmployeeTimesheetReport report) throws Exception {
+    try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+      Sheet sheet = workbook.createSheet("Timesheet");
+
+      sheet.createRow(0).createCell(0).setCellValue("Raport Okresowy: " + report.startDate() + " do " + report.endDate());
+      sheet.createRow(1).createCell(0).setCellValue("Pracownik: " + report.employeeFullName());
+      sheet.createRow(2).createCell(0).setCellValue("Przepracowano: " + formatSeconds(report.totalWorkSeconds()));
+      sheet.createRow(3).createCell(0).setCellValue("Wymagano: " + formatSeconds(report.totalRequiredSeconds()));
+      sheet.createRow(4).createCell(0).setCellValue("Bilans: " + formatSeconds(report.totalBalanceSeconds()));
+      sheet.createRow(5).createCell(0).setCellValue("Godziny Nocne: " + formatSeconds(report.totalNightSeconds()));
+
+      Row headerRow = sheet.createRow(7);
+      String[] headers = {"Data", "Start", "Koniec", "Efektywny Czas", "Wymagany Czas", "Bilans", "Godziny Nocne", "Wniosek"};
+      for (int i = 0; i < headers.length; i++) {
+        headerRow.createCell(i).setCellValue(headers[i]);
+      }
+
+      int rowIdx = 8;
+      for (DailyTimesheetEntry entry : report.dailyEntries()) {
+        Row row = sheet.createRow(rowIdx++);
+        row.createCell(0).setCellValue(entry.date().toString());
+        row.createCell(1).setCellValue(entry.startTime() != null ? entry.startTime().toString() : "-");
+        row.createCell(2).setCellValue(entry.endTime() != null ? entry.endTime().toString() : "-");
+        row.createCell(3).setCellValue(formatSeconds(entry.effectiveWorkSeconds()));
+        row.createCell(4).setCellValue(formatSeconds((long) entry.requiredSeconds()));
+        row.createCell(5).setCellValue(formatSeconds(entry.balanceSeconds()));
+        row.createCell(6).setCellValue(formatSeconds(entry.nightSeconds()));
+        row.createCell(7).setCellValue(entry.applicationType() != null ? entry.applicationType() : "");
+      }
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+      }
+
+      workbook.write(out);
+      return out.toByteArray();
+    }
   }
 
   private byte[] addUtf8Bom(String content) {

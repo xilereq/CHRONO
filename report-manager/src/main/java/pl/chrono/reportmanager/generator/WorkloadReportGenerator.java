@@ -8,6 +8,10 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamWorkloadEntry;
@@ -26,7 +30,8 @@ public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadRe
       return switch (format) {
         case CSV -> generateCsv(report);
         case PDF -> generatePdf(report);
-        case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
+        case XLSX -> generateXlsx(report);
+        default -> throw new ReportGenerationException.UnsupportedFormat(format.name());
       };
     } catch (ReportGenerationException e) {
       throw e;
@@ -82,5 +87,36 @@ public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadRe
     document.add(table);
     document.close();
     return out.toByteArray();
+  }
+
+  private byte[] generateXlsx(TeamWorkloadReport report) throws Exception {
+    try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+      Sheet sheet = workbook.createSheet("Obciazenie Zespolu");
+
+      sheet.createRow(0).createCell(0).setCellValue("Raport Obciazenia Zespolu: " + report.startDate() + " - " + report.endDate());
+
+      Row headerRow = sheet.createRow(2);
+      String[] headers = {"ID Pracownika", "Imie i Nazwisko", "Przepracowano", "Wymagano", "Bilans"};
+      for (int i = 0; i < headers.length; i++) {
+        headerRow.createCell(i).setCellValue(headers[i]);
+      }
+
+      int rowIdx = 3;
+      for (TeamWorkloadEntry e : report.entries()) {
+        Row row = sheet.createRow(rowIdx++);
+        row.createCell(0).setCellValue(e.employeeId());
+        row.createCell(1).setCellValue(e.employeeFullName());
+        row.createCell(2).setCellValue(formatSeconds(e.totalWorkSeconds()));
+        row.createCell(3).setCellValue(formatSeconds(e.totalRequiredSeconds()));
+        row.createCell(4).setCellValue(formatSeconds(e.totalBalanceSeconds()));
+      }
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+      }
+
+      workbook.write(out);
+      return out.toByteArray();
+    }
   }
 }

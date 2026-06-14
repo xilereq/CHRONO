@@ -8,6 +8,10 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.EmployeeOvertimeReport;
 import pl.chrono.reportmanager.dto.OvertimeEntry;
@@ -26,7 +30,8 @@ public class EmployeeOvertimeReportGenerator implements I_ReportGenerator<Employ
       return switch (format) {
         case CSV -> generateCsv(report);
         case PDF -> generatePdf(report);
-        case XLSX -> throw new ReportGenerationException.UnsupportedFormat(format.name());
+        case XLSX -> generateXlsx(report);
+        default -> throw new ReportGenerationException.UnsupportedFormat(format.name());
       };
     } catch (ReportGenerationException e) {
       throw e;
@@ -86,5 +91,37 @@ public class EmployeeOvertimeReportGenerator implements I_ReportGenerator<Employ
     document.add(table);
     document.close();
     return out.toByteArray();
+  }
+
+  private byte[] generateXlsx(EmployeeOvertimeReport report) throws Exception {
+    try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+      Sheet sheet = workbook.createSheet("Nadgodziny - Pracownik");
+
+      sheet.createRow(0).createCell(0).setCellValue("Raport Nadgodzin: " + report.startDate() + " - " + report.endDate());
+      sheet.createRow(1).createCell(0).setCellValue("Pracownik: " + report.employeeFullName());
+      sheet.createRow(2).createCell(0).setCellValue("Suma nadgodzin: " + formatSeconds(report.totalOvertimeSeconds()));
+
+      Row headerRow = sheet.createRow(4);
+      String[] headers = {"Data", "Przepracowano", "Wymagano", "Nadgodziny"};
+      for (int i = 0; i < headers.length; i++) {
+        headerRow.createCell(i).setCellValue(headers[i]);
+      }
+
+      int rowIdx = 5;
+      for (OvertimeEntry e : report.entries()) {
+        Row row = sheet.createRow(rowIdx++);
+        row.createCell(0).setCellValue(e.date().toString());
+        row.createCell(1).setCellValue(formatSeconds(e.workedSeconds()));
+        row.createCell(2).setCellValue(formatSeconds((long) e.requiredSeconds()));
+        row.createCell(3).setCellValue(formatSeconds(e.overtimeSeconds()));
+      }
+
+      for (int i = 0; i < headers.length; i++) {
+        sheet.autoSizeColumn(i);
+      }
+
+      workbook.write(out);
+      return out.toByteArray();
+    }
   }
 }
