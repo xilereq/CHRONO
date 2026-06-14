@@ -186,6 +186,7 @@ const ManagerRequestTab = () => {
                             onChange={handleChange}
                         >
                             <option value="SICK_LEAVE">Zwolnienie lekarskie / L4</option>
+                            <option value="HOME_OFFICE">Praca zdalna (Home Office)</option>
                             <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
                         </select>
                     </label>

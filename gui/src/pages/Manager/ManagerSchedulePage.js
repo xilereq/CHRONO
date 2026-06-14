@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ManagerSidebar from '../../components/manager/ManagerSidebar';
 import ScheduleChangeTab from '../../components/manager/ScheduleChangeTab';
 import ManagerRequestTab from '../../components/manager/ManagerRequestTab';
+import ApprovalList from '../Requests/ApprovalList';
 
 import '../main.css';
 import '../Policies/policies.css';
@@ -19,6 +20,8 @@ const ManagerSchedulePage = () => {
 
                     <div className="policies-scrollable-content" style={{ marginTop: '1.5rem' }}>
                         {activeTab === 'schedule' && <ScheduleChangeTab />}
+
+                        {activeTab === 'approvals' && <ApprovalList />}
 
                         {activeTab === 'team-requests' && <ManagerRequestTab />}
                     </div>

@@ -115,6 +115,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
                         >
                             <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
                             <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
+                            <option value="HOME_OFFICE">Praca zdalna (Home Office)</option>
                             <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
                             <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
                             <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
