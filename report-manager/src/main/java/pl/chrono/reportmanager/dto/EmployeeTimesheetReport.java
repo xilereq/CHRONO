@@ -11,5 +11,6 @@ public record EmployeeTimesheetReport(
     Long totalWorkSeconds,
     Long totalRequiredSeconds,
     Long totalBalanceSeconds,
+    Long totalNightSeconds,
     List<DailyTimesheetEntry> dailyEntries
 ) {}

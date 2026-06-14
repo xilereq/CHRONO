@@ -26,8 +26,9 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
     sb.append("Przepracowano:;").append(formatSeconds(report.totalWorkSeconds())).append("\n");
     sb.append("Wymagano:;").append(formatSeconds(report.totalRequiredSeconds())).append("\n");
     sb.append("Bilans:;").append(formatSeconds(report.totalBalanceSeconds())).append("\n\n");
+    sb.append("Godziny Nocne:;").append(formatSeconds(report.totalNightSeconds())).append("\n\n");
 
-    sb.append("Data;Start;Koniec;Efektywny Czas;Wymagany Czas;Bilans;Wniosek\n");
+    sb.append("Data;Start;Koniec;Efektywny Czas;Wymagany Czas;Bilans;Godziny Nocne;Wniosek\n");
 
     for (DailyTimesheetEntry entry : report.dailyEntries()) {
       sb.append(entry.date()).append(";");
@@ -36,6 +37,7 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
       sb.append(formatSeconds(entry.effectiveWorkSeconds())).append(";");
       sb.append(formatSeconds((long) entry.requiredSeconds())).append(";");
       sb.append(formatSeconds(entry.balanceSeconds())).append(";");
+      sb.append(formatSeconds(entry.nightSeconds())).append(";");
       sb.append(entry.applicationType() != null ? entry.applicationType() : "").append("\n");
     }
 

@@ -10,5 +10,6 @@ public record DailyTimesheetEntry(
     Long effectiveWorkSeconds,
     Integer requiredSeconds,
     Long balanceSeconds,
+    Long nightSeconds,
     String applicationType
 ) {}
