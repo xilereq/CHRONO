@@ -19,7 +19,6 @@ import pl.chrono.reportmanager.dto.TeamOvertimeReport;
 import pl.chrono.reportmanager.exception.ReportGenerationException;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 
 @Component
 public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOvertimeReport> {
@@ -51,7 +50,7 @@ public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOverti
           .append(formatSeconds(e.totalOvertimeSeconds())).append("\n");
     });
 
-    return "\uFEFF".getBytes(StandardCharsets.UTF_8);
+    return addUtf8Bom(sb.toString());
   }
 
   private byte[] generatePdf(TeamOvertimeReport report) throws Exception {

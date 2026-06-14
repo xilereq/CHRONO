@@ -1,6 +1,7 @@
 package pl.chrono.reportmanager.generator;
 
 import pl.chrono.reportmanager.dto.ReportFormat;
+import java.nio.charset.StandardCharsets;
 
 public interface I_ReportGenerator<T> {
   byte[] generate(T reportData, ReportFormat format);
@@ -12,5 +13,9 @@ public interface I_ReportGenerator<T> {
     long minutes = absSeconds % 3600 / 60;
     String sign = totalSeconds < 0 ? "-" : "";
     return String.format("%s%d:%02d", sign, hours, minutes);
+  }
+
+  default byte[] addUtf8Bom(String content) {
+    return ("\uFEFF" + content).getBytes(StandardCharsets.UTF_8);
   }
 }

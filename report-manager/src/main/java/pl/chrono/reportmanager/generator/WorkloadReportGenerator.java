@@ -19,7 +19,6 @@ import pl.chrono.reportmanager.dto.TeamWorkloadReport;
 import pl.chrono.reportmanager.exception.ReportGenerationException;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 
 @Component
 public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadReport> {
@@ -53,7 +52,7 @@ public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadRe
           .append(formatSeconds(e.totalBalanceSeconds())).append("\n");
     });
 
-    return "\uFEFF".getBytes(StandardCharsets.UTF_8);
+    return addUtf8Bom(sb.toString());
   }
 
   private byte[] generatePdf(TeamWorkloadReport report) throws Exception {

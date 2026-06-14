@@ -19,7 +19,6 @@ import pl.chrono.reportmanager.dto.TeamAbsencesReport;
 import pl.chrono.reportmanager.exception.ReportGenerationException;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 
 @Component
 public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesReport> {
@@ -56,7 +55,7 @@ public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesRep
           .append(e.endDate()).append("\n");
     });
 
-    return "\uFEFF".getBytes(StandardCharsets.UTF_8);
+    return addUtf8Bom(sb.toString());
   }
 
   private byte[] generatePdf(TeamAbsencesReport report) throws Exception {

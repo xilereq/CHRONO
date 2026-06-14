@@ -19,7 +19,6 @@ import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.exception.ReportGenerationException;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 
 @Component
 public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimesheetReport> {
@@ -144,15 +143,5 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
       workbook.write(out);
       return out.toByteArray();
     }
-  }
-
-  private byte[] addUtf8Bom(String content) {
-    byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-    byte[] withBom = new byte[bytes.length + 3];
-    withBom[0] = (byte) 0xEF;
-    withBom[1] = (byte) 0xBB;
-    withBom[2] = (byte) 0xBF;
-    System.arraycopy(bytes, 0, withBom, 3, bytes.length);
-    return withBom;
   }
 }

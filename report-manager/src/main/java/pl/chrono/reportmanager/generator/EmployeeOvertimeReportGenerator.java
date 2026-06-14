@@ -19,7 +19,6 @@ import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.exception.ReportGenerationException;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 
 @Component
 public class EmployeeOvertimeReportGenerator implements I_ReportGenerator<EmployeeOvertimeReport> {
@@ -55,7 +54,7 @@ public class EmployeeOvertimeReportGenerator implements I_ReportGenerator<Employ
           .append(formatSeconds(e.overtimeSeconds())).append("\n");
     });
 
-    return "\uFEFF".getBytes(StandardCharsets.UTF_8);
+    return addUtf8Bom(sb.toString());
   }
 
   private byte[] generatePdf(EmployeeOvertimeReport report) throws Exception {
