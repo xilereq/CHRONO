@@ -28,7 +28,17 @@ const Sidebar = () => {
             <div className="sidebar-logo">
                 <Clock size={32} />
             </div>
-            <nav className="sidebar-nav">
+
+            <nav
+                className="sidebar-nav"
+                style={{
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
                 <NavLink to="/" end className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <LayoutGrid size={24} />
                     <span>Pulpit</span>
@@ -68,6 +78,7 @@ const Sidebar = () => {
                         </NavLink>
                     </>
                 )}
+
                 <NavLink to="/ustawienia" className={({isActive}) => isActive ? 'sidebar-item mt-auto active' : 'sidebar-item mt-auto'}>
                     <Settings size={24} />
                     <span>Ustawienia</span>
