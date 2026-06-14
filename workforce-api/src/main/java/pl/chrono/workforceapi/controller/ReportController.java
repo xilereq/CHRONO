@@ -38,7 +38,7 @@ public class ReportController extends BaseController {
     Integer employeeId = extractId(token);
     byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = String.format("my_timesheet_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    String filename = String.format("my_timesheet_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
     return createResponse(reportData, filename, format);
   }
 
@@ -52,12 +52,27 @@ public class ReportController extends BaseController {
 
     byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = String.format("employee_%d_timesheet_%s_to_%s.%s", employeeId, startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    String filename = String.format("employee_%d_timesheet_%s_to_%s.%s", employeeId, startDate, endDate, format.name().toLowerCase());
     return createResponse(reportData, filename, format);
   }
 
-  @GetMapping("/team/workload")
-  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  @GetMapping("/overtime/me")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
+  public ResponseEntity<byte[]> getMyOvertimeReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer employeeId = extractId(token);
+    byte[] reportData = reportFacade.getEmployeeOvertime(employeeId, startDate, endDate, format);
+
+    String filename = String.format("my_overtime_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/workload/team")
+  @PreAuthorize("hasRole('MANAGER')")
   public ResponseEntity<byte[]> getTeamWorkloadReport(
       @RequestHeader("Authorization") String token,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -67,12 +82,12 @@ public class ReportController extends BaseController {
     Integer managerId = extractId(token);
     byte[] reportData = reportFacade.getTeamWorkload(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_workload_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    String filename = String.format("team_workload_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
     return createResponse(reportData, filename, format);
   }
 
-  @GetMapping("/team/absences")
-  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  @GetMapping("/absences/team")
+  @PreAuthorize("hasRole('MANAGER')")
   public ResponseEntity<byte[]> getTeamAbsencesReport(
       @RequestHeader("Authorization") String token,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -82,7 +97,22 @@ public class ReportController extends BaseController {
     Integer managerId = extractId(token);
     byte[] reportData = reportFacade.getTeamAbsences(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_absences_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    String filename = String.format("team_absences_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/overtime/team")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<byte[]> getTeamOvertimeReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer managerId = extractId(token);
+    byte[] reportData = reportFacade.getTeamOvertime(managerId, startDate, endDate, format);
+
+    String filename = String.format("team_overtime_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
     return createResponse(reportData, filename, format);
   }
 
@@ -97,35 +127,5 @@ public class ReportController extends BaseController {
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
         .contentType(mediaType)
         .body(fileData);
-  }
-
-  @GetMapping("/overtime/me")
-  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
-  public ResponseEntity<byte[]> getMyOvertimeReport(
-      @RequestHeader("Authorization") String token,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam(defaultValue = "CSV") ReportFormat format) {
-
-    Integer employeeId = extractId(token);
-    byte[] reportData = reportFacade.getEmployeeOvertime(employeeId, startDate, endDate, format);
-
-    String filename = String.format("my_overtime_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
-    return createResponse(reportData, filename, format);
-  }
-
-  @GetMapping("/overtime/team")
-  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-  public ResponseEntity<byte[]> getTeamOvertimeReport(
-      @RequestHeader("Authorization") String token,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam(defaultValue = "CSV") ReportFormat format) {
-
-    Integer managerId = extractId(token);
-    byte[] reportData = reportFacade.getTeamOvertime(managerId, startDate, endDate, format);
-
-    String filename = String.format("team_overtime_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
-    return createResponse(reportData, filename, format);
   }
 }
