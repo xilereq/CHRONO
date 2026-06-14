@@ -297,3 +297,76 @@
 
 .overtime-val.pos { color: #D97706; }
 .overtime-val.neg { color: #ef4444; }
+
+/* ── Download section ───────────────────────────────────────────────── */
+.dl-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+}
+
+.dl-tabs {
+    display: flex;
+    background: var(--bg-main);
+    border-radius: 0.5rem;
+    padding: 3px;
+    gap: 2px;
+    width: fit-content;
+}
+
+.dl-type-row {
+    display: flex;
+    background: var(--bg-main);
+    border-radius: 0.5rem;
+    padding: 3px;
+    gap: 2px;
+    width: fit-content;
+}
+
+.dl-date-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.dl-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 20px;
+}
+
+.dl-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+.report-dl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--primary-color);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    font-family: inherit;
+}
+
+.report-dl-btn:hover { opacity: 0.85; }
+.report-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+    .dl-date-row { flex-direction: column; align-items: stretch; }
+    .dl-label { min-width: unset; }
+    .dl-footer { flex-direction: column; align-items: stretch; }
+    .report-dl-btn { justify-content: center; }
+}

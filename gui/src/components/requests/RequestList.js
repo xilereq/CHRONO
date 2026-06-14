@@ -105,31 +105,6 @@ const RequestList = () => {
                 </div>
             </div>
 
-            {showForm && (
-                <RequestForm
-                    onCancel={() => setShowForm(false)}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        fetchRequests();
-                    }}
-                />
-            )}
-
-            {!showForm && (
-                <div className="section-panel">
-                    <div className="section-title">Nowy wniosek</div>
-                    <div className="submit-actions submit-actions-row">
-                        <Button
-                            className="big-yellow-btn"
-                            variant="primary"
-                            onClick={() => setShowForm(true)}
-                        >
-                            NOWY WNIOSEK
-                        </Button>
-                    </div>
-                </div>
-            )}
-
             <div className="section-panel">
                 <div className="section-title">Lista moich wniosków</div>
                 {loading ? (
@@ -190,6 +165,26 @@ const RequestList = () => {
                     </div>
                 )}
             </div>
+
+            {showForm ? (
+                <RequestForm
+                    onCancel={() => setShowForm(false)}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        fetchRequests();
+                    }}
+                />
+            ) : (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                    <Button
+                        className="big-yellow-btn"
+                        variant="primary"
+                        onClick={() => setShowForm(true)}
+                    >
+                        Utwórz wniosek
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };
