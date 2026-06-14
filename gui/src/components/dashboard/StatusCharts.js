@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../index';
 import { workLogService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../pages/main.css';
 
 const formatHours = (seconds) => {
@@ -10,6 +11,7 @@ const formatHours = (seconds) => {
 };
 
 const StatusCharts = () => {
+    const { t } = useLanguage();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -28,7 +30,7 @@ const StatusCharts = () => {
     }, []);
 
     if (loading || !stats) {
-        return <Card title="TWÓJ STATUS">Ładowanie statystyk...</Card>;
+        return <Card title={t('statusCharts.yourStatusTitle', 'TWÓJ STATUS')}>{t('statusCharts.loadingStats', 'Ładowanie statystyk...')}</Card>;
     }
 
     const workedHours = Math.floor(stats.totalWorkTime);
@@ -36,10 +38,10 @@ const StatusCharts = () => {
     const progressPercent = Math.min((stats.totalWorkTime / stats.totalMonthlyHours) * 100, 100);
 
     return (
-        <Card title="TWÓJ STATUS">
+        <Card title={t('statusCharts.yourStatusTitle', 'TWÓJ STATUS')}>
             <div className="charts-container">
                 <div className="chart-wrapper">
-                    <span className="chart-title">NADGODZINY</span>
+                    <span className="chart-title">{t('statusCharts.overtimeTitle', 'NADGODZINY')}</span>
                     <div className="chart-svg-container">
                         <svg viewBox="0 0 36 36" className="chart-svg">
                             <path className="text-blue-300" strokeWidth="6" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -47,12 +49,12 @@ const StatusCharts = () => {
                         </svg>
                     </div>
                     <div className="chart-legend">
-                        <div className="legend-item"><div className="legend-dot bg-blue-600"></div> Saldo: {formatHours(stats.overtimeSeconds)}</div>
+                        <div className="legend-item"><div className="legend-dot bg-blue-600"></div> {t('statusCharts.balance', 'Saldo:')} {formatHours(stats.overtimeSeconds)}</div>
                     </div>
                 </div>
 
                 <div className="chart-wrapper">
-                    <span className="chart-title">CZAS PRACY (BIEŻĄCY MIESIĄC)</span>
+                    <span className="chart-title">{t('statusCharts.workTimeTitle', 'CZAS PRACY (BIEŻĄCY MIESIĄC)')}</span>
                     <div className="chart-svg-container">
                         <svg viewBox="0 0 36 36" className="chart-svg">
                             <path className="text-blue-300" strokeWidth="6" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -60,8 +62,8 @@ const StatusCharts = () => {
                         </svg>
                     </div>
                     <div className="chart-legend">
-                        <div className="legend-item"><div className="legend-dot bg-blue-800"></div> Przepracowano: {workedHours}h</div>
-                        <div className="legend-item"><div className="legend-dot bg-blue-300"></div> Plan: {plannedHours}h</div>
+                        <div className="legend-item"><div className="legend-dot bg-blue-800"></div> {t('statusCharts.worked', 'Przepracowano:')} {workedHours}h</div>
+                        <div className="legend-item"><div className="legend-dot bg-blue-300"></div> {t('statusCharts.plan', 'Plan:')} {plannedHours}h</div>
                     </div>
                 </div>
             </div>

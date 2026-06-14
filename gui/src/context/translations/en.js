@@ -103,7 +103,39 @@ export const en = {
         workFromHome: 'Work from Home',
         dayOff: 'Day Off',
         scheduleChange: 'Schedule Change',
+        quickRequestsTitle: 'QUICK ACTIONS',
+        leaveRequestBtn: 'SUBMIT LEAVE REQUEST',
+        overtimeTakeBtn: 'TAKE OVERTIME',
+        scheduleChangeBtn: 'ADJUST WORK HOURS',
+        recentRequestsTitle: 'RECENT REQUESTS',
+        mainTitle: 'Time Tracking - Employee Dashboard',
     },
+
+    timeTracker: {
+        startWork: 'START WORK',
+        endWork: 'END WORK',
+        hoStart: 'WFH Start',
+        onBreak: 'ON BREAK',
+        break: 'BREAK',
+        endBreak: 'END BREAK',
+        workEndedAlert: 'Work time ended',
+        workAlreadyStarted: 'Work is already started in the system.',
+        cancelConfirm: 'Are you sure you want to cancel this work entry? This entry will be deleted.',
+        entryCancelledAlert: 'Entry cancelled.',
+        mistakeCancel: 'Mistake? Cancel entry ('
+    },
+
+    statusCharts: {
+        yourStatusTitle: 'YOUR STATUS',
+        loadingStats: 'Loading statistics...',
+        overtimeTitle: 'OVERTIME',
+        workTimeTitle: 'WORK TIME (CURRENT MONTH)',
+        balance: 'Balance:',
+        worked: 'Worked:',
+        plan: 'Plan:'
+    },
+
+
 
     // ============= REQUESTS PAGE =============
     requests: {
@@ -125,6 +157,15 @@ export const en = {
         submitRequest: 'Submit Request',
         cancelRequest: 'Cancel Request',
         viewRequest: 'View Request',
+        types: {
+            holiday: 'Holiday Leave',
+            sick: 'Sick Leave',
+            earlyExit: 'Early Exit',
+            overtimeEarn: 'Overtime Logging',
+            overtimeTake: 'Overtime Take'
+        },
+        submitDate: 'Submit Date',
+        absenceDate: 'Absence Date',
     },
 
     // ============= APPROVALS PAGE =============
@@ -153,6 +194,14 @@ export const en = {
         sunday: 'Sunday',
         startTime: 'Start Time',
         endTime: 'End Time',
+        changeSuccessAlert: 'Work hours change request submitted successfully!',
+        changeErrorAlert: 'An error occurred while submitting the request.',
+        changeWorkHoursTitle: 'Change Work Hours',
+        whenDate: 'When (Date)',
+        newHoursFrom: 'New Hours (From)',
+        newHoursTo: 'New Hours (To)',
+        reason: 'Reason',
+        reasonPlaceholder: 'Describe why you want to change your hours...'
     },
 
     // ============= REPORTS PAGE =============

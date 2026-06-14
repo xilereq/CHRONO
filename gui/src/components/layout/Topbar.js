@@ -16,7 +16,7 @@ const Topbar = ({ userEmail, onLogout }) => {
                 const data = await notificationService.getUnread();
                 setNotifications(data);
             } catch (err) {
-                console.error(t('errors.errorFetchingNotifications'), err);
+                console.error(t('errors.errorFetchingNotifications', 'Błąd pobierania powiadomień'), err);
             }
         };
         fetchUnread();
@@ -29,12 +29,12 @@ const Topbar = ({ userEmail, onLogout }) => {
                 const newNotification = JSON.parse(event.data);
                 setNotifications(prev => [newNotification, ...prev]);
             } catch (err) {
-                console.error(t('topbar.errorParsingNotification'), err);
+                console.error(t('topbar.errorParsingNotification', 'Błąd parsowania powiadomienia'), err);
             }
         });
 
         eventSource.onerror = (err) => {
-            console.error(t('topbar.errorSSEConnection'), err);
+            console.error(t('topbar.errorSSEConnection', 'Błąd połączenia SSE'), err);
             eventSource.close();
         };
 
@@ -48,7 +48,7 @@ const Topbar = ({ userEmail, onLogout }) => {
             await notificationService.markAsRead(id);
             setNotifications(prev => prev.filter(n => n.id !== id));
         } catch (err) {
-            console.error(t('topbar.markAsReadError'), err);
+            console.error(t('topbar.markAsReadError', 'Nie udało się oznaczyć jako przeczytane'), err);
         }
     };
 
@@ -57,7 +57,6 @@ const Topbar = ({ userEmail, onLogout }) => {
             <h1></h1>
             <div className="topbar-right">
 
-                {/* Oczyszczony selektor języka wykorzystujący klasy CSS */}
                 <div className="language-selector-pill">
                     <Globe size={18} style={{ color: '#666' }} />
                     <select
@@ -74,8 +73,8 @@ const Topbar = ({ userEmail, onLogout }) => {
                     <div className="user-icon">
                         <User size={16} />
                     </div>
-                    <span className="user-email" title={userEmail || t('topbar.userLoggedIn')}>
-                        {userEmail || t('topbar.userLoggedIn')}
+                    <span className="user-email" title={userEmail || t('topbar.userLoggedIn', 'Zalogowany')}>
+                        {userEmail || t('topbar.userLoggedIn', 'Zalogowany')}
                     </span>
 
                     <div
@@ -90,12 +89,12 @@ const Topbar = ({ userEmail, onLogout }) => {
                         {isDropdownOpen && (
                             <div className="notification-dropdown">
                                 <div className="notification-dropdown-header">
-                                    {t('topbar.notifications')} ({notifications.length})
+                                    {t('topbar.notifications', 'Powiadomienia')} ({notifications.length})
                                 </div>
                                 <div className="notification-dropdown-list">
                                     {notifications.length === 0 ? (
                                         <div className="notification-empty">
-                                            {t('topbar.noNewNotifications')}
+                                            {t('topbar.noNewNotifications', 'Brak nowych powiadomień')}
                                         </div>
                                     ) : (
                                         notifications.map(notif => (
@@ -108,7 +107,7 @@ const Topbar = ({ userEmail, onLogout }) => {
                                                         handleMarkAsRead(notif.id);
                                                     }}
                                                 >
-                                                    <Check size={14} /> {t('topbar.markAsRead')}
+                                                    <Check size={14} /> {t('topbar.markAsRead', 'Odznacz')}
                                                 </button>
                                             </div>
                                         ))
@@ -119,7 +118,7 @@ const Topbar = ({ userEmail, onLogout }) => {
                     </div>
                 </div>
 
-                <button onClick={onLogout} className="logout-btn" title={t('common.logout')}>
+                <button onClick={onLogout} className="logout-btn" title={t('common.logout', 'Wyloguj się')}>
                     <LogOut size={18} />
                 </button>
             </div>

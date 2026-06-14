@@ -103,28 +103,68 @@ export const pl = {
         workFromHome: 'Praca z domu',
         dayOff: 'Dzień wolny',
         scheduleChange: 'Zmiana harmonogramu',
+        quickRequestsTitle: 'SZYBKIE AKCJE',
+        leaveRequestBtn: 'ZŁÓŻ WNIOSEK URLOPOWY',
+        overtimeTakeBtn: 'ODBIERZ NADGODZINY',
+        scheduleChangeBtn: 'KOREKCJA CZASU PRACY',
+        recentRequestsTitle: 'OSTATNIE WNIOSKI',
+        mainTitle: 'Ewidencja Czasu Pracy - Pulpit Pracownika',
     },
+
+    timeTracker: {
+        startWork: 'ROZPOCZNIJ PRACĘ',
+        endWork: 'ZAKOŃCZ PRACĘ',
+        hoStart: 'HO Start',
+        onBreak: 'W TRAKCIE PRZERWY',
+        break: 'PRZERWA',
+        endBreak: 'ZAKOŃCZ PRZERWĘ',
+        workEndedAlert: 'Zakończono czas pracy',
+        workAlreadyStarted: 'Praca jest już rozpoczęta w systemie.',
+        cancelConfirm: 'Czy na pewno chcesz anulować to rozpoczęcie pracy? Ten wpis zostanie usunięty.',
+        entryCancelledAlert: 'Anulowano wpis.',
+        mistakeCancel: 'Pomyłka? Anuluj wpis ('
+    },
+
+    statusCharts: {
+        yourStatusTitle: 'TWÓJ STATUS',
+        loadingStats: 'Ładowanie statystyk...',
+        overtimeTitle: 'NADGODZINY',
+        workTimeTitle: 'CZAS PRACY (BIEŻĄCY MIESIĄC)',
+        balance: 'Saldo:',
+        worked: 'Przepracowano:',
+        plan: 'Plan:'
+    },
+
 
     // ============= REQUESTS PAGE =============
     requests: {
         title: 'Wnioski',
         myRequests: 'Moje wnioski',
         allRequests: 'Wszystkie wnioski',
-        requestType: 'Typ wniosku',
-        status: 'Status',
         dateFrom: 'Data od',
         dateTo: 'Data do',
         description: 'Opis',
         createRequest: 'Utwórz nowy wniosek',
-        pending: 'Oczekujący',
-        approved: 'Zatwierdzony',
-        rejected: 'Odrzucony',
-        cancelled: 'Anulowany',
         noRequests: 'Brak wniosków',
         requestDetails: 'Szczegóły wniosku',
         submitRequest: 'Wyślij wniosek',
         cancelRequest: 'Anuluj wniosek',
         viewRequest: 'Pokaż wniosek',
+        types: {
+            holiday: 'Urlop wypoczynkowy',
+            sick: 'Zwolnienie lekarskie',
+            earlyExit: 'Wyjście wcześniejsze',
+            overtimeEarn: 'Zgłoszenie nadgodzin',
+            overtimeTake: 'Odbiór nadgodzin'
+        },
+        approved: 'Zatwierdzony',
+        pending: 'Oczekujący',
+        rejected: 'Odrzucony',
+        cancelled: 'Anulowany',
+        requestType: 'Typ',
+        submitDate: 'Data zgłoszenia',
+        absenceDate: 'Data nieobecności',
+        status: 'Status'
     },
 
     // ============= APPROVALS PAGE =============
@@ -167,6 +207,14 @@ export const pl = {
         periodTo: 'Okres do',
         download: 'Pobierz',
         export: 'Eksportuj',
+        changeSuccessAlert: 'Prośba o zmianę godzin została pomyślnie wysłana!',
+        changeErrorAlert: 'Wystąpił błąd podczas wysyłania prośby.',
+        changeWorkHoursTitle: 'Zmiana godzin pracy',
+        whenDate: 'Kiedy (Data)',
+        newHoursFrom: 'Nowe godziny (Od)',
+        newHoursTo: 'Nowe godziny (Do)',
+        reason: 'Powód',
+        reasonPlaceholder: 'Opisz dlaczego chcesz zmienić godziny...'
     },
 
     // ============= USER MANAGEMENT =============
