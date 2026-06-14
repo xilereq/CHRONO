@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -13,7 +14,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "leave_log")
+@Table(name = "leave_log", indexes = {
+    @Index(name = "idx_leave_worklog", columnList = "work_log_id"),
+    @Index(name = "idx_leave_user_time", columnList = "user_id, start_time")
+})
 @Getter
 @Setter
 public class LeaveLog {

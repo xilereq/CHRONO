@@ -14,9 +14,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users_policy", indexes =
-    {@Index(name = "idx_user_range", columnList =
-    "user_id, " + "validFrom, validTo")})
+@Table(name = "users_policy", indexes = {
+    @Index(name = "idx_user_range", columnList = "user_id, valid_from, valid_to")
+})
 @Getter
 @Setter
 public class UsersPolicy {

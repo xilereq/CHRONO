@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "notifications", indexes = {
+    @Index(name = "idx_notif_user_read", columnList = "user_id, is_read")
+})
 @Getter
 @Setter
 public class Notification {

@@ -5,13 +5,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "holiday")
+@Table(name = "holiday", indexes = {
+    @Index(name = "idx_holiday_date", columnList = "date"),
+    @Index(name = "idx_holiday_yearly", columnList = "occurs_yearly")
+})
 @Getter
 @Setter
 public class Holiday {
