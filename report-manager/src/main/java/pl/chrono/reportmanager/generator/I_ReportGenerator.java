@@ -1,7 +1,9 @@
 package pl.chrono.reportmanager.generator;
 
-public interface I_CsvGenerator<T> {
-  byte[] generateCsv(T reportData);
+import pl.chrono.reportmanager.dto.ReportFormat;
+
+public interface I_ReportGenerator<T> {
+  byte[] generate(T reportData, ReportFormat format);
 
   default String formatSeconds(Long totalSeconds) {
     if (totalSeconds == null) return "0:00";

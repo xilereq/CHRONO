@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.reportmanager.api.I_ReportFacade;
+import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.usermanager.service.AuthService;
 
 @RestController
@@ -26,18 +27,19 @@ public class ReportController extends BaseController {
     this.reportFacade = reportFacade;
   }
 
-  @GetMapping("/timesheet/my")
+  @GetMapping("/timesheet/me")
   @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
   public ResponseEntity<byte[]> getMyTimesheetReport(
       @RequestHeader("Authorization") String token,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
 
     Integer employeeId = extractId(token);
-    byte[] csvData = reportFacade.getEmployeeTimesheetCsv(employeeId, startDate, endDate);
+    byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = String.format("my_timesheet_%s_to_%s.csv", startDate.toString(), endDate.toString());
-    return createCsvResponse(csvData, filename);
+    String filename = String.format("my_timesheet_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
   }
 
   @GetMapping("/timesheet/employee/{employeeId}")
@@ -45,12 +47,13 @@ public class ReportController extends BaseController {
   public ResponseEntity<byte[]> getEmployeeTimesheetReport(
       @PathVariable Integer employeeId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
 
-    byte[] csvData = reportFacade.getEmployeeTimesheetCsv(employeeId, startDate, endDate);
+    byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = String.format("employee_%d_timesheet_%s_to_%s.csv", employeeId, startDate.toString(), endDate.toString());
-    return createCsvResponse(csvData, filename);
+    String filename = String.format("employee_%d_timesheet_%s_to_%s.%s", employeeId, startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
   }
 
   @GetMapping("/team/workload")
@@ -58,13 +61,14 @@ public class ReportController extends BaseController {
   public ResponseEntity<byte[]> getTeamWorkloadReport(
       @RequestHeader("Authorization") String token,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
 
     Integer managerId = extractId(token);
-    byte[] csvData = reportFacade.getTeamWorkloadCsv(managerId, startDate, endDate);
+    byte[] reportData = reportFacade.getTeamWorkload(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_workload_%s_to_%s.csv", startDate.toString(), endDate.toString());
-    return createCsvResponse(csvData, filename);
+    String filename = String.format("team_workload_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
   }
 
   @GetMapping("/team/absences")
@@ -72,19 +76,26 @@ public class ReportController extends BaseController {
   public ResponseEntity<byte[]> getTeamAbsencesReport(
       @RequestHeader("Authorization") String token,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
 
     Integer managerId = extractId(token);
-    byte[] csvData = reportFacade.getTeamAbsencesCsv(managerId, startDate, endDate);
+    byte[] reportData = reportFacade.getTeamAbsences(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_absences_%s_to_%s.csv", startDate.toString(), endDate.toString());
-    return createCsvResponse(csvData, filename);
+    String filename = String.format("team_absences_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
   }
 
-  private ResponseEntity<byte[]> createCsvResponse(byte[] csvData, String filename) {
+  private ResponseEntity<byte[]> createResponse(byte[] fileData, String filename, ReportFormat format) {
+    MediaType mediaType = switch (format) {
+      case CSV -> MediaType.parseMediaType("text/csv; charset=UTF-8");
+      case PDF -> MediaType.APPLICATION_PDF;
+      case XLSX -> MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    };
+
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-        .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
-        .body(csvData);
+        .contentType(mediaType)
+        .body(fileData);
   }
 }

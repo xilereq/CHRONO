@@ -1,13 +1,23 @@
 package pl.chrono.reportmanager.generator;
 
 import org.springframework.stereotype.Component;
+import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamAbsencesReport;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class AbsenceCsvGenerator implements I_CsvGenerator<TeamAbsencesReport> {
+public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesReport> {
+
   @Override
-  public byte[] generateCsv(TeamAbsencesReport report) {
+  public byte[] generate(TeamAbsencesReport report, ReportFormat format) {
+    return switch (format) {
+      case CSV -> generateCsv(report);
+      case PDF -> throw new UnsupportedOperationException("Eksport do PDF wymaga dodania biblioteki np. iText/OpenPDF");
+      case XLSX -> throw new UnsupportedOperationException("Eksport do XLSX wymaga dodania biblioteki Apache POI");
+    };
+  }
+
+  private byte[] generateCsv(TeamAbsencesReport report) {
     StringBuilder sb = new StringBuilder();
     sb.append("Raport Wnioskow i Absencji\n");
     sb.append("Od:;").append(report.startDate()).append("\n");

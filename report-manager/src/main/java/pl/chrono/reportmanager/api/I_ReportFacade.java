@@ -1,9 +1,10 @@
 package pl.chrono.reportmanager.api;
 
+import pl.chrono.reportmanager.dto.ReportFormat;
 import java.time.LocalDate;
 
 public interface I_ReportFacade {
-  byte[] getEmployeeTimesheetCsv(Integer employeeId, LocalDate startDate, LocalDate endDate);
-  byte[] getTeamWorkloadCsv(Integer managerId, LocalDate startDate, LocalDate endDate);
-  byte[] getTeamAbsencesCsv(Integer managerId, LocalDate startDate, LocalDate endDate);
+  byte[] getEmployeeTimesheet(Integer employeeId, LocalDate startDate, LocalDate endDate, ReportFormat format);
+  byte[] getTeamWorkload(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
+  byte[] getTeamAbsences(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
 }

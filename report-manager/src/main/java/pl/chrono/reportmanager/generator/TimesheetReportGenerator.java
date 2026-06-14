@@ -3,12 +3,23 @@ package pl.chrono.reportmanager.generator;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.EmployeeTimesheetReport;
 import pl.chrono.reportmanager.dto.DailyTimesheetEntry;
+import pl.chrono.reportmanager.dto.ReportFormat;
+
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class TimesheetCsvGenerator implements I_CsvGenerator<EmployeeTimesheetReport> {
+public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimesheetReport> {
+
   @Override
-  public byte[] generateCsv(EmployeeTimesheetReport report) {
+  public byte[] generate(EmployeeTimesheetReport report, ReportFormat format) {
+    return switch (format) {
+      case CSV -> generateCsv(report);
+      case PDF -> throw new UnsupportedOperationException("Eksport do PDF wymaga dodania biblioteki np. iText/OpenPDF");
+      case XLSX -> throw new UnsupportedOperationException("Eksport do XLSX wymaga dodania biblioteki Apache POI");
+    };
+  }
+
+  private byte[] generateCsv(EmployeeTimesheetReport report) {
     StringBuilder sb = new StringBuilder();
     sb.append("Raport Okresowy:;").append(report.startDate()).append(" do ").append(report.endDate()).append("\n");
     sb.append("Pracownik:;").append(report.employeeFullName()).append("\n");

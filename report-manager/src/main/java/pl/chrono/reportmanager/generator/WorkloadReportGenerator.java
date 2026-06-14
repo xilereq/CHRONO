@@ -1,13 +1,23 @@
 package pl.chrono.reportmanager.generator;
 
 import org.springframework.stereotype.Component;
+import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamWorkloadReport;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class WorkloadCsvGenerator implements I_CsvGenerator<TeamWorkloadReport> {
+public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadReport> {
+
   @Override
-  public byte[] generateCsv(TeamWorkloadReport report) {
+  public byte[] generate(TeamWorkloadReport report, ReportFormat format) {
+    return switch (format) {
+      case CSV -> generateCsv(report);
+      case PDF -> throw new UnsupportedOperationException("Eksport do PDF wymaga dodania biblioteki np. iText/OpenPDF");
+      case XLSX -> throw new UnsupportedOperationException("Eksport do XLSX wymaga dodania biblioteki Apache POI");
+    };
+  }
+
+  private byte[] generateCsv(TeamWorkloadReport report) {
     StringBuilder sb = new StringBuilder();
     sb.append("Raport Obciazenia Zespolu (Od - Do):;").append(report.startDate()).append(" - ").append(report.endDate()).append("\n\n");
     sb.append("ID Pracownika;Imie i Nazwisko;Przepracowano;Wymagano;Bilans (Nadgodziny)\n");
