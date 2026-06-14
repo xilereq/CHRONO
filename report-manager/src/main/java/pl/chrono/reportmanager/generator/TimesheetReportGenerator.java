@@ -14,8 +14,8 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
   public byte[] generate(EmployeeTimesheetReport report, ReportFormat format) {
     return switch (format) {
       case CSV -> generateCsv(report);
-      case PDF -> throw new UnsupportedOperationException("Eksport do PDF wymaga dodania biblioteki np. iText/OpenPDF");
-      case XLSX -> throw new UnsupportedOperationException("Eksport do XLSX wymaga dodania biblioteki Apache POI");
+      case PDF -> throw new UnsupportedOperationException("Eksport do PDF wymaga dodania biblioteki");
+      case XLSX -> throw new UnsupportedOperationException("Eksport do XLSX wymaga dodania biblioteki");
     };
   }
 

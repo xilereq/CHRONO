@@ -98,4 +98,34 @@ public class ReportController extends BaseController {
         .contentType(mediaType)
         .body(fileData);
   }
+
+  @GetMapping("/overtime/me")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
+  public ResponseEntity<byte[]> getMyOvertimeReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer employeeId = extractId(token);
+    byte[] reportData = reportFacade.getEmployeeOvertime(employeeId, startDate, endDate, format);
+
+    String filename = String.format("my_overtime_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/overtime/team")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  public ResponseEntity<byte[]> getTeamOvertimeReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer managerId = extractId(token);
+    byte[] reportData = reportFacade.getTeamOvertime(managerId, startDate, endDate, format);
+
+    String filename = String.format("team_overtime_%s_to_%s.%s", startDate.toString(), endDate.toString(), format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
+  }
 }
