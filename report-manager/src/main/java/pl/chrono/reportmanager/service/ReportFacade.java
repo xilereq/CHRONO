@@ -24,17 +24,16 @@ public class ReportFacade implements I_ReportFacade {
   private final AbsenceCsvGenerator absenceGenerator;
 
   @Override
-  public byte[] getEmployeeTimesheetCsv(Integer employeeId, int year, int month) {
-    EmployeeTimesheetReport reportData = timesheetService.generateMonthlyTimesheet(employeeId, year, month);
+  public byte[] getEmployeeTimesheetCsv(Integer employeeId, LocalDate startDate, LocalDate endDate) {
+    EmployeeTimesheetReport reportData = timesheetService.generateTimesheet(employeeId, startDate, endDate);
     return timesheetGenerator.generateCsv(reportData);
   }
 
   @Override
-  public byte[] getTeamWorkloadCsv(Integer managerId, int year, int month) {
-    TeamWorkloadReport reportData = workloadService.generateReport(managerId, year, month);
+  public byte[] getTeamWorkloadCsv(Integer managerId, LocalDate startDate, LocalDate endDate) {
+    TeamWorkloadReport reportData = workloadService.generateReport(managerId, startDate, endDate);
     return workloadGenerator.generateCsv(reportData);
   }
-
   @Override
   public byte[] getTeamAbsencesCsv(Integer managerId, LocalDate startDate, LocalDate endDate) {
     TeamAbsencesReport reportData = absenceService.generateReport(managerId, startDate, endDate);

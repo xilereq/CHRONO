@@ -9,7 +9,7 @@ public class WorkloadCsvGenerator implements I_CsvGenerator<TeamWorkloadReport> 
   @Override
   public byte[] generateCsv(TeamWorkloadReport report) {
     StringBuilder sb = new StringBuilder();
-    sb.append("Raport Obciazenia Zespolu (Miesiac/Rok):;").append(report.month()).append("/").append(report.year()).append("\n\n");
+    sb.append("Raport Obciazenia Zespolu (Od - Do):;").append(report.startDate()).append(" - ").append(report.endDate()).append("\n\n");
     sb.append("ID Pracownika;Imie i Nazwisko;Przepracowano;Wymagano;Bilans (Nadgodziny)\n");
 
     report.entries().forEach(e -> {

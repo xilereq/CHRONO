@@ -10,7 +10,7 @@ public class TimesheetCsvGenerator implements I_CsvGenerator<EmployeeTimesheetRe
   @Override
   public byte[] generateCsv(EmployeeTimesheetReport report) {
     StringBuilder sb = new StringBuilder();
-    sb.append("Raport Miesieczny:;").append(report.year()).append("-").append(String.format("%02d", report.month())).append("\n");
+    sb.append("Raport Okresowy:;").append(report.startDate()).append(" do ").append(report.endDate()).append("\n");
     sb.append("Pracownik:;").append(report.employeeFullName()).append("\n");
     sb.append("Przepracowano:;").append(formatSeconds(report.totalWorkSeconds())).append("\n");
     sb.append("Wymagano:;").append(formatSeconds(report.totalRequiredSeconds())).append("\n");

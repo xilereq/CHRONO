@@ -2,7 +2,6 @@ package pl.chrono.reportmanager.service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,20 +26,19 @@ public class TimesheetReportService {
   private final ApplicationRepository applicationRepository;
 
   @Transactional(readOnly = true)
-  public EmployeeTimesheetReport generateMonthlyTimesheet(Integer employeeId, int year, int month) {
+  public EmployeeTimesheetReport generateTimesheet(Integer employeeId, LocalDate startDate, LocalDate endDate) {
     User user = userRepository.findById(employeeId)
-        .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono użytkownika o ID: " + employeeId));
+        .orElseThrow(() -> new IllegalArgumentException("\n" + "No user with ID found: " + employeeId));
 
-    YearMonth yearMonth = YearMonth.of(year, month);
     List<DailyTimesheetEntry> dailyEntries = new ArrayList<>();
 
     long totalWork = 0L;
     long totalRequired = 0L;
     long totalBalance = 0L;
 
-    for (int day = 1; day <= yearMonth.lengthOfMonth(); day++) {
-      LocalDate currentDate = yearMonth.atDay(day);
+    LocalDate currentDate = startDate;
 
+    while (!currentDate.isAfter(endDate)) {
       Optional<WorkLog> workLogOpt = workLogRepository.findByUserUserIdAndStartTimeBetween(
           employeeId,
           currentDate.atStartOfDay(),
@@ -83,13 +81,15 @@ public class TimesheetReportService {
       totalWork += effectiveWork;
       totalRequired += requiredSeconds;
       totalBalance += balance;
+
+      currentDate = currentDate.plusDays(1);
     }
 
     return new EmployeeTimesheetReport(
         user.getUserId(),
         user.getName() + " " + user.getSurname(),
-        year,
-        month,
+        startDate,
+        endDate,
         totalWork,
         totalRequired,
         totalBalance,

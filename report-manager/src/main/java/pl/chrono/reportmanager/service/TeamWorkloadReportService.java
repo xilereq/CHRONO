@@ -1,5 +1,6 @@
 package pl.chrono.reportmanager.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,11 +19,11 @@ public class TeamWorkloadReportService {
   private final TimesheetReportService timesheetReportService;
 
   @Transactional(readOnly = true)
-  public TeamWorkloadReport generateReport(Integer managerId, int year, int month) {
+  public TeamWorkloadReport generateReport(Integer managerId, LocalDate startDate, LocalDate endDate) {
     List<User> subordinates = userRepository.findByManagerUserId(managerId);
 
     List<TeamWorkloadEntry> entries = subordinates.stream().map(user -> {
-      EmployeeTimesheetReport timesheet = timesheetReportService.generateMonthlyTimesheet(user.getUserId(), year, month);
+      EmployeeTimesheetReport timesheet = timesheetReportService.generateTimesheet(user.getUserId(), startDate, endDate);
 
       return new TeamWorkloadEntry(
           user.getUserId(),
@@ -33,6 +34,6 @@ public class TeamWorkloadReportService {
       );
     }).toList();
 
-    return new TeamWorkloadReport(managerId, year, month, entries);
+    return new TeamWorkloadReport(managerId, startDate, endDate, entries);
   }
 }

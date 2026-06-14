@@ -30,13 +30,13 @@ public class ReportController extends BaseController {
   @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
   public ResponseEntity<byte[]> getMyTimesheetReport(
       @RequestHeader("Authorization") String token,
-      @RequestParam int year,
-      @RequestParam int month) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
     Integer employeeId = extractId(token);
-    byte[] csvData = reportFacade.getEmployeeTimesheetCsv(employeeId, year, month);
+    byte[] csvData = reportFacade.getEmployeeTimesheetCsv(employeeId, startDate, endDate);
 
-    String filename = String.format("my_timesheet_%d_%02d.csv", year, month);
+    String filename = String.format("my_timesheet_%s_to_%s.csv", startDate.toString(), endDate.toString());
     return createCsvResponse(csvData, filename);
   }
 
@@ -44,12 +44,12 @@ public class ReportController extends BaseController {
   @PreAuthorize("hasAnyRole('MANAGER', 'HR', 'ADMIN')")
   public ResponseEntity<byte[]> getEmployeeTimesheetReport(
       @PathVariable Integer employeeId,
-      @RequestParam int year,
-      @RequestParam int month) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-    byte[] csvData = reportFacade.getEmployeeTimesheetCsv(employeeId, year, month);
+    byte[] csvData = reportFacade.getEmployeeTimesheetCsv(employeeId, startDate, endDate);
 
-    String filename = String.format("employee_%d_timesheet_%d_%02d.csv", employeeId, year, month);
+    String filename = String.format("employee_%d_timesheet_%s_to_%s.csv", employeeId, startDate.toString(), endDate.toString());
     return createCsvResponse(csvData, filename);
   }
 
@@ -57,13 +57,13 @@ public class ReportController extends BaseController {
   @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   public ResponseEntity<byte[]> getTeamWorkloadReport(
       @RequestHeader("Authorization") String token,
-      @RequestParam int year,
-      @RequestParam int month) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
     Integer managerId = extractId(token);
-    byte[] csvData = reportFacade.getTeamWorkloadCsv(managerId, year, month);
+    byte[] csvData = reportFacade.getTeamWorkloadCsv(managerId, startDate, endDate);
 
-    String filename = String.format("team_workload_%d_%02d.csv", year, month);
+    String filename = String.format("team_workload_%s_to_%s.csv", startDate.toString(), endDate.toString());
     return createCsvResponse(csvData, filename);
   }
 
