@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { applicationService, userService } from '../../services';
 import '../../components/requests/requests.css';
 import './ApprovalList.css';
@@ -40,14 +40,20 @@ const getDuration = (request) => {
 };
 
 const ApprovalList = () => {
-    const [userRole, setUserRole]           = useState(null);
+    const [userRole, setUserRole]               = useState(null);
     const [pendingRequests, setPendingRequests] = useState([]);
-    const [loading, setLoading]             = useState(true);
-    const [activeAction, setActiveAction]   = useState({ id: null, type: null });
-    const [actionReason, setActionReason]   = useState('');
-    const [processingId, setProcessingId]   = useState(null);
-    const [currentPage, setCurrentPage]     = useState(1);
-    const [itemsPerPage, setItemsPerPage]   = useState(() => window.innerWidth <= 768 ? 5 : 10);
+    const [loading, setLoading]                 = useState(true);
+    const [activeAction, setActiveAction]       = useState({ id: null, type: null });
+    const [actionReason, setActionReason]       = useState('');
+    const [processingId, setProcessingId]       = useState(null);
+    const [currentPage, setCurrentPage]         = useState(1);
+    const [itemsPerPage, setItemsPerPage]       = useState(() => window.innerWidth <= 768 ? 5 : 10);
+
+    const [filterType, setFilterType]               = useState('');
+    const [filterStatus, setFilterStatus]           = useState('');
+    const [filterDateFrom, setFilterDateFrom]       = useState('');
+    const [filterDateTo, setFilterDateTo]           = useState('');
+    const [filterEmployeeId, setFilterEmployeeId]   = useState('');
 
     useEffect(() => {
         const onResize = () => setItemsPerPage(window.innerWidth <= 768 ? 5 : 10);
@@ -80,9 +86,31 @@ const ApprovalList = () => {
         loadRequests();
     }, [userRole]);
 
+    const employees = useMemo(() => {
+        const map = new Map();
+        pendingRequests.forEach(r => {
+            if (r.employeeId != null && !map.has(r.employeeId)) {
+                map.set(r.employeeId, r.employeeEmail || String(r.employeeId));
+            }
+        });
+        return [...map.entries()]
+            .map(([id, email]) => ({ id, email }))
+            .sort((a, b) => a.email.localeCompare(b.email));
+    }, [pendingRequests]);
+
+    const filteredRequests = useMemo(() => pendingRequests.filter(r => {
+        if (filterType && r.type !== filterType) return false;
+        if (filterStatus && r.status !== filterStatus) return false;
+        if (filterEmployeeId && String(r.employeeId) !== filterEmployeeId) return false;
+        if (filterDateFrom && r.startDate < filterDateFrom) return false;
+        if (filterDateTo && r.startDate > filterDateTo) return false;
+        return true;
+    }), [pendingRequests, filterType, filterStatus, filterEmployeeId, filterDateFrom, filterDateTo]);
+
     useEffect(() => {
         setCurrentPage(1);
-    }, [pendingRequests, itemsPerPage]);
+        setActiveAction({ id: null, type: null });
+    }, [filteredRequests, itemsPerPage]);
 
     const initiateAction = (id, type) => {
         setActiveAction({ id, type });
@@ -108,8 +136,8 @@ const ApprovalList = () => {
         setActiveAction({ id: null, type: null });
     };
 
-    const totalPages = Math.ceil(pendingRequests.length / itemsPerPage);
-    const pageItems  = pendingRequests.slice(
+    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+    const pageItems  = filteredRequests.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -122,13 +150,67 @@ const ApprovalList = () => {
 
     return (
         <div className="requests-container">
+
+            <div className="section-panel filters-bar">
+                <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+                    <option value="">Typ</option>
+                    <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
+                    <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
+                    <option value="HOME_OFFICE">Praca zdalna (HO)</option>
+                    <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
+                    <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
+                    <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
+                </select>
+
+                <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                    <option value="">Status</option>
+                    <option value="PENDING">Oczekujący</option>
+                    <option value="APPROVED">Zatwierdzony</option>
+                    <option value="REJECTED">Odrzucony</option>
+                    <option value="CANCELLED">Anulowany</option>
+                </select>
+
+                <select className="filter-select" value={filterEmployeeId} onChange={e => setFilterEmployeeId(e.target.value)}>
+                    <option value="">Pracownik</option>
+                    {employees.map(emp => (
+                        <option key={emp.id} value={String(emp.id)}>{emp.email}</option>
+                    ))}
+                </select>
+
+                <div className="filters-date-row">
+                    <input
+                        type="date"
+                        className="filter-input"
+                        title="Od"
+                        value={filterDateFrom}
+                        onChange={e => {
+                            setFilterDateFrom(e.target.value);
+                            if (filterDateTo && e.target.value > filterDateTo) setFilterDateTo('');
+                        }}
+                    />
+                    <input
+                        type="date"
+                        className="filter-input"
+                        title="Do"
+                        value={filterDateTo}
+                        min={filterDateFrom || undefined}
+                        onChange={e => setFilterDateTo(e.target.value)}
+                    />
+                </div>
+            </div>
+
             <div className="section-panel">
                 <div className="section-title">
                     {userRole === 'MANAGER' ? 'Wnioski pracownicze' : 'Wnioski w systemie'}
+                    {filteredRequests.length !== pendingRequests.length && (
+                        <span style={{ fontWeight: 400, fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '0.75rem' }}>
+                            ({filteredRequests.length} z {pendingRequests.length})
+                        </span>
+                    )}
                 </div>
 
-                {pendingRequests.length === 0 ? (
-                    <div className="table-empty-cell">Brak wniosków do wyświetlenia.</div>
+                {filteredRequests.length === 0 ? (
+                    <div className="table-empty-cell">Brak wniosków spełniających kryteria.</div>
                 ) : (
                     <div className="requests-table-container">
                         <table className="requests-table">

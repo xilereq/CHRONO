@@ -10,7 +10,8 @@ const RequestList = () => {
 
     const [filterStatus, setFilterStatus] = useState("");
     const [filterType, setFilterType] = useState("");
-    const [filterDate, setFilterDate] = useState("");
+    const [filterDateFrom, setFilterDateFrom] = useState("");
+    const [filterDateTo, setFilterDateTo] = useState("");
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(() => window.innerWidth <= 768 ? 5 : 10);
@@ -23,7 +24,7 @@ const RequestList = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [filterStatus, filterType, filterDate, itemsPerPage]);
+    }, [filterStatus, filterType, filterDateFrom, filterDateTo, itemsPerPage]);
 
 
     const fetchRequests = async () => {
@@ -47,13 +48,8 @@ const RequestList = () => {
         const matchType = filterType === "" || r.type === filterType;
 
         let matchDate = true;
-        if (filterDate !== "") {
-            const requestStart = new Date(r.startDate);
-            const requestEnd = new Date(r.endDate);
-            const selectedDate = new Date(filterDate);
-
-            matchDate = selectedDate >= requestStart && selectedDate <= requestEnd;
-        }
+        if (filterDateFrom) matchDate = r.startDate >= filterDateFrom;
+        if (filterDateTo) matchDate = matchDate && r.startDate <= filterDateTo;
 
         return matchStatus && matchType && matchDate;
     });
@@ -81,17 +77,32 @@ const RequestList = () => {
                     <option value="">Typ</option>
                     <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
                     <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
+                    <option value="HOME_OFFICE">Praca zdalna (HO)</option>
                     <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
                     <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
                     <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
                 </select>
 
-                <input
-                    type="date"
-                    className="filter-input"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                />
+                <div className="filters-date-row">
+                    <input
+                        type="date"
+                        className="filter-input"
+                        title="Od"
+                        value={filterDateFrom}
+                        onChange={(e) => {
+                            setFilterDateFrom(e.target.value);
+                            if (filterDateTo && e.target.value > filterDateTo) setFilterDateTo('');
+                        }}
+                    />
+                    <input
+                        type="date"
+                        className="filter-input"
+                        title="Do"
+                        value={filterDateTo}
+                        min={filterDateFrom || undefined}
+                        onChange={(e) => setFilterDateTo(e.target.value)}
+                    />
+                </div>
             </div>
 
             {showForm && (
