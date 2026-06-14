@@ -429,6 +429,7 @@ export const pl = {
     // ============= MANAGER PAGE =============
     manager: {
         title: 'Czas pracy zespołu',
+        homeOfficeType: 'Praca zdalna (Home Office)',
         teamMembers: 'Członkowie zespołu',
         memberSchedule: 'Harmonogram członka',
         approveRequest: 'Zatwierdź wniosek',

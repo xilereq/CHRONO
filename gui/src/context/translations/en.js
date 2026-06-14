@@ -429,6 +429,7 @@ export const en = {
     // ============= MANAGER PAGE =============
     manager: {
         title: 'Team Work Hours',
+        homeOfficeType: 'Remote Work (Home Office)',
         teamMembers: 'Team Members',
         memberSchedule: 'Member Schedule',
         approveRequest: 'Approve Request',

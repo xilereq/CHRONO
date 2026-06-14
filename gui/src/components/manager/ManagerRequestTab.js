@@ -187,9 +187,7 @@ const ManagerRequestTab = () => {
                             value={formData.type}
                             onChange={handleChange}
                         >
-                            <option value="SICK_LEAVE">Zwolnienie lekarskie / L4</option>
-                            <option value="HOME_OFFICE">Praca zdalna (Home Office)</option>
-                            <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
+                            <option value="HOME_OFFICE">{t('manager.homeOfficeType', 'Praca zdalna (Home Office)')}</option>
                             <option value="SICK_LEAVE">{t('manager.sickLeaveType', 'Zwolnienie lekarskie / L4')}</option>
                             <option value="EARLY_EXIT">{t('manager.earlyExitType', 'Wcześniejsze wyjście')}</option>
                         </select>
