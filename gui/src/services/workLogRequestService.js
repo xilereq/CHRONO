@@ -35,7 +35,7 @@ const workLogRequestService = {
     },
 
     submitRequest: async (requestDto) => {
-        const response = await fetch(`${API_URL}/work-log-requests`, {
+        const response = await fetch(`${API_URL}`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(requestDto)

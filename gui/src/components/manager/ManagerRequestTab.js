@@ -13,8 +13,10 @@ const ManagerRequestTab = () => {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
+    const [searchTerm, setSearchTerm] = useState('');
+
     const [formData, setFormData] = useState({
-        targetEmployeeEmail: '',
+        targetEmployeeId: '',
         title: '',
         type: 'SICK_LEAVE',
         startDate: '',
@@ -26,7 +28,13 @@ const ManagerRequestTab = () => {
     useEffect(() => {
         const fetchSubordinates = async () => {
             try {
-                const data = await userService.getSubordinates();
+                const request = await userService.getMyRole();
+                let data;
+                if (request.role === 'ROLE_ADMIN') {
+                    data = await userService.getAllUsers();
+                } else {
+                    data = await userService.getSubordinates();
+                }
                 setSubordinates(data || []);
             } catch (err) {
                 console.error("Błąd podczas pobierania podwładnych:", err);
@@ -57,7 +65,7 @@ const ManagerRequestTab = () => {
         setMessage('');
         setLoading(true);
 
-        if (!formData.targetEmployeeEmail) {
+        if (!formData.targetEmployeeId) {
             setError('Proszę wybrać pracownika.');
             setLoading(false);
             return;
@@ -71,18 +79,27 @@ const ManagerRequestTab = () => {
             }
 
             const payload = {
-                targetEmail: formData.targetEmployeeEmail,
                 type: formData.type,
                 startDate: formData.startDate,
                 endDate: effectiveEndDate,
                 reason: formData.reason || formData.title,
                 durationSeconds: formData.durationHours ? parseInt(formData.durationHours) * 3600 : null
             };
-            await applicationService.createApplicationForEmployee(payload);
 
-            setMessage(`Wniosek dla pracownika został pomyślnie złożony i zaakceptowany.`);
+            await applicationService.createApplicationForEmployee(formData.targetEmployeeId, payload);
 
-            setFormData(prev => ({ ...prev, title: '', startDate: '', endDate: '', reason: '', durationHours: '' }));
+            setMessage(`Wniosek dla pracownika został pomyślnie złożony.`);
+
+            setFormData(prev => ({
+                ...prev,
+                targetEmployeeId: '',
+                title: '',
+                startDate: '',
+                endDate: '',
+                reason: '',
+                durationHours: ''
+            }));
+            setSearchTerm('');
 
         } catch (err) {
             setError(err.message || 'Wystąpił błąd podczas wysyłania wniosku.');
@@ -90,6 +107,17 @@ const ManagerRequestTab = () => {
             setLoading(false);
         }
     };
+
+    const filteredSubordinates = subordinates.filter(sub => {
+        const searchLower = searchTerm.toLowerCase();
+        const fullName = `${sub.name || ''} ${sub.surname || ''}`.toLowerCase();
+        const email = (sub.email || '').toLowerCase();
+        const userId = sub.ID ? String(sub.ID) : (sub.userID ? String(sub.userID) : '');
+
+        return fullName.includes(searchLower) ||
+            email.includes(searchLower) ||
+            userId.includes(searchLower);
+    });
 
     return (
         <div className="policy-section">
@@ -103,22 +131,38 @@ const ManagerRequestTab = () => {
                 <div className="request-form-grid">
 
                     <label className="field field-full-width">
+                        <span className="field-label" style={{ color: 'var(--primary-color)' }}>Wyszukaj pracownika (Imię, Nazwisko lub ID)</span>
+                        <input
+                            type="text"
+                            className="field-input"
+                            placeholder="Wpisz dane..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </label>
+
+                    <label className="field field-full-width" style={{ marginTop: '-0.5rem' }}>
                         <span className="field-label" style={{ color: 'var(--primary-color)' }}>Wybierz pracownika z zespołu *</span>
                         <select
                             className="field-input"
-                            name="targetEmployeeEmail"
-                            value={formData.targetEmployeeEmail}
+                            name="targetEmployeeId"
+                            value={formData.targetEmployeeId}
                             onChange={handleChange}
                             required
                             style={{ border: '1px solid var(--primary-color)' }}
                         >
                             <option value="">-- Wybierz pracownika --</option>
-                            {subordinates.map(sub => (
-                                <option key={sub.email} value={sub.email}>
-                                    {sub.name} {sub.surname} ({sub.email})
+                            {filteredSubordinates.map(sub => (
+                                <option key={sub.userID} value={sub.userID}>
+                                    [{sub.userID}] {sub.name} {sub.surname} ({sub.email})
                                 </option>
                             ))}
                         </select>
+                        {filteredSubordinates.length === 0 && (
+                            <span style={{ fontSize: '0.8rem', color: 'red', marginTop: '4px', display: 'block' }}>
+                                Brak wyników dla wyszukiwania.
+                            </span>
+                        )}
                     </label>
 
                     <label className="field field-full-width">

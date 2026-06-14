@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Coffee, Square, Home } from 'lucide-react';
+import { Clock, Coffee, Square, Home, XCircle } from 'lucide-react'; // Dodano XCircle
 import { Card, Button } from '../../components';
 import '../../pages/main.css';
 import './dashboard.css';
@@ -81,21 +81,31 @@ const TimeTracker = () => {
         setIsLoading(true);
         try {
             if (isWorking) {
+                // LOGIKA ZAKOŃCZENIA PRACY
                 if (isOnBreak) {
                     await leaveLogService.endLeave();
                     setIsOnBreak(false);
                 }
-
                 await workLogService.endWork();
-
                 setIsWorking(false);
                 setIsHO(false);
                 setStartTime(null);
                 alert("Zakończono czas pracy");
             } else {
+                // LOGIKA ROZPOCZĘCIA PRACY W BIURZE
+
+                // --- DODANE ZABEZPIECZENIE ---
+                // Ponownie sprawdzamy status w bazie tuż przed uderzeniem w startWork,
+                // na wypadek, gdyby pracownik otworzył aplikację w dwóch kartach przeglądarki.
+                const currentStatus = await workLogService.getStatus();
+                if (currentStatus === true) {
+                    setIsWorking(true);
+                    await syncActiveTime(); // Jeśli praca już trwa, synchronizujemy czas
+                    throw new Error("Praca jest już rozpoczęta w systemie.");
+                }
+
                 const request = { locationType: "OFFICE" };
                 await workLogService.startWork(request);
-
                 const nowStart = new Date();
                 setIsWorking(true);
                 setIsHO(false);
@@ -114,6 +124,14 @@ const TimeTracker = () => {
         setIsLoading(true);
 
         try {
+            // --- DODANE ZABEZPIECZENIE ---
+            const currentStatus = await workLogService.getStatus();
+            if (currentStatus === true) {
+                setIsWorking(true);
+                await syncActiveTime();
+                throw new Error("Praca jest już rozpoczęta w systemie.");
+            }
+
             const request = { locationType: "HOME_OFFICE" };
             await workLogService.startWork(request);
 
@@ -153,13 +171,47 @@ const TimeTracker = () => {
         }
     };
 
+    // NOWA FUNKCJA: Anulowanie rozpoczęcia pracy
+    const handleCancelWork = async () => {
+        if (isLoading) return;
+
+        // Zabezpieczenie przed przypadkowym kliknięciem
+        if (!window.confirm("Czy na pewno chcesz anulować to rozpoczęcie pracy? Ten wpis zostanie usunięty.")) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await workLogService.cancelWork();
+            setIsWorking(false);
+            setIsHO(false);
+            setIsOnBreak(false);
+            setStartTime(null);
+            alert("Anulowano wpis.");
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const timeString = now.toLocaleTimeString('pl-PL', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
     });
 
-    const elapsedString = startTime ? formatDuration(now - new Date(startTime)) : '00:00:00';
+    // Obliczanie czasu, który upłynął (w milisekundach)
+    const elapsedMs = startTime ? now - new Date(startTime) : 0;
+    const elapsedString = startTime ? formatDuration(elapsedMs) : '00:00:00';
+
+    // Logika dostępności przycisku anulowania: 15 minut = 15 * 60 * 1000 = 900000 ms
+    const FIFTEEN_MINUTES_MS = 900000;
+    const isCancelable = isWorking && startTime && (elapsedMs <= FIFTEEN_MINUTES_MS);
+
+    // Opcjonalnie: ile czasu zostało na anulowanie, żeby wyświetlić to użytkownikowi
+    const remainingCancelTimeStr = isCancelable ? formatDuration(FIFTEEN_MINUTES_MS - elapsedMs).substring(3) : ''; // ucina godziny, zostawia mm:ss
 
     return (
         <Card>
@@ -196,22 +248,49 @@ const TimeTracker = () => {
                     </button>
                 </div>
             ) : (
-                <button
-                    className={`time-display time-display-btn ${isLoading ? 'loading' : 'working'}`}
-                    onClick={handleToggleWork}
-                    disabled={isLoading}
-                >
-                    <div className="time-header">
-                        <Square size={20} />
-                        <span className="time-header-text">
-                            {isLoading ? "ŁADOWANIE..." : "ZAKOŃCZ PRACĘ"}
-                        </span>
-                    </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <button
+                        className={`time-display time-display-btn ${isLoading ? 'loading' : 'working'}`}
+                        onClick={handleToggleWork}
+                        disabled={isLoading}
+                    >
+                        <div className="time-header">
+                            <Square size={20} />
+                            <span className="time-header-text">
+                                {isLoading ? "ŁADOWANIE..." : "ZAKOŃCZ PRACĘ"}
+                            </span>
+                        </div>
 
-                    <div className="time-clock">
-                        {isOnBreak ? "W TRAKCIE PRZERWY" : elapsedString}
-                    </div>
-                </button>
+                        <div className="time-clock">
+                            {isOnBreak ? "W TRAKCIE PRZERWY" : elapsedString}
+                        </div>
+                    </button>
+
+                    {/* PRZYCISK ANULOWANIA - renderuje się tylko przez 15 minut */}
+                    {isCancelable && (
+                        <button
+                            type="button"
+                            onClick={handleCancelWork}
+                            disabled={isLoading}
+                            style={{
+                                marginTop: '0.8rem',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '5px',
+                                fontSize: '0.85rem'
+                            }}
+                        >
+                            <XCircle size={14} />
+                            Pomyłka? Anuluj wpis ({remainingCancelTimeStr})
+                        </button>
+                    )}
+                </div>
             )}
 
             <div className="time-actions-wrapper">

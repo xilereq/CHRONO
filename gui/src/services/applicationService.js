@@ -69,7 +69,20 @@ const applicationService = {
         });
         if (!response.ok) throw new Error('Nie udało się pobrać wniosków do zatwierdzenia');
         return response.json();
-    }
+    },
+
+    createApplicationForEmployee: async (targetEmployeeId, payload) => {
+        const response = await fetch(`${API_URL}/employee/${targetEmployeeId}`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Błąd podczas składania wniosku za pracownika.');
+        }
+        return response.json();
+    },
 };
 
 export default applicationService;

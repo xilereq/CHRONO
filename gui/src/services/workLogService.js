@@ -37,7 +37,19 @@ const workLogService = {
         const response = await fetch(`${API_URL}/monthly-stats`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Błąd pobierania statystyk miesięcznych');
         return response.json();
-    }
+    },
+    cancelWork: async () => {
+        const response = await fetch(`${API_URL}/cancel`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Błąd podczas anulowania rozpoczęcia pracy');
+        }
+        return true;
+    },
 };
 
 export default workLogService;
