@@ -25,6 +25,7 @@ export const pl = {
         loading_data: 'Ładowanie danych...',
         no_data: 'Brak danych',
         settings: 'Ustawienia',
+        processing: 'Przetwarzanie...',
     },
 
     // ============= SIDEBAR =============
@@ -239,6 +240,35 @@ export const pl = {
         deleteSuccess: 'Użytkownik usunięty.',
         userCreated: 'Użytkownik utworzony.',
         userUpdated: 'Użytkownik zaktualizowany.',
+        fetchDataError: 'Błąd podczas pobierania danych:',
+        noPasswordData: '[Brak danych o haśle]',
+        userAddedPart1: 'Użytkownik',
+        userAddedPart2: 'został pomyślnie dodany. Tymczasowe hasło:',
+        addUserError: 'Wystąpił błąd podczas dodawania użytkownika.',
+        selectEmpAndManagerError: 'Wybierz pracownika i managera.',
+        managerAssignedSuccess: 'Manager został pomyślnie przypisany.',
+        assignManagerError: 'Błąd podczas przypisywania managera.',
+        pageTitle: 'Zarządzanie Użytkownikami (HR)',
+        section1Title: 'Sekcja 1: Dodaj nowego użytkownika',
+        section1Subtitle: 'Zarejestruj nowe konto pracownicze w systemie.',
+        emailLabel: 'Adres e-mail',
+        systemRole: 'Rola systemowa',
+        roles: {
+            employee: 'Pracownik',
+            hr: 'HR',
+            manager: 'Kierownik',
+            admin: 'Administrator'
+        },
+        assignManagerLabel: 'Przypisz managera',
+        selectManagerPlaceholder: '-- Wybierz managera --',
+        registerUserBtn: 'Zarejestruj użytkownika',
+        section2Title: 'Sekcja 2: Przypisz Managera do istniejącego konta',
+        section2Subtitle: 'Wybierz pracownika oraz managera, którego chcesz mu przypisać.',
+        employeeLabel: 'Pracownik',
+        selectEmployeePlaceholder: '-- Wybierz pracownika --',
+        managerLabel: 'Manager',
+        assigningBtn: 'Przypisywanie...',
+        saveManagerAssignBtn: 'Zapisz przypisanie managera'
     },
 
     // ============= POLICIES PAGE =============

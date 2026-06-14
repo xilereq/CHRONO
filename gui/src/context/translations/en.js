@@ -25,6 +25,7 @@ export const en = {
         loading_data: 'Loading data...',
         no_data: 'No data',
         settings: 'Settings',
+        processing: 'Processing...',
     },
 
     // ============= SIDEBAR =============
@@ -240,6 +241,35 @@ export const en = {
         deleteSuccess: 'User deleted.',
         userCreated: 'User created.',
         userUpdated: 'User updated.',
+        fetchDataError: 'Error fetching data:',
+        noPasswordData: '[No password data]',
+        userAddedPart1: 'User',
+        userAddedPart2: 'was added successfully. Temporary password:',
+        addUserError: 'An error occurred while adding the user.',
+        selectEmpAndManagerError: 'Please select an employee and a manager.',
+        managerAssignedSuccess: 'Manager successfully assigned.',
+        assignManagerError: 'Error assigning manager.',
+        pageTitle: 'User Management (HR)',
+        section1Title: 'Section 1: Add new user',
+        section1Subtitle: 'Register a new employee account in the system.',
+        emailLabel: 'Email address',
+        systemRole: 'System Role',
+        roles: {
+            employee: 'Employee',
+            hr: 'HR',
+            manager: 'Manager',
+            admin: 'Administrator'
+        },
+        assignManagerLabel: 'Assign manager',
+        selectManagerPlaceholder: '-- Select manager --',
+        registerUserBtn: 'Register user',
+        section2Title: 'Section 2: Assign Manager to existing account',
+        section2Subtitle: 'Select the employee and the manager to be assigned.',
+        employeeLabel: 'Employee',
+        selectEmployeePlaceholder: '-- Select employee --',
+        managerLabel: 'Manager',
+        assigningBtn: 'Assigning...',
+        saveManagerAssignBtn: 'Save manager assignment'
     },
 
     // ============= POLICIES PAGE =============
