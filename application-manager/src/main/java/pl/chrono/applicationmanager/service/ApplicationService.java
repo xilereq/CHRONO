@@ -76,6 +76,7 @@ public class ApplicationService implements I_UserApplication {
     applicationValidationService.validateApplicationLimits(
         employee.getUserId(),
         request.startDate(),
+        request.endDate(),
         type,
         request.durationSeconds()
     );

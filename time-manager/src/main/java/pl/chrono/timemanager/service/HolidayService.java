@@ -1,5 +1,6 @@
 package pl.chrono.timemanager.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,19 @@ public class HolidayService {
 
     holidayPolicyRepository.deleteByHoliday(holiday);
     holidayRepository.delete(holiday);
+  }
+
+  @Transactional(readOnly = true)
+  public boolean isHoliday(LocalDate date) {
+    return holidayRepository.findAll().stream()
+        .anyMatch(holiday -> {
+          if (holiday.getDate().equals(date)) {
+            return true;
+          }
+          return holiday.isOccursYearly()
+              && holiday.getDate().getMonth() == date.getMonth()
+              && holiday.getDate().getDayOfMonth() == date.getDayOfMonth();
+        });
   }
 }
 
