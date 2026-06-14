@@ -61,24 +61,6 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                 {error && <div className="login-error" role="alert">{error}</div>}
 
                 <form className="login-form" onSubmit={handleSubmit} noValidate>
-                    <label className="field">
-                        <span className="field-label">Tymczasowe hasło</span>
-                        <div className="password-wrapper">
-                            <input
-                                className="field-input"
-                                type={showOld ? 'text' : 'password'}
-                                value={oldPassword}
-                                onChange={(e) => setOldPassword(e.target.value)}
-                                autoComplete="current-password"
-                                placeholder="Wprowadź tymczasowe hasło"
-                                required
-                                autoFocus
-                            />
-                            <button type="button" className="password-toggle" onClick={() => setShowOld(v => !v)} aria-label={showOld ? 'Ukryj hasło' : 'Pokaż hasło'}>
-                                {showOld ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                        </div>
-                    </label>
 
                     <label className="field">
                         <span className="field-label">Nowe hasło</span>
