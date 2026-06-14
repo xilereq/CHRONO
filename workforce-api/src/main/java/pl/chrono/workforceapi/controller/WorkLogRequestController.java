@@ -46,66 +46,36 @@ public class WorkLogRequestController extends BaseController {
     return ResponseEntity.ok(requestService.getEmployeeRequests(employeeId));
   }
 
-  @PreAuthorize("hasRole('MANAGER')")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   @GetMapping("/pending")
   public ResponseEntity<List<WorkLogRequestDto>> getPendingRequests(
       @RequestHeader("Authorization") String token) {
 
-    Integer managerId = extractId(token);
-    return ResponseEntity.ok(requestService.getPendingRequestsForManager(managerId));
+    Integer reviewerId = extractId(token);
+    return ResponseEntity.ok(requestService.getPendingRequestsForReviewer(reviewerId));
   }
 
-  @PreAuthorize("hasRole('MANAGER')")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   @PostMapping("/{id}/approve")
   public ResponseEntity<Void> approveRequest(
       @RequestHeader("Authorization") String token,
       @PathVariable("id") Long requestId,
       @RequestBody(required = false) WorkLogResolveRequest resolveDto) {
 
-    Integer managerId = extractId(token);
-    requestService.approveRequest(requestId, managerId, resolveDto);
+    Integer reviewerId = extractId(token);
+    requestService.approveRequest(requestId, reviewerId, resolveDto);
     return ResponseEntity.ok().build();
   }
 
-  @PreAuthorize("hasRole('MANAGER')")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   @PostMapping("/{id}/reject")
   public ResponseEntity<Void> rejectRequest(
       @RequestHeader("Authorization") String token,
       @PathVariable("id") Long requestId,
       @RequestBody(required = false) WorkLogResolveRequest resolveDto) {
 
-    Integer managerId = extractId(token);
-    requestService.rejectRequest(requestId, managerId, resolveDto);
-    return ResponseEntity.ok().build();
-  }
-
-  @PreAuthorize("hasRole('ADMIN')")
-  @GetMapping("/admin/pending")
-  public ResponseEntity<List<WorkLogRequestDto>> getAllPendingRequests() {
-    return ResponseEntity.ok(requestService.getAllPendingRequests());
-  }
-
-  @PreAuthorize("hasRole('ADMIN')")
-  @PostMapping("/admin/{id}/approve")
-  public ResponseEntity<Void> adminApproveRequest(
-      @RequestHeader("Authorization") String token,
-      @PathVariable("id") Long requestId,
-      @RequestBody(required = false) WorkLogResolveRequest resolveDto) {
-
-    Integer adminId = extractId(token);
-    requestService.adminApproveRequest(requestId, adminId, resolveDto);
-    return ResponseEntity.ok().build();
-  }
-
-  @PreAuthorize("hasRole('ADMIN')")
-  @PostMapping("/admin/{id}/reject")
-  public ResponseEntity<Void> adminRejectRequest(
-      @RequestHeader("Authorization") String token,
-      @PathVariable("id") Long requestId,
-      @RequestBody(required = false) WorkLogResolveRequest resolveDto) {
-
-    Integer adminId = extractId(token);
-    requestService.adminRejectRequest(requestId, adminId, resolveDto);
+    Integer reviewerId = extractId(token);
+    requestService.rejectRequest(requestId, reviewerId, resolveDto);
     return ResponseEntity.ok().build();
   }
 }

@@ -38,36 +38,6 @@ public class WorkLogRequestException extends TimeManagerException {
     }
   }
 
-  public static class MissingTargetWorkLog extends WorkLogRequestException {
-    public MissingTargetWorkLog() {
-      super(
-          ErrorCodes.MISSING_TARGET_WORKLOG,
-          "Target WorkLog ID is required for UPDATE requests.",
-          HttpStatus.BAD_REQUEST
-      );
-    }
-  }
-
-  public static class TargetWorkLogNotFound extends WorkLogRequestException {
-    public TargetWorkLogNotFound() {
-      super(
-          ErrorCodes.TARGET_WORKLOG_NOT_FOUND,
-          "Target WorkLog for correction was not found.",
-          HttpStatus.NOT_FOUND
-      );
-    }
-  }
-
-  public static class UnauthorizedWorkLogAccess extends WorkLogRequestException {
-    public UnauthorizedWorkLogAccess() {
-      super(
-          ErrorCodes.UNAUTHORIZED_WORKLOG_ACCESS,
-          "You cannot request changes to another user's WorkLog.",
-          HttpStatus.FORBIDDEN
-      );
-    }
-  }
-
   public static class InvalidState extends WorkLogRequestException {
     public InvalidState() {
       super(
@@ -84,16 +54,6 @@ public class WorkLogRequestException extends TimeManagerException {
           ErrorCodes.UNAUTHORIZED_MANAGER,
           "Access Denied. Only the direct manager can process this request.",
           HttpStatus.FORBIDDEN
-      );
-    }
-  }
-
-  public static class OverlappingWorkLog extends WorkLogRequestException {
-    public OverlappingWorkLog() {
-      super(
-          ErrorCodes.OVERLAPPING_WORKLOG,
-          "Proposed time range overlaps with an existing work log.",
-          HttpStatus.CONFLICT
       );
     }
   }
