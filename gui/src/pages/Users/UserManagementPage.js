@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { userService, authService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import '../main.css';
 import '../Policies/policies.css';
 
 const UserManagementPage = () => {
+    const { t } = useLanguage();
     const [userFormData, setUserFormData] = useState({
         name: '', surname: '', email: '', roleName: "ROLE_EMPLOYEE", managerEmail: ''
     });
@@ -26,11 +28,11 @@ const UserManagementPage = () => {
                 setManagers(allManagers || []);
                 setUsers(allUsers || []);
             } catch (err) {
-                console.error("Błąd podczas pobierania danych:", err);
+                console.error(t('userManagement.fetchDataError', "Błąd podczas pobierania danych:"), err);
             }
         };
         fetchData();
-    }, []);
+    }, [t]);
 
     const handleUserFormChange = (e) => {
         const { name, value } = e.target;
@@ -46,13 +48,15 @@ const UserManagementPage = () => {
 
         try {
             const response = await authService.register(payload);
-            const generatedPassword = response.temporaryPassword || '[Brak danych o haśle]';
-            setUserMessage(`Użytkownik ${payload.name} ${payload.surname} został pomyślnie dodany. Tymczasowe hasło: ${generatedPassword}`);
+            const generatedPassword = response.temporaryPassword || t('userManagement.noPasswordData', '[Brak danych o haśle]');
+
+            setUserMessage(`${t('userManagement.userAddedPart1', 'Użytkownik')} ${payload.name} ${payload.surname} ${t('userManagement.userAddedPart2', 'został pomyślnie dodany. Tymczasowe hasło:')} ${generatedPassword}`);
+
             const updatedUsers = await userService.getAllUsers();
             setUsers(updatedUsers || []);
             setUserFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE', managerEmail: '' });
         } catch (err) {
-            setUserError(err.message || 'Wystąpił błąd podczas dodawania użytkownika.');
+            setUserError(err.message || t('userManagement.addUserError', 'Wystąpił błąd podczas dodawania użytkownika.'));
         } finally {
             setUserLoading(false);
         }
@@ -62,18 +66,18 @@ const UserManagementPage = () => {
         e.preventDefault();
         setManagerError(''); setManagerMessage('');
         if (!managerFormData.email || !managerFormData.managerEmail) {
-            setManagerError("Wybierz pracownika i managera.");
+            setManagerError(t('userManagement.selectEmpAndManagerError', "Wybierz pracownika i managera."));
             return;
         }
         setManagerLoading(true);
         try {
             await userService.setManager(managerFormData.email, managerFormData.managerEmail);
-            setManagerMessage("Manager został pomyślnie przypisany.");
+            setManagerMessage(t('userManagement.managerAssignedSuccess', "Manager został pomyślnie przypisany."));
             setManagerFormData({ email: '', managerEmail: '' });
             const updatedUsers = await userService.getAllUsers();
             setUsers(updatedUsers || []);
         } catch (err) {
-            setManagerError(err.message || "Błąd podczas przypisywania managera.");
+            setManagerError(err.message || t('userManagement.assignManagerError', "Błąd podczas przypisywania managera."));
         } finally {
             setManagerLoading(false);
         }
@@ -81,31 +85,31 @@ const UserManagementPage = () => {
 
     return (
         <div className="page-container">
-            <h2 className="page-title-no-margin">Zarządzanie Użytkownikami (HR)</h2>
+            <h2 className="page-title-no-margin">{t('userManagement.pageTitle', 'Zarządzanie Użytkownikami (HR)')}</h2>
 
             <div className="policy-section" style={{ marginTop: '1.5rem' }}>
-                <h2 className="section-title">Sekcja 1: Dodaj nowego użytkownika</h2>
-                <p className="section-subtitle mb-3">Zarejestruj nowe konto pracownicze w systemie.</p>
+                <h2 className="section-title">{t('userManagement.section1Title', 'Sekcja 1: Dodaj nowego użytkownika')}</h2>
+                <p className="section-subtitle mb-3">{t('userManagement.section1Subtitle', 'Zarejestruj nowe konto pracownicze w systemie.')}</p>
                 {userError && <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{userError}</div>}
                 {userMessage && <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}><strong>{userMessage}</strong></div>}
 
                 <form onSubmit={handleUserFormSubmit}>
                     <div className="grid-2-col" style={{ marginTop: '15px' }}>
-                        <div className="form-group"><span className="form-label">Imię</span><input className="form-input" type="text" name="name" value={userFormData.name} onChange={handleUserFormChange} required /></div>
-                        <div className="form-group"><span className="form-label">Nazwisko</span><input className="form-input" type="text" name="surname" value={userFormData.surname} onChange={handleUserFormChange} required /></div>
-                        <div className="form-group"><span className="form-label">Adres e-mail</span><input className="form-input" type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required /></div>
-                        <div className="form-group"><span className="form-label">Rola systemowa</span>
+                        <div className="form-group"><span className="form-label">{t('userManagement.firstName', 'Imię')}</span><input className="form-input" type="text" name="name" value={userFormData.name} onChange={handleUserFormChange} required /></div>
+                        <div className="form-group"><span className="form-label">{t('userManagement.lastName', 'Nazwisko')}</span><input className="form-input" type="text" name="surname" value={userFormData.surname} onChange={handleUserFormChange} required /></div>
+                        <div className="form-group"><span className="form-label">{t('userManagement.emailLabel', 'Adres e-mail')}</span><input className="form-input" type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required /></div>
+                        <div className="form-group"><span className="form-label">{t('userManagement.systemRole', 'Rola systemowa')}</span>
                             <select className="form-input" name="roleName" value={userFormData.roleName} onChange={handleUserFormChange}>
-                                <option value="ROLE_EMPLOYEE">Pracownik</option>
-                                <option value="ROLE_HR">HR</option>
-                                <option value="ROLE_MANAGER">Kierownik</option>
-                                <option value="ROLE_ADMIN">Administrator</option>
+                                <option value="ROLE_EMPLOYEE">{t('userManagement.roles.employee', 'Pracownik')}</option>
+                                <option value="ROLE_HR">{t('userManagement.roles.hr', 'HR')}</option>
+                                <option value="ROLE_MANAGER">{t('userManagement.roles.manager', 'Kierownik')}</option>
+                                <option value="ROLE_ADMIN">{t('userManagement.roles.admin', 'Administrator')}</option>
                             </select>
                         </div>
                         {userFormData.roleName === 'ROLE_EMPLOYEE' && (
-                            <div className="form-group"><span className="form-label">Przypisz managera</span>
+                            <div className="form-group"><span className="form-label">{t('userManagement.assignManagerLabel', 'Przypisz managera')}</span>
                                 <select className="form-input" name="managerEmail" value={userFormData.managerEmail} onChange={handleUserFormChange}>
-                                    <option value="">-- Wybierz managera --</option>
+                                    <option value="">{t('userManagement.selectManagerPlaceholder', '-- Wybierz managera --')}</option>
                                     {managers.map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)}
                                 </select>
                             </div>
@@ -115,7 +119,7 @@ const UserManagementPage = () => {
                         <div style={{ flex: 1 }}></div>
                         <div className="footer-actions">
                             <button type="submit" className="btn-yellow" disabled={userLoading}>
-                                {userLoading ? 'Przetwarzanie...' : 'Zarejestruj użytkownika'}
+                                {userLoading ? t('common.processing', 'Przetwarzanie...') : t('userManagement.registerUserBtn', 'Zarejestruj użytkownika')}
                             </button>
                         </div>
                     </div>
@@ -123,27 +127,27 @@ const UserManagementPage = () => {
             </div>
 
             <div className="policy-section" style={{ marginTop: '2rem' }}>
-                <h2 className="section-title">Sekcja 2: Przypisz Managera do istniejącego konta</h2>
-                <p className="section-subtitle mb-3">Wybierz pracownika oraz managera, którego chcesz mu przypisać.</p>
+                <h2 className="section-title">{t('userManagement.section2Title', 'Sekcja 2: Przypisz Managera do istniejącego konta')}</h2>
+                <p className="section-subtitle mb-3">{t('userManagement.section2Subtitle', 'Wybierz pracownika oraz managera, którego chcesz mu przypisać.')}</p>
                 {managerError && <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{managerError}</div>}
                 {managerMessage && <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}><strong>{managerMessage}</strong></div>}
 
                 <form className="grid-2-col" style={{ marginTop: '15px' }} onSubmit={handleManagerFormSubmit}>
-                    <div className="form-group"><span className="form-label">Pracownik</span>
+                    <div className="form-group"><span className="form-label">{t('userManagement.employeeLabel', 'Pracownik')}</span>
                         <select className="form-input" value={managerFormData.email} onChange={(e) => setManagerFormData({...managerFormData, email: e.target.value})} required>
-                            <option value="">-- Wybierz pracownika --</option>
+                            <option value="">{t('userManagement.selectEmployeePlaceholder', '-- Wybierz pracownika --')}</option>
                             {users.map(u => <option key={u.email} value={u.email}>{u.name} {u.surname} ({u.email})</option>)}
                         </select>
                     </div>
-                    <div className="form-group"><span className="form-label">Manager</span>
+                    <div className="form-group"><span className="form-label">{t('userManagement.managerLabel', 'Manager')}</span>
                         <select className="form-input" value={managerFormData.managerEmail} onChange={(e) => setManagerFormData({...managerFormData, managerEmail: e.target.value})} required>
-                            <option value="">-- Wybierz managera --</option>
+                            <option value="">{t('userManagement.selectManagerPlaceholder', '-- Wybierz managera --')}</option>
                             {managers.map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)}
                         </select>
                     </div>
                     <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
                         <button type="submit" className="btn-yellow" disabled={managerLoading} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                            {managerLoading ? 'Przypisywanie...' : 'Zapisz przypisanie managera'}
+                            {managerLoading ? t('userManagement.assigningBtn', 'Przypisywanie...') : t('userManagement.saveManagerAssignBtn', 'Zapisz przypisanie managera')}
                         </button>
                     </div>
                 </form>

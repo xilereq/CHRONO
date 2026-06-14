@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Globe } from 'lucide-react'; // Dodano Globe
+import { useLanguage } from '../../context/LanguageContext';
 import './Login.css';
 
 function useQuery() {
@@ -9,6 +10,8 @@ function useQuery() {
 }
 
 const ForgotPasswordReset = () => {
+    const { t, language, changeLanguage } = useLanguage();
+
     const query = useQuery();
     const navigate = useNavigate();
     const tokenFromQuery = query.get('token') || '';
@@ -33,25 +36,25 @@ const ForgotPasswordReset = () => {
         setError('');
         setMessage('');
         if (!token) {
-            setError('Brak tokenu resetującego.');
+            setError(t('errors.genericError', 'Brak tokenu resetującego.'));
             return;
         }
         if (!password || password.length < 6) {
-            setError('Hasło musi mieć co najmniej 6 znaków.');
+            setError(t('resetPassword.passwordTooShort', 'Hasło musi mieć co najmniej 6 znaków.'));
             return;
         }
         if (password !== confirm) {
-            setError('Hasła nie są zgodne.');
+            setError(t('resetPassword.passwordMismatch', 'Hasła nie pasują do siebie.'));
             return;
         }
 
         setLoading(true);
         try {
             await authService.resetPassword(token, password);
-            setMessage('Hasło zostało zresetowane. Możesz się teraz zalogować.');
+            setMessage(t('resetPassword.resetSuccess', 'Hasło zostało zresetowane. Możesz się teraz zalogować.'));
             setTimeout(() => navigate('/login'), 2000);
         } catch (err) {
-            setError(err?.message || 'Błąd podczas resetowania hasła.');
+            setError(err?.message || t('errors.genericError', 'Błąd podczas resetowania hasła.'));
         } finally {
             setLoading(false);
         }
@@ -59,9 +62,24 @@ const ForgotPasswordReset = () => {
 
     return (
         <div className="login-page">
+
+            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+                <div className="language-selector-pill">
+                    <Globe size={18} style={{ color: '#666' }} />
+                    <select
+                        className="language-selector-select"
+                        value={language}
+                        onChange={(e) => changeLanguage(e.target.value)}
+                    >
+                        <option value="pl">PL</option>
+                        <option value="en">EN</option>
+                    </select>
+                </div>
+            </div>
+
             <div className="login-card" role="main">
-                <h1 className="login-title">Ustaw nowe hasło</h1>
-                <p className="login-subtitle">Wprowadź nowe hasło dla konta.</p>
+                <h1 className="login-title">{t('resetPassword.title', 'Ustaw nowe hasło')}</h1>
+                <p className="login-subtitle">{t('resetPassword.subtitle', 'Wprowadź nowe hasło dla konta.')}</p>
 
                 {error && <div className="login-error" role="alert">{error}</div>}
                 {message && <div className="login-success" role="status">{message}</div>}
@@ -69,13 +87,13 @@ const ForgotPasswordReset = () => {
                 <form className="login-form" onSubmit={handleSubmit} noValidate>
                     {!token && (
                         <label className="field">
-                            <span className="field-label">Token resetujący</span>
+                            <span className="field-label">{t('resetPassword.token', 'Token resetujący')}</span>
                             <input className="field-input" value={token} onChange={(e) => setToken(e.target.value)} />
                         </label>
                     )}
 
                     <label className="field">
-                        <span className="field-label">Nowe hasło</span>
+                        <span className="field-label">{t('resetPassword.newPassword', 'Nowe hasło')}</span>
                         <div className="password-wrapper">
                             <input
                                 className="field-input"
@@ -83,13 +101,13 @@ const ForgotPasswordReset = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="new-password"
-                                placeholder="Minimum 6 znaków"
+                                placeholder={t('resetPassword.passwordTooShort', 'Minimum 6 znaków')}
                             />
                             <button
                                 type="button"
                                 className="password-toggle"
                                 onClick={() => setShowPassword(v => !v)}
-                                aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                                aria-label={showPassword ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}
                             >
                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
@@ -97,7 +115,7 @@ const ForgotPasswordReset = () => {
                     </label>
 
                     <label className="field">
-                        <span className="field-label">Potwierdź hasło</span>
+                        <span className="field-label">{t('resetPassword.confirmPassword', 'Potwierdź hasło')}</span>
                         <div className="password-wrapper">
                             <input
                                 className="field-input"
@@ -105,13 +123,13 @@ const ForgotPasswordReset = () => {
                                 value={confirm}
                                 onChange={(e) => setConfirm(e.target.value)}
                                 autoComplete="new-password"
-                                placeholder="Powtórz nowe hasło"
+                                placeholder={t('resetPassword.confirmPassword', 'Powtórz nowe hasło')}
                             />
                             <button
                                 type="button"
                                 className="password-toggle"
                                 onClick={() => setShowConfirm(v => !v)}
-                                aria-label={showConfirm ? 'Ukryj hasło' : 'Pokaż hasło'}
+                                aria-label={showConfirm ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}
                             >
                                 {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
@@ -119,7 +137,7 @@ const ForgotPasswordReset = () => {
                     </label>
 
                     <button className="btn-primary" type="submit" disabled={loading}>
-                        {loading ? 'Przetwarzanie...' : 'Ustaw nowe hasło'}
+                        {loading ? t('common.loading_data', 'Przetwarzanie...') : t('resetPassword.resetButton', 'Ustaw nowe hasło')}
                     </button>
                 </form>
             </div>
@@ -128,4 +146,3 @@ const ForgotPasswordReset = () => {
 };
 
 export default ForgotPasswordReset;
-

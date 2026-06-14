@@ -1,32 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Badge } from '../index';
 import { applicationService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../pages/main.css';
-
-const translateType = (type) => {
-    switch (type) {
-        case 'HOLIDAY_LEAVE': return 'Urlop wypoczynkowy';
-        case 'SICK_LEAVE': return 'Zwolnienie lekarskie';
-        case 'EARLY_EXIT': return 'Wyjście wcześniejsze';
-        case 'OVERTIME_EARN': return 'Zgłoszenie nadgodzin';
-        case 'OVERTIME_TAKE': return 'Odbiór nadgodzin';
-        default: return type || 'Inny';
-    }
-};
-
-const translateStatus = (status) => {
-    switch (status) {
-        case 'APPROVED': return 'Zatwierdzony';
-        case 'PENDING': return 'Oczekujący';
-        case 'REJECTED': return 'Odrzucony';
-        case 'CANCELLED': return 'Anulowany';
-        default: return status;
-    }
-};
 
 const RecentRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
+
+    const translateType = (type) => {
+        switch (type) {
+            case 'HOLIDAY_LEAVE': return t('requests.types.holiday', 'Urlop wypoczynkowy');
+            case 'SICK_LEAVE': return t('requests.types.sick', 'Zwolnienie lekarskie');
+            case 'EARLY_EXIT': return t('requests.types.earlyExit', 'Wyjście wcześniejsze');
+            case 'OVERTIME_EARN': return t('requests.types.overtimeEarn', 'Zgłoszenie nadgodzin');
+            case 'OVERTIME_TAKE': return t('requests.types.overtimeTake', 'Odbiór nadgodzin');
+            default: return type || t('common.other', 'Inny');
+        }
+    };
+
+    const translateStatus = (status) => {
+        switch (status) {
+            case 'APPROVED': return t('requests.approved', 'Zatwierdzony');
+            case 'PENDING': return t('requests.pending', 'Oczekujący');
+            case 'REJECTED': return t('requests.rejected', 'Odrzucony');
+            case 'CANCELLED': return t('requests.cancelled', 'Anulowany');
+            default: return status;
+        }
+    };
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -44,30 +46,30 @@ const RecentRequests = () => {
     }, []);
 
     return (
-        <Card title="OSTATNIE WNIOSKI" className="table-container">
+        <Card title={t('dashboard.recentRequestsTitle', 'OSTATNIE WNIOSKI')} className="table-container">
             <table className="requests-table">
                 <thead>
                 <tr>
-                    <th>Typ</th>
-                    <th>Data zgłoszenia</th>
-                    <th>Data nieobecności</th>
-                    <th>Status</th>
+                    <th>{t('requests.requestType', 'Typ')}</th>
+                    <th>{t('requests.submitDate', 'Data zgłoszenia')}</th>
+                    <th>{t('requests.absenceDate', 'Data nieobecności')}</th>
+                    <th>{t('requests.status', 'Status')}</th>
                 </tr>
                 </thead>
                 <tbody>
                 {loading ? (
                     <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>Ładowanie danych...</td>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>{t('common.loading_data', 'Ładowanie danych...')}</td>
                     </tr>
                 ) : requests.length === 0 ? (
                     <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>Brak ostatnich wniosków.</td>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>{t('dashboard.noRecentRequests', 'Brak ostatnich wniosków.')}</td>
                     </tr>
                 ) : (
                     requests.map((req) => (
                         <tr key={req.id}>
                             <td>{translateType(req.type)}</td>
-                            <td>{req.creationDateTime ? new Date(req.creationDateTime).toLocaleDateString('pl-PL') : '-'}</td>
+                            <td>{req.creationDateTime ? new Date(req.creationDateTime).toLocaleDateString(t('common.locale', 'pl-PL')) : '-'}</td>
                             <td>{req.startDate} - {req.endDate}</td>
                             <td><Badge status={translateStatus(req.status)} /></td>
                         </tr>

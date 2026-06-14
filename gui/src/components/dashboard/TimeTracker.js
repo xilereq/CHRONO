@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Coffee, Square, Home, XCircle } from 'lucide-react'; // Dodano XCircle
+import { Clock, Coffee, Square, Home, XCircle } from 'lucide-react';
 import { Card, Button } from '../../components';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../pages/main.css';
 import './dashboard.css';
 import { workLogService, leaveLogService } from '../../services';
@@ -26,6 +27,7 @@ const parseDurationToMs = (timeString) => {
 };
 
 const TimeTracker = () => {
+    const { t } = useLanguage();
     const [now, setNow] = useState(new Date());
     const [isWorking, setIsWorking] = useState(false);
     const [isOnBreak, setIsOnBreak] = useState(false);
@@ -81,7 +83,6 @@ const TimeTracker = () => {
         setIsLoading(true);
         try {
             if (isWorking) {
-                // LOGIKA ZAKOŃCZENIA PRACY
                 if (isOnBreak) {
                     await leaveLogService.endLeave();
                     setIsOnBreak(false);
@@ -90,18 +91,13 @@ const TimeTracker = () => {
                 setIsWorking(false);
                 setIsHO(false);
                 setStartTime(null);
-                alert("Zakończono czas pracy");
+                alert(t('timeTracker.workEndedAlert', 'Zakończono czas pracy'));
             } else {
-                // LOGIKA ROZPOCZĘCIA PRACY W BIURZE
-
-                // --- DODANE ZABEZPIECZENIE ---
-                // Ponownie sprawdzamy status w bazie tuż przed uderzeniem w startWork,
-                // na wypadek, gdyby pracownik otworzył aplikację w dwóch kartach przeglądarki.
                 const currentStatus = await workLogService.getStatus();
                 if (currentStatus === true) {
                     setIsWorking(true);
-                    await syncActiveTime(); // Jeśli praca już trwa, synchronizujemy czas
-                    throw new Error("Praca jest już rozpoczęta w systemie.");
+                    await syncActiveTime();
+                    throw new Error(t('timeTracker.workAlreadyStarted', 'Praca jest już rozpoczęta w systemie.'));
                 }
 
                 const request = { locationType: "OFFICE" };
@@ -124,12 +120,11 @@ const TimeTracker = () => {
         setIsLoading(true);
 
         try {
-            // --- DODANE ZABEZPIECZENIE ---
             const currentStatus = await workLogService.getStatus();
             if (currentStatus === true) {
                 setIsWorking(true);
                 await syncActiveTime();
-                throw new Error("Praca jest już rozpoczęta w systemie.");
+                throw new Error(t('timeTracker.workAlreadyStarted', 'Praca jest już rozpoczęta w systemie.'));
             }
 
             const request = { locationType: "HOME_OFFICE" };
@@ -171,12 +166,10 @@ const TimeTracker = () => {
         }
     };
 
-    // NOWA FUNKCJA: Anulowanie rozpoczęcia pracy
     const handleCancelWork = async () => {
         if (isLoading) return;
 
-        // Zabezpieczenie przed przypadkowym kliknięciem
-        if (!window.confirm("Czy na pewno chcesz anulować to rozpoczęcie pracy? Ten wpis zostanie usunięty.")) {
+        if (!window.confirm(t('timeTracker.cancelConfirm', 'Czy na pewno chcesz anulować to rozpoczęcie pracy? Ten wpis zostanie usunięty.'))) {
             return;
         }
 
@@ -187,7 +180,7 @@ const TimeTracker = () => {
             setIsHO(false);
             setIsOnBreak(false);
             setStartTime(null);
-            alert("Anulowano wpis.");
+            alert(t('timeTracker.entryCancelledAlert', 'Anulowano wpis.'));
         } catch (error) {
             console.error(error);
             alert(error.message);
@@ -196,22 +189,19 @@ const TimeTracker = () => {
         }
     };
 
-    const timeString = now.toLocaleTimeString('pl-PL', {
+    const timeString = now.toLocaleTimeString(t('common.locale', 'pl-PL'), {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
     });
 
-    // Obliczanie czasu, który upłynął (w milisekundach)
     const elapsedMs = startTime ? now - new Date(startTime) : 0;
     const elapsedString = startTime ? formatDuration(elapsedMs) : '00:00:00';
 
-    // Logika dostępności przycisku anulowania: 15 minut = 15 * 60 * 1000 = 900000 ms
     const FIFTEEN_MINUTES_MS = 900000;
     const isCancelable = isWorking && startTime && (elapsedMs <= FIFTEEN_MINUTES_MS);
 
-    // Opcjonalnie: ile czasu zostało na anulowanie, żeby wyświetlić to użytkownikowi
-    const remainingCancelTimeStr = isCancelable ? formatDuration(FIFTEEN_MINUTES_MS - elapsedMs).substring(3) : ''; // ucina godziny, zostawia mm:ss
+    const remainingCancelTimeStr = isCancelable ? formatDuration(FIFTEEN_MINUTES_MS - elapsedMs).substring(3) : '';
 
     return (
         <Card>
@@ -226,7 +216,7 @@ const TimeTracker = () => {
                         <div className="time-header">
                             <Clock size={20} />
                             <span className="time-header-text">
-                                {isLoading ? "ŁADOWANIE..." : "ROZPOCZNIJ PRACĘ"}
+                                {isLoading ? t('common.loadingUpper', 'ŁADOWANIE...') : t('timeTracker.startWork', 'ROZPOCZNIJ PRACĘ')}
                             </span>
                         </div>
                         <div className="time-clock">{timeString}</div>
@@ -241,7 +231,7 @@ const TimeTracker = () => {
                         <div className="time-header">
                             <Home size={20} />
                             <span className="time-header-text">
-                                {isLoading ? "ŁADOWANIE..." : "HO Start"}
+                                {isLoading ? t('common.loadingUpper', 'ŁADOWANIE...') : t('timeTracker.hoStart', 'HO Start')}
                             </span>
                         </div>
                         <div className="time-clock">{timeString}</div>
@@ -257,16 +247,15 @@ const TimeTracker = () => {
                         <div className="time-header">
                             <Square size={20} />
                             <span className="time-header-text">
-                                {isLoading ? "ŁADOWANIE..." : "ZAKOŃCZ PRACĘ"}
+                                {isLoading ? t('common.loadingUpper', 'ŁADOWANIE...') : t('timeTracker.endWork', 'ZAKOŃCZ PRACĘ')}
                             </span>
                         </div>
 
                         <div className="time-clock">
-                            {isOnBreak ? "W TRAKCIE PRZERWY" : elapsedString}
+                            {isOnBreak ? t('timeTracker.onBreak', 'W TRAKCIE PRZERWY') : elapsedString}
                         </div>
                     </button>
 
-                    {/* PRZYCISK ANULOWANIA - renderuje się tylko przez 15 minut */}
                     {isCancelable && (
                         <button
                             type="button"
@@ -287,7 +276,7 @@ const TimeTracker = () => {
                             }}
                         >
                             <XCircle size={14} />
-                            Pomyłka? Anuluj wpis ({remainingCancelTimeStr})
+                            {t('timeTracker.mistakeCancel', 'Pomyłka? Anuluj wpis (')} {remainingCancelTimeStr} )
                         </button>
                     )}
                 </div>
@@ -301,7 +290,7 @@ const TimeTracker = () => {
                     onClick={handleToggleBreak}
                 >
                     <Coffee size={18} />
-                    {isOnBreak ? "ZAKOŃCZ PRZERWĘ" : "PRZERWA"}
+                    {isOnBreak ? t('timeTracker.endBreak', 'ZAKOŃCZ PRZERWĘ') : t('timeTracker.break', 'PRZERWA')}
                 </Button>
             </div>
         </Card>
