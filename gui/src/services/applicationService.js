@@ -5,6 +5,25 @@ const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
 });
 
+const ERROR_MESSAGES = {
+    APPLICATION_NOT_FOUND:              'Nie znaleziono wniosku.',
+    APPLICATION_ALREADY_PROCESSED:      'Wniosek został już rozpatrzony — nie można zmienić jego statusu.',
+    APPLICATION_NOT_PENDING:            'Anulowanie jest możliwe tylko dla wniosków oczekujących na rozpatrzenie.',
+    UNAUTHORIZED_MANAGER:               'Brak uprawnień. Tylko bezpośredni przełożony może rozpatrywać wnioski tego pracownika.',
+    UNAUTHORIZED_ACCESS:                'Brak uprawnień dostępu do tego zasobu.',
+    UNAUTHORIZED_CANCELLATION:          'Możesz anulować tylko własne wnioski.',
+    USER_NOT_FOUND:                     'Nie znaleziono użytkownika.',
+    INSUFFICIENT_LEAVE_BALANCE:         'Niewystarczające saldo urlopu. Sprawdź liczbę dostępnych dni urlopowych.',
+    APPLICATION_DAILY_LIMIT_EXCEEDED:   'Wniosek odrzucony — suma godzin pracy i nadgodzin przekroczyłaby dzienny limit.',
+    REQUESTED_TIME_EXCEEDS_SCHEDULED:   'Żądana liczba godzin przekracza zaplanowany czas pracy na ten dzień.',
+};
+
+const readError = async (response, fallback) => {
+    const body = await response.json().catch(() => null);
+    const translated = ERROR_MESSAGES[body?.code];
+    return new Error(translated || body?.message || fallback);
+};
+
 const applicationService = {
     getUserApplications: async () => {
         const response = await fetch(`${API_URL}/my`, {
@@ -27,7 +46,7 @@ const applicationService = {
                 const time = timeMatch ? timeMatch[1] : '0h:00m';
                 throw new Error(`Niewystarczające saldo nadgodzin. Aktualnie masz ${time} do wykorzystania.`);
             }
-            throw new Error(errorBody?.message || 'Błąd podczas składania wniosku');
+            throw new Error(ERROR_MESSAGES[errorBody?.code] || errorBody?.message || 'Błąd podczas składania wniosku');
         }
         return response.json();
     },
@@ -37,7 +56,7 @@ const applicationService = {
             method: 'PATCH',
             headers: getHeaders()
         });
-        if (!response.ok) throw new Error('Błąd podczas anulowania wniosku');
+        if (!response.ok) throw await readError(response, 'Błąd podczas anulowania wniosku');
         return response.json();
     },
 
@@ -51,7 +70,7 @@ const applicationService = {
             headers: getHeaders(),
             body: JSON.stringify(payload)
         });
-        if (!response.ok) throw new Error('Błąd zmiany statusu');
+        if (!response.ok) throw await readError(response, 'Błąd zmiany statusu wniosku');
         return response.json();
     },
 
@@ -77,10 +96,7 @@ const applicationService = {
             headers: getHeaders(),
             body: JSON.stringify(payload)
         });
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({}));
-            throw new Error(error.message || 'Błąd podczas składania wniosku za pracownika.');
-        }
+        if (!response.ok) throw await readError(response, 'Błąd podczas składania wniosku za pracownika');
         return response.json();
     },
 };

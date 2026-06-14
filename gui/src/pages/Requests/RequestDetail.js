@@ -11,6 +11,7 @@ const translateType = (type) => {
         case 'EARLY_EXIT': return 'Wyjście wcześniejsze';
         case 'OVERTIME_EARN': return 'Zgłoszenie nadgodzin';
         case 'OVERTIME_TAKE': return 'Odbiór nadgodzin';
+        case 'HOME_OFFICE':   return 'Praca zdalna (HO)';
         default: return type || 'Inny';
     }
 };
