@@ -12,14 +12,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
-import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
@@ -36,8 +33,8 @@ public class WorkLogService {
   private final UserRepository userRepository;
   private final WorkLogMapper workLogMapper;
   private final OvertimeService overtimeService;
-  private final ApplicationRepository applicationRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final WorkTimeCalculationService workTimeCalculationService;
 
   @Transactional(readOnly = true)
   public List<WorkLogDto> getWorkLogsByDate(Integer userId, LocalDate date) {
@@ -50,11 +47,19 @@ public class WorkLogService {
         .toList();
   }
 
+  public boolean hasUserWorkedToday(Integer userId) {
+    LocalDate today = LocalDate.now();
+    LocalDateTime startOfDay = today.atStartOfDay();
+    LocalDateTime endOfDay = today.plusDays(1).atStartOfDay().minusNanos(1);
+
+    return !timeData.findWorkLogsByUserAndDate(userId, startOfDay, endOfDay).isEmpty();
+  }
+
   @EventListener
   @Transactional
   public void handleUserLoginEvent(UserLoginEvent event) {
-    if (!isUserWorking(event.userId())) {
-        startWork(event.userId(), null);
+    if (!isUserWorking(event.userId()) && !hasUserWorkedToday(event.userId())) {
+      startWork(event.userId(), null);
     }
   }
 
@@ -64,12 +69,17 @@ public class WorkLogService {
       throw new WorkException.WorkStarted(userId);
     }
 
+    if (hasUserWorkedToday(userId)) {
+      throw new WorkException.AlreadyWorkedToday();
+    }
+
     WorkLog workLog = new WorkLog();
     workLog.setUser(userRepository.findById(userId)
         .orElseThrow(() -> new UserException.NotFound(userId)));
     workLog.setStartTime(LocalDateTime.now());
 
-    boolean hasHoApplication = isHomeOffice(userId);
+    boolean hasHoApplication = workTimeCalculationService.hasApprovedHomeOffice(
+        userId, LocalDate.now());
     if (location != null) {
       if (location == WorkLocationType.HOME_OFFICE && !hasHoApplication) {
         throw new WorkException.NoHomeOfficeApplication();
@@ -81,12 +91,6 @@ public class WorkLogService {
 
     WorkLog saved = timeData.saveWorkLog(workLog);
     return workLogMapper.toDto(saved);
-  }
-
-  private boolean isHomeOffice(Integer userId) {
-    return applicationRepository.findApprovedByEmployeeAndDate(userId, LocalDate.now())
-        .stream()
-        .anyMatch(app -> app.getType() == ApplicationType.HOME_OFFICE);
   }
 
   @Transactional
@@ -112,24 +116,27 @@ public class WorkLogService {
 
     LocalDateTime now = LocalDateTime.now();
     long workTime = workLog.calculateWorkTime(now);
+    LocalDate workDate = workLog.getStartTime() != null ? workLog.getStartTime()
+        .toLocalDate() : now.toLocalDate();
+    Policy policyForDay = workLog.getUser().getPolicyForDate(workDate);
 
-    int requiredSeconds = calculateAdjustedRequiredSeconds(
-        userId, now.toLocalDate(),
-        workLog.getRequiredSeconds()
-    );
-    int roundingSeconds = workLog.getRoundingSeconds();
-    int maxAllowedSeconds = workLog.getMaxAllowedSeconds();
+    int requiredSeconds = workTimeCalculationService.getAdjustedRequiredSeconds(
+        userId, workDate, policyForDay);
+    int roundingSeconds = workTimeCalculationService.getRoundingSeconds(policyForDay);
+    int maxAllowedSeconds = workTimeCalculationService.getMaxAllowedSeconds(policyForDay);
 
     if (workTime > maxAllowedSeconds) {
-      workLog.forceClose(now);
+      workLog.forceClose(now, requiredSeconds);
       eventPublisher.publishEvent(new LawViolationEvent(
           userId, "VIOLATION_MAX_WORK", workLog.getWorkLogId().longValue(), "WORK_LOG",
-          "Your work time has exceeded maximum work time for your policy (" + formatSecondsToTime(
-              maxAllowedSeconds) + "). Log has been automatically closed."
+          "Your work time has exceeded maximum work time for your policy ("
+              + workTimeCalculationService.formatSecondsToTime( maxAllowedSeconds) + "). " +
+              "Log has been automatically closed."
       ));
     } else if (workTime < (requiredSeconds - roundingSeconds)) {
       long missingSeconds = requiredSeconds - workTime;
-      throw new WorkException.InsufficientWorkTime(formatSecondsToTime(missingSeconds));
+      throw new WorkException.InsufficientWorkTime(
+          workTimeCalculationService.formatSecondsToTime(missingSeconds));
     } else {
       workLog.setEndTime(now);
     }
@@ -147,7 +154,8 @@ public class WorkLogService {
         }
       }
     });
-    checkWeeklyWorkLimit(saved, now, workLog.getUser().getActivePolicy());
+
+    checkWeeklyWorkLimit(saved, now, policyForDay);
     return workLogMapper.toDto(saved);
   }
 
@@ -160,19 +168,15 @@ public class WorkLogService {
   public String getActiveWorkTime(Integer userId) {
     return timeData.findActiveWorkLog(userId).map(workLog -> {
       long workTime = workLog.calculateWorkTime(LocalDateTime.now());
-      return formatSecondsToTime(workTime);
+      return workTimeCalculationService.formatSecondsToTime(workTime);
     }).orElse("00:00:00");
   }
 
-  private boolean defaultIsWorkDay(LocalDate date) {
-    DayOfWeek day = date.getDayOfWeek();
-    return day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY;
-  }
 
   private record MonthlyHours(int total, int remaining) {
   }
 
-  private MonthlyHours calculateMonthlyHours(Policy policy, LocalDate today) {
+  private MonthlyHours calculateMonthlyHours(User user, LocalDate today) {
     LocalDate firstDay = today.withDayOfMonth(1);
     LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
 
@@ -181,8 +185,8 @@ public class WorkLogService {
     LocalDate cur = firstDay;
 
     while (!cur.isAfter(lastDay)) {
-      int dailySeconds = policy != null ? policy.getRequiredSecondsForDate(cur) : defaultIsWorkDay(
-          cur) ? 8 * 3600 : 0;
+      Policy policyForDay = user.getPolicyForDate(cur);
+      int dailySeconds = workTimeCalculationService.getBaseRequiredSeconds(cur, policyForDay);
 
       int dailyHours = dailySeconds / 3600;
       totalMonthlyHours += dailyHours;
@@ -199,9 +203,14 @@ public class WorkLogService {
     LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
 
     long totalSecondsWorked = timeData.findUserWorkLogsAfter(userId, startOfMonth).stream().filter(
-            workLog -> workLog.getEndTime() != null && workLog.getEndTime()
-                .isBefore(today.atStartOfDay()))
-        .mapToLong(workLog -> workLog.getEffectiveWorkTime(workLog.getEndTime())).sum();
+        workLog -> workLog.getEndTime() != null && workLog.getEndTime()
+            .isBefore(today.atStartOfDay())).mapToLong(workLog -> {
+      Policy policy = workLog.getUser().getPolicyForDate(workLog.getStartTime().toLocalDate());
+      int required = workTimeCalculationService.getBaseRequiredSeconds(
+          workLog.getStartTime().toLocalDate(), policy);
+      int rounding = workTimeCalculationService.getRoundingSeconds(policy);
+      return workLog.getEffectiveWorkTime(workLog.getEndTime(), required, rounding);
+    }).sum();
 
     return (int) (totalSecondsWorked / 3600);
   }
@@ -212,12 +221,9 @@ public class WorkLogService {
         .orElseThrow(() -> new UserException.NotFound(userId));
 
     LocalDate today = LocalDate.now();
-    Policy policy = user.getActivePolicy();
 
-    MonthlyHours monthlyHours = calculateMonthlyHours(policy, today);
-
+    MonthlyHours monthlyHours = calculateMonthlyHours(user, today);
     int totalHoursWorked = calculateTotalHoursWorked(userId, today);
-
     int overtimeSeconds = overtimeService.getOvertimeBalance(userId);
 
     return new WorkStats(
@@ -226,46 +232,15 @@ public class WorkLogService {
     );
   }
 
-  private String formatSecondsToTime(long totalSeconds) {
-    long hours = totalSeconds / 3600;
-    long minutes = totalSeconds % 3600 / 60;
-    long seconds = totalSeconds % 60;
-    return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-  }
-
-  private int calculateAdjustedRequiredSeconds(Integer userId, LocalDate date,
-                                               int baseRequiredSeconds) {
-    List<Application> applications = applicationRepository.findApprovedByEmployeeAndDate(
-        userId, date);
-    int adjustedRequiredSeconds = baseRequiredSeconds;
-
-    for (Application app : applications) {
-      int duration = app.getDurationSeconds() != null ? app.getDurationSeconds() : 0;
-      switch (app.getType()) {
-        case EARLY_EXIT:
-        case OVERTIME_TAKE:
-          adjustedRequiredSeconds -= duration;
-          break;
-        case OVERTIME_EARN:
-          adjustedRequiredSeconds += duration;
-          break;
-        default:
-          break;
-      }
-    }
-    return Math.max(0, adjustedRequiredSeconds);
-  }
-
   @Transactional(readOnly = true)
   public String getTodayTarget(Integer userId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserException.NotFound(userId));
     LocalDate today = LocalDate.now();
-
-    int baseRequiredSeconds = user.getActivePolicy() != null ? user.getActivePolicy()
-        .getRequiredSecondsForDate(today) : defaultIsWorkDay(today) ? 8 * 3600 : 0;
-    int todayRequiredSeconds = calculateAdjustedRequiredSeconds(userId, today, baseRequiredSeconds);
-    return formatSecondsToTime(todayRequiredSeconds);
+    Policy policyForToday = user.getPolicyForDate(today);
+    int todayRequiredSeconds = workTimeCalculationService.getAdjustedRequiredSeconds(
+        userId, today, policyForToday);
+    return workTimeCalculationService.formatSecondsToTime(todayRequiredSeconds);
   }
 
   private void checkWeeklyWorkLimit(WorkLog currentLog, LocalDateTime now, Policy policy) {
@@ -277,9 +252,21 @@ public class WorkLogService {
 
     long totalSecondsThisWeek = timeData.findUserWorkLogsAfter(
             currentLog.getUser().getUserId(), startOfWeek).stream()
-        .mapToLong(log -> log.getEffectiveWorkTime(now)).sum();
+        .mapToLong(log -> {
+          Policy policyForDate = log.getUser().getPolicyForDate(log.getStartTime().toLocalDate());
+          int required = workTimeCalculationService.getBaseRequiredSeconds(log.getStartTime().toLocalDate(), policyForDate);
+          int rounding = workTimeCalculationService.getRoundingSeconds(policyForDate);
 
-    long currentLogSeconds = currentLog.getEffectiveWorkTime(now);
+          LocalDateTime boundary = log.getEndTime() != null ? log.getEndTime() : now;
+
+          return log.getEffectiveWorkTime(boundary, required, rounding);
+        }).sum();
+
+    int currentRequired = workTimeCalculationService.getBaseRequiredSeconds(currentLog.getStartTime().toLocalDate(), policy);
+    int currentRounding = workTimeCalculationService.getRoundingSeconds(policy);
+
+    long currentLogSeconds = currentLog.getEffectiveWorkTime(now, currentRequired, currentRounding);
+
     long secondsBeforeThisShift = totalSecondsThisWeek - currentLogSeconds;
 
     if (secondsBeforeThisShift <= maxWeeklySeconds && totalSecondsThisWeek > maxWeeklySeconds) {
@@ -288,7 +275,6 @@ public class WorkLogService {
           currentLog.getWorkLogId().longValue(), "WORK_LOG",
           "WARNING: You have exceeded maximum weekly limit (" + maxWeeklyHours + " hours)."
       ));
-
     }
   }
 }

@@ -18,7 +18,7 @@ public class ApplicationValidationService {
 
   private final UserRepository userRepository;
   private final LeaveBalanceService leaveBalanceService;
-  private final WorkingDaysCalculationService workingDaysCalculationService;
+  private final WorkTimeCalculationService workingDaysCalculationService;
 
   @Transactional(readOnly = true)
   public void validateApplicationLimits(Integer employeeId, LocalDate startDate, LocalDate endDate, ApplicationType type, Integer durationSeconds) {
@@ -34,7 +34,8 @@ public class ApplicationValidationService {
 
     switch (type) {
       case HOLIDAY_LEAVE:
-        int requestedWorkingDays = workingDaysCalculationService.calculateWorkingDays(startDate, endDate);
+        int requestedWorkingDays = workingDaysCalculationService.calculateWorkingDays(
+            startDate, endDate, policy);
         if (requestedWorkingDays <= 0) return;
 
         int currentYear = startDate.getYear();

@@ -14,24 +14,23 @@ public final class ErrorCodes {
   public static final String INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE";
   public static final String CANCELLATION_EXPIRED = "CANCELLATION_EXPIRED";
   public static final String NO_HO_APPLICATION = "NO_HO_APPLICATION";
-
+  public static final String ALREADY_WORKED_TODAY = "ALREADY_WORKED_TODAY";
 
   public static final String HOLIDAY_NOT_FOUND = "HOLIDAY_NOT_FOUND";
+  public static final String HOLIDAY_NONE_FOUND = "HOLIDAY_NONE_FOUND";
   public static final String HOLIDAY_ALREADY_ASSIGNED = "HOLIDAY_ALREADY_ASSIGNED";
   public static final String HOLIDAY_NOT_ASSIGNED = "HOLIDAY_NOT_ASSIGNED";
 
   public static final String REQUEST_NOT_FOUND = "REQUEST_NOT_FOUND";
   public static final String INVALID_TIME_RANGE = "INVALID_TIME_RANGE";
   public static final String DAILY_LIMIT_EXCEEDED = "DAILY_LIMIT_EXCEEDED";
-  public static final String MISSING_TARGET_WORKLOG = "MISSING_TARGET_WORKLOG";
-  public static final String TARGET_WORKLOG_NOT_FOUND = "TARGET_WORKLOG_NOT_FOUND";
-  public static final String UNAUTHORIZED_WORKLOG_ACCESS = "UNAUTHORIZED_WORKLOG_ACCESS";
   public static final String INVALID_REQUEST_STATE = "INVALID_REQUEST_STATE";
   public static final String UNAUTHORIZED_MANAGER = "UNAUTHORIZED_MANAGER";
-  public static final String OVERLAPPING_WORKLOG = "OVERLAPPING_WORKLOG";
+  public static final String INSUFFICIENT_REQUEST_TIME = "INSUFFICIENT_REQUEST_TIME";
 
   public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
 
   public static final String APPLICATION_DAILY_LIMIT_EXCEEDED = "APPLICATION_DAILY_LIMIT_EXCEEDED";
   public static final String REQUESTED_TIME_EXCEEDS_SCHEDULED = "REQUESTED_TIME_EXCEEDS_SCHEDULED";
+  public static final String INSUFFICIENT_LEAVE_BALANCE = "INSUFFICIENT_LEAVE_BALANCE";
 }

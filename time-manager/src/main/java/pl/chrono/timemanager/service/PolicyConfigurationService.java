@@ -1,6 +1,8 @@
 package pl.chrono.timemanager.service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,13 +122,13 @@ public class PolicyConfigurationService {
 
     List<Holiday> holidaysToAssign = holidayRepository.findAllById(request.holidayIds());
     if (holidaysToAssign.isEmpty()) {
-      throw new IllegalArgumentException("No valid holidays found for provided IDs.");
+      throw new HolidayException.NoneFound();
     }
 
     List<HolidayPolicy> existingAssignments = holidayPolicyRepository.findByPolicy(policy);
-    java.util.Set<Integer> existingHolidayIds = existingAssignments.stream()
+    Set<Integer> existingHolidayIds = existingAssignments.stream()
         .map(hp -> hp.getHoliday().getHolidayId())
-        .collect(java.util.stream.Collectors.toSet());
+        .collect(Collectors.toSet());
 
     List<HolidayPolicy> newAssignments = holidaysToAssign.stream()
         .filter(holiday -> !existingHolidayIds.contains(holiday.getHolidayId()))

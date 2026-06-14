@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Application;
+import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
@@ -18,6 +19,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.WorkLogRepository;
 import pl.chrono.reportmanager.dto.DailyTimesheetEntry;
 import pl.chrono.reportmanager.dto.EmployeeTimesheetReport;
+import pl.chrono.timemanager.service.WorkTimeCalculationService;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class TimesheetReportService {
   private final UserRepository userRepository;
   private final WorkLogRepository workLogRepository;
   private final ApplicationRepository applicationRepository;
+  private final WorkTimeCalculationService workTimeCalculationService;
 
   @Transactional(readOnly = true)
   public EmployeeTimesheetReport generateTimesheet(Integer employeeId, LocalDate startDate, LocalDate endDate) {
@@ -57,25 +60,21 @@ public class TimesheetReportService {
       int requiredSeconds = 0;
       long nightSeconds = 0L;
 
+      Policy policyForDay = user.getPolicyForDate(currentDate);
+      requiredSeconds = workTimeCalculationService.getBaseRequiredSeconds(currentDate, policyForDay);
+
       if (workLogOpt.isPresent()) {
         WorkLog wl = workLogOpt.get();
         startTime = wl.getStartTime().toLocalTime();
         endTime = wl.getEndTime() != null ? wl.getEndTime().toLocalTime() : null;
-        effectiveWork = wl.getEffectiveWorkTime(LocalDateTime.now());
-        requiredSeconds = wl.getRequiredSeconds();
+        int roundingSeconds = workTimeCalculationService.getRoundingSeconds(policyForDay);
+        effectiveWork = wl.getEffectiveWorkTime(LocalDateTime.now(), requiredSeconds, roundingSeconds);
 
         if (wl.getEndTime() != null) {
           nightSeconds = calculateNightSeconds(wl.getStartTime(), wl.getEndTime());
         }
 
       } else {
-        if (user.getActivePolicy() != null) {
-          requiredSeconds = user.getActivePolicy().getRequiredSecondsForDate(currentDate);
-        } else {
-          boolean isWeekend = currentDate.getDayOfWeek().getValue() >= 6;
-          requiredSeconds = isWeekend ? 0 : 8 * 3600;
-        }
-
         if (appType != null && isFullDayAbsence(apps.getFirst())) {
           effectiveWork = requiredSeconds;
         }

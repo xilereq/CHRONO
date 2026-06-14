@@ -40,5 +40,18 @@ public class OvertimeDataAdapter implements I_OvertimeData {
     return repository.findByApplication_IdAndType(applicationId, type);
   }
 
+  @Override
+  public Integer getExpiringOvertimeBalance(Integer userId, LocalDateTime threshold) {
+    return repository.calculateExpiringBalanceSeconds(userId, threshold);
+  }
 
+  @Override
+  public List<OvertimeArchive> findByWorkLogId(Integer workLogId){
+    return repository.findByWorkLog_WorkLogId(workLogId);
+  }
+
+  @Override
+  public void deleteOvertimeRecord(OvertimeArchive overtimeArchive) {
+    repository.delete(overtimeArchive);
+  }
 }

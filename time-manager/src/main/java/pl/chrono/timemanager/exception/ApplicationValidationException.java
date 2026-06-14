@@ -31,7 +31,7 @@ public class ApplicationValidationException extends TimeManagerException {
   public static class InsufficientLeaveBalance extends ApplicationValidationException {
     public InsufficientLeaveBalance(int requested, int available) {
       super(
-          "INSUFFICIENT_LEAVE_BALANCE",
+          ErrorCodes.INSUFFICIENT_LEAVE_BALANCE,
           "Application rejected. You requested " + requested + " days, but you only have " + available + " days of leave available this year.",
           HttpStatus.BAD_REQUEST
       );

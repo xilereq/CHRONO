@@ -48,6 +48,16 @@ public class WorkLogRequestException extends TimeManagerException {
     }
   }
 
+  public static class InsufficientTime extends WorkLogRequestException {
+    public InsufficientTime(String requiredHours) {
+      super(
+          ErrorCodes.INSUFFICIENT_REQUEST_TIME,
+          "Your work log needs to be at least " + requiredHours + " long.",
+          HttpStatus.BAD_REQUEST
+      );
+    }
+  }
+
   public static class UnauthorizedManager extends WorkLogRequestException {
     public UnauthorizedManager() {
       super(

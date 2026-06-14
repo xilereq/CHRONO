@@ -30,5 +30,12 @@ public class HolidayException extends TimeManagerException {
           "This holiday is not assigned to the specified policy.", HttpStatus.NOT_FOUND);
     }
   }
+
+  public static class NoneFound extends HolidayException {
+    public NoneFound() {
+      super(ErrorCodes.HOLIDAY_NONE_FOUND,
+          "No valid holidays found for the provided IDs.", HttpStatus.NOT_FOUND);
+    }
+  }
 }
 

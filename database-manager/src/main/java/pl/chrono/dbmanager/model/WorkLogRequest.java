@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,7 +18,10 @@ import lombok.Setter;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
 
 @Entity
-@Table(name = "work_log_request")
+@Table(name = "work_log_request", indexes = {
+    @Index(name = "idx_wlr_employee", columnList = "employee_id"),
+    @Index(name = "idx_wlr_manager_status", columnList = "manager_id, status")
+})
 @Getter
 @Setter
 public class WorkLogRequest {
@@ -33,10 +37,6 @@ public class WorkLogRequest {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "manager_id")
   private User manager;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "target_work_log_id")
-  private WorkLog targetWorkLog;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)

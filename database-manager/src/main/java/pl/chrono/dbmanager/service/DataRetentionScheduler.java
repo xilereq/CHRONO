@@ -26,7 +26,7 @@ public class DataRetentionScheduler {
   private int userRetentionYears;
 
   @Value("${app.retention.logs-months:60}")
-  private static final int operationLogRetentionMonths = 60;
+  private int operationLogRetentionMonths;
 
   @Scheduled(cron = "0 0 2 * * ?")
   @Transactional

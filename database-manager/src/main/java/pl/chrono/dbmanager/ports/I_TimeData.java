@@ -28,8 +28,6 @@ public interface I_TimeData {
 
   Optional<WorkLog> findLastClosedWorkLog(Integer userId);
 
-  Optional<WorkLog> findWorkLogById(Integer workLogId);
-
   WorkLogRequest saveWorkLogRequest(WorkLogRequest request);
 
   Optional<WorkLogRequest> findWorkLogRequestById(Long requestId);
