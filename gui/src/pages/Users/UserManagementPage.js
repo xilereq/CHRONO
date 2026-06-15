@@ -37,7 +37,9 @@ const UserManagementPage = () => {
     const handleUserFormChange = (e) => {
         const { name, value } = e.target;
         setUserFormData(prev => ({
-            ...prev, [name]: value, ...(name === 'roleName' && value !== 'ROLE_EMPLOYEE' ? { managerEmail: '' } : {})
+            ...prev,
+            [name]: value,
+            ...(name === 'roleName' && !['ROLE_EMPLOYEE', 'ROLE_MANAGER'].includes(value) ? { managerEmail: '' } : {})
         }));
     };
 
@@ -53,7 +55,10 @@ const UserManagementPage = () => {
             setUserMessage(`${t('userManagement.userAddedPart1', 'Użytkownik')} ${payload.name} ${payload.surname} ${t('userManagement.userAddedPart2', 'został pomyślnie dodany. Tymczasowe hasło:')} ${generatedPassword}`);
 
             const updatedUsers = await userService.getAllUsers();
+            const updatedManagers = await userService.getManagers();
+
             setUsers(updatedUsers || []);
+            setManagers(updatedManagers || []);
             setUserFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE', managerEmail: '' });
         } catch (err) {
             setUserError(err.message || t('userManagement.addUserError', 'Wystąpił błąd podczas dodawania użytkownika.'));
@@ -65,10 +70,16 @@ const UserManagementPage = () => {
     const handleManagerFormSubmit = async (e) => {
         e.preventDefault();
         setManagerError(''); setManagerMessage('');
+
         if (!managerFormData.email || !managerFormData.managerEmail) {
             setManagerError(t('userManagement.selectEmpAndManagerError', "Wybierz pracownika i managera."));
             return;
         }
+        if (managerFormData.email === managerFormData.managerEmail) {
+            setManagerError(t('userManagement.selfAssignError', "Użytkownik nie może być swoim własnym managerem."));
+            return;
+        }
+
         setManagerLoading(true);
         try {
             await userService.setManager(managerFormData.email, managerFormData.managerEmail);
@@ -106,11 +117,16 @@ const UserManagementPage = () => {
                                 <option value="ROLE_ADMIN">{t('userManagement.roles.admin', 'Administrator')}</option>
                             </select>
                         </div>
-                        {userFormData.roleName === 'ROLE_EMPLOYEE' && (
+
+                        {(userFormData.roleName === 'ROLE_EMPLOYEE' || userFormData.roleName === 'ROLE_MANAGER') && (
                             <div className="form-group"><span className="form-label">{t('userManagement.assignManagerLabel', 'Przypisz managera')}</span>
                                 <select className="form-input" name="managerEmail" value={userFormData.managerEmail} onChange={handleUserFormChange}>
                                     <option value="">{t('userManagement.selectManagerPlaceholder', '-- Wybierz managera --')}</option>
-                                    {managers.map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)}
+                                    {managers
+                                        // ZMIANA: Wykluczamy adres email wpisany w formularzu (zabezpieczenie przed przypisaniem do samego siebie)
+                                        .filter(m => m.email !== userFormData.email)
+                                        .map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)
+                                    }
                                 </select>
                             </div>
                         )}
@@ -142,7 +158,10 @@ const UserManagementPage = () => {
                     <div className="form-group"><span className="form-label">{t('userManagement.managerLabel', 'Manager')}</span>
                         <select className="form-input" value={managerFormData.managerEmail} onChange={(e) => setManagerFormData({...managerFormData, managerEmail: e.target.value})} required>
                             <option value="">{t('userManagement.selectManagerPlaceholder', '-- Wybierz managera --')}</option>
-                            {managers.map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)}
+                            {managers
+                                .filter(m => m.email !== managerFormData.email)
+                                .map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)
+                            }
                         </select>
                     </div>
                     <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
