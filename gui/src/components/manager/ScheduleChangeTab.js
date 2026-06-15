@@ -54,6 +54,22 @@ const ScheduleChangeTab = () => {
         }
     };
 
+    const formatDateTime = (isoString) => {
+        if (!isoString) return { date: '-', time: '-' };
+        try {
+            const [datePart, timePart] = isoString.split('T');
+            const [year, month, day] = datePart.split('-');
+            const [hour, minute] = timePart.split(':');
+
+            return {
+                date: `${day}.${month}.${year}`,
+                time: `${hour}:${minute}`
+            };
+        } catch (e) {
+            return { date: isoString, time: '' };
+        }
+    };
+
     return (
         <div className="policy-section">
             <h2 className="section-title">{t('manager.pendingEventsTitle', 'Oczekujące eventy do akceptacji')}</h2>
@@ -70,45 +86,50 @@ const ScheduleChangeTab = () => {
                 </div>
             ) : (
                 <div className="manager-request-list">
-                    {requests.map(req => (
-                        <div key={req.id} className="manager-request-card">
-                            <div>
-                                <h3 className="manager-request-title">
-                                    {req.employeeName || t('manager.unknownEmployee', 'Nieznany pracownik')}
-                                    {req.type && (
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '10px' }}>
-                                            [{req.type}]
-                                        </span>
-                                    )}
-                                </h3>
+                    {requests.map(req => {
+                        const start = formatDateTime(req.proposedStartTime);
+                        const end = formatDateTime(req.proposedEndTime);
 
-                                <div className="manager-request-details">
-                                    <span><strong>{t('manager.dateField', 'Data:')}</strong> {req.startDate || req.date}</span>
-                                    {(req.startTime || req.newHours) && (
+                        return (
+                            <div key={req.id} className="manager-request-card">
+                                <div>
+                                    <h3 className="manager-request-title">
+                                        {req.employeeName || t('manager.unknownEmployee', 'Nieznany pracownik')}
+                                        {req.type && (
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '10px' }}>
+                                                [{req.type}]
+                                            </span>
+                                        )}
+                                    </h3>
+
+                                    <div className="manager-request-details">
                                         <span>
-                                            <strong>{t('manager.hoursField', 'Godziny: ')}</strong>
-                                            {req.newHours || `${req.startTime} - ${req.endTime}`}
+                                            <strong>{t('manager.dateField', 'Data:')}</strong> {start.date}
                                         </span>
+                                            <span>
+                                                <strong>{t('manager.hoursField', 'Godziny: ')}</strong>
+                                                {start.time} - {end.time}
+                                            </span>
+                                    </div>
+
+                                    {req.reason && (
+                                        <p className="manager-request-reason">
+                                            {t('manager.reasonField', 'Powód:')} {req.reason}
+                                        </p>
                                     )}
                                 </div>
 
-                                {req.reason && (
-                                    <p className="manager-request-reason">
-                                        {t('manager.reasonField', 'Powód:')} {req.reason}
-                                    </p>
-                                )}
+                                <div className="manager-actions">
+                                    <button onClick={() => handleReject(req.id)} className="btn-reject">
+                                        <X size={16} /> {t('manager.rejectBtn', 'Odrzuć')}
+                                    </button>
+                                    <button onClick={() => handleApprove(req.id)} className="btn-approve">
+                                        <Check size={16} /> {t('manager.approveBtn', 'Akceptuj')}
+                                    </button>
+                                </div>
                             </div>
-
-                            <div className="manager-actions">
-                                <button onClick={() => handleReject(req.id)} className="btn-reject">
-                                    <X size={16} /> {t('manager.rejectBtn', 'Odrzuć')}
-                                </button>
-                                <button onClick={() => handleApprove(req.id)} className="btn-approve">
-                                    <Check size={16} /> {t('manager.approveBtn', 'Akceptuj')}
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

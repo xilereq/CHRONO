@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Clock, CalendarClock, DoorOpen } from 'lucide-react'; // Dodano DoorOpen
+import { User, Clock, CalendarClock, DoorOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '../../components';
 import ScheduleChangeForm from "./ScheduleChangeForm";
