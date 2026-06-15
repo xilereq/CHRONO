@@ -14,22 +14,10 @@ class WorkLogTest {
   private final LocalDateTime boundaryTime = LocalDateTime.of(2026, 6, 9, 16, 0);
   private WorkLog workLog;
 
-  private Policy createTestPolicy() {
-    Policy policy = new Policy();
-    policy.setWorkingDays(Set.of(
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY
-    ));
-    policy.setDailyHours(8);
-    policy.setRoundingMinutes(15);
-    return policy;
-  }
-
   @BeforeEach
   void setUp() {
     workLog = new WorkLog();
   }
-
 
   @Test
   void nullStartTimeTest() {
@@ -101,153 +89,11 @@ class WorkLogTest {
   }
 
   @Test
-  void noPolicyDefaultTest() {
-    assertThat(workLog.getRequiredSeconds()).isEqualTo(8 * 3600);
-    assertThat(workLog.getMaxAllowedSeconds()).isEqualTo(12 * 3600);
-    assertThat(workLog.getRoundingSeconds()).isZero();
-  }
-
-  @Test
-  void maxAllowedFromPolicyTest() {
-    User testUser = new User();
-    Policy policy = new Policy();
-    policy.setMaxDailyHours(10);
-
-    UsersPolicy up = new UsersPolicy();
-    up.setValidFrom(LocalDate.now().minusDays(1));
-    up.setPolicy(policy);
-    testUser.setUserPolicies(List.of(up));
-    workLog.setUser(testUser);
-
-    int maxAllowed = workLog.getMaxAllowedSeconds();
-
-    assertThat(maxAllowed).isEqualTo(10 * 3600);
-  }
-
-  @Test
   void nullStartTimeForceCloseTest() {
     workLog.setStartTime(null);
 
-    workLog.forceClose(boundaryTime);
-
-    assertThat(workLog.getEndTime()).isNull();
-  }
-
-  @Test
-  void nullStartTimeRequiredSecondsTest() {
-    workLog.setStartTime(null);
-
-    int requiredSeconds = workLog.getRequiredSeconds();
-
-    assertThat(requiredSeconds).isEqualTo(8 * 3600);
-  }
-
-  @Test
-  void notNullUserButNullPolicyTest() {
-    User testUser = new User();
-    testUser.setUserPolicies(List.of());
-    workLog.setUser(testUser);
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-
-    assertThat(workLog.getRequiredSeconds()).isEqualTo(8 * 3600);
-    assertThat(workLog.getMaxAllowedSeconds()).isEqualTo(12 * 3600);
-    assertThat(workLog.getRoundingSeconds()).isZero();
-  }
-
-  @Test
-  void everythingSetButNullStartTimeTest() {
-    User testUser = new User();
-    Policy policy = createTestPolicy();
-    UsersPolicy up = new UsersPolicy();
-    up.setValidFrom(LocalDate.now().minusDays(1));
-    up.setPolicy(policy);
-    testUser.setUserPolicies(List.of(up));
-    workLog.setUser(testUser);
-    workLog.setStartTime(null);
-
-    assertThat(workLog.getRequiredSeconds()).isEqualTo(8 * 3600);
-  }
-
-  @Test
-  void nullRoundingMinutesTest() {
-    User testUser = new User();
-    Policy policy = createTestPolicy();
-    policy.setRoundingMinutes(null);
-
-    UsersPolicy up = new UsersPolicy();
-    up.setValidFrom(LocalDate.now().minusDays(1));
-    up.setPolicy(policy);
-    testUser.setUserPolicies(List.of(up));
-    workLog.setUser(testUser);
-
-    int roundingSeconds = workLog.getRoundingSeconds();
-
-    assertThat(roundingSeconds).isZero();
-  }
-
-  @Test
-  void endTimeWithRoundingTest() {
-    User testUser = new User();
-    Policy policy = createTestPolicy();
-
-    UsersPolicy up = new UsersPolicy();
-    up.setPolicy(policy);
-    up.setValidFrom(LocalDate.now().minusDays(1));
-    testUser.setUserPolicies(List.of(up));
-
-    workLog.setUser(testUser);
-
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-    workLog.setEndTime(LocalDateTime.of(2026, 6, 9, 15, 50));
-
-    long effectiveTime = workLog.getEffectiveWorkTime(boundaryTime);
-
-    assertThat(effectiveTime).isEqualTo(8 * 3600);
-  }
-
-  @Test
-  void endTimeWithoutRoundingTest() {
-    User testUser = new User();
-    Policy policy = createTestPolicy();
-
-    UsersPolicy up = new UsersPolicy();
-    up.setValidFrom(LocalDate.now().minusDays(1));
-    up.setPolicy(policy);
-    testUser.setUserPolicies(List.of(up));
-    workLog.setUser(testUser);
-
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-    workLog.setEndTime(LocalDateTime.of(2026, 6, 9, 15, 30));
-
-    long effectiveTime = workLog.getEffectiveWorkTime(boundaryTime);
-
-    long expectedExactTime = 7 * 3600 + 30 * 60;
-
-    assertThat(effectiveTime).isEqualTo(expectedExactTime);
-  }
-
-
-  @Test
-  void forceCloseTest() {
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-
-    LeaveLog openBreak = new LeaveLog();
-    openBreak.setStartTime(LocalDateTime.of(2026, 6, 9, 12, 0));
-    workLog.setLeaveLogs(List.of(openBreak));
-
-    workLog.forceClose(boundaryTime);
-
-    LocalDateTime expectedCloseTime = LocalDateTime.of(2026, 6, 9, 20, 0);
-
-    assertThat(workLog.getEndTime()).isEqualTo(expectedCloseTime);
-    assertThat(openBreak.getEndTime()).isEqualTo(expectedCloseTime);
-  }
-
-  @Test
-  void nullStartTimeForForceCloseTest() {
-    workLog.setStartTime(null);
-
-    workLog.forceClose(boundaryTime);
+    int targetSeconds = 8 * 3600;
+    workLog.forceClose(boundaryTime, targetSeconds);
 
     assertThat(workLog.getEndTime()).isNull();
   }
@@ -257,13 +103,15 @@ class WorkLogTest {
     workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
     workLog.setLeaveLogs(null);
 
-    workLog.forceClose(boundaryTime);
+    int targetSeconds = 8 * 3600;
+    workLog.forceClose(boundaryTime, targetSeconds);
 
-    assertThat(workLog.getEndTime()).isNotNull();
+    assertThat(workLog.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 9, 16, 0));
   }
 
   @Test
-  void forceCloseWithClosedBreakLogsTest() {
+  void forceCloseWithClosedAndOpenBreakLogsTest() {
+    LocalDateTime customBoundary = LocalDateTime.of(2026, 6, 9, 14, 30);
     workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
 
     LeaveLog closedLeave = new LeaveLog();
@@ -275,92 +123,77 @@ class WorkLogTest {
     openLeave.setEndTime(null);
 
     workLog.setLeaveLogs(List.of(closedLeave, openLeave));
-
-    workLog.forceClose(boundaryTime);
+    int targetSeconds = 8 * 3600;
+    workLog.forceClose(customBoundary, targetSeconds);
 
     assertThat(closedLeave.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 9, 12, 30));
-    assertThat(openLeave.getEndTime()).isNotNull();
+    assertThat(openLeave.getEndTime()).isEqualTo(customBoundary);
+    assertThat(workLog.getEndTime()).isEqualTo(customBoundary);
   }
 
   @Test
-  void roundingIsIgnoredForExceedingTimeTest() {
-    User testUser = new User();
-    Policy policy = new Policy();
-    policy.setDailyHours(8);
-    policy.setRoundingMinutes(15);
-    policy.setWorkingDays(Set.of(
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY
-    ));
-
-    UsersPolicy up = new UsersPolicy();
-    up.setValidFrom(LocalDate.now().minusDays(1));
-    up.setPolicy(policy);
-    testUser.setUserPolicies(List.of(up));
-    workLog.setUser(testUser);
-
+  void roundingAppliedTest() {
     workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
+    workLog.setEndTime(LocalDateTime.of(2026, 6, 9, 15, 50));
+
+    int requiredSeconds = 8 * 3600;
+    int roundingSeconds = 15 * 60;
+
+    long effectiveTime = workLog.getEffectiveWorkTime(boundaryTime, requiredSeconds, roundingSeconds);
+
+    assertThat(effectiveTime).isEqualTo(requiredSeconds);
+  }
+
+  @Test
+  void roundingIgnoreWithInsufficientTimeTest() {
+    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
+    workLog.setEndTime(LocalDateTime.of(2026, 6, 9, 15, 30));
+
+    int requiredSeconds = 8 * 3600;
+    int roundingSeconds = 15 * 60;
+
+    long effectiveTime = workLog.getEffectiveWorkTime(boundaryTime, requiredSeconds, roundingSeconds);
+
+    assertThat(effectiveTime).isEqualTo(7 * 3600 + 30 * 60);
+  }
+
+
+  @Test
+  void roundingIgnoreOnExceedingTimeTest() {
+    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 59));
     workLog.setEndTime(LocalDateTime.of(2026, 6, 9, 17, 0));
 
-    long effectiveTime = workLog.getEffectiveWorkTime(boundaryTime);
+    int requiredSeconds = 8 * 3600;
+    int roundingSeconds = 15 * 60;
 
-    assertThat(effectiveTime).isEqualTo(9 * 3600);
+    long effectiveTime = workLog.getEffectiveWorkTime(boundaryTime, requiredSeconds, roundingSeconds);
+
+    assertThat(effectiveTime).isEqualTo(8 * 3600 + 60);
   }
 
   @Test
-  void nullDateNightSecondsTest() {
-    assertThat(workLog.calculateNightSeconds(null, null)).isZero();
-    assertThat(workLog.calculateNightSeconds(null, LocalDateTime.of(2026, 6, 9, 8, 0))).isZero();
-    assertThat(workLog.calculateNightSeconds(LocalDateTime.of(2026, 6, 9, 8, 0), null)).isZero();
+  void onlyOpenBreaksForInForceCloseTest() {
+    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
+    LeaveLog openLeave = new LeaveLog();
+    openLeave.setStartTime(LocalDateTime.of(2026, 6, 9, 12, 0));
+    openLeave.setEndTime(null);
+
+    workLog.setLeaveLogs(List.of(openLeave));
+
+    workLog.forceClose(boundaryTime, 8 * 3600);
+
+    assertThat(workLog.getEndTime()).isEqualTo(boundaryTime);
   }
 
   @Test
-  void nightSecondsCalculationTest() {
-    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 22, 0);
-    LocalDateTime end = LocalDateTime.of(2026, 6, 10, 6, 0);
+  void forceCloseWithEmptyLeaveLogsListTest() {
+    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
 
-    long nightSeconds = workLog.calculateNightSeconds(start, end);
+    workLog.setLeaveLogs(List.of());
 
-    assertThat(nightSeconds).isEqualTo(8 * 3600);
-  }
+    int targetSeconds = 8 * 3600;
+    workLog.forceClose(boundaryTime, targetSeconds);
 
-  @Test
-  void nightSecondsStartBeforeNightTest() {
-    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 20, 0);
-    LocalDateTime end = LocalDateTime.of(2026, 6, 10, 4, 0);
-
-    long nightSeconds = workLog.calculateNightSeconds(start, end);
-
-    assertThat(nightSeconds).isEqualTo(7 * 3600);
-  }
-
-  @Test
-  void nightSecondsEndAfterNightTest() {
-    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 23, 0);
-    LocalDateTime end = LocalDateTime.of(2026, 6, 10, 8, 0);
-
-    long nightSeconds = workLog.calculateNightSeconds(start, end);
-
-    assertThat(nightSeconds).isEqualTo(8 * 3600);
-  }
-
-  @Test
-  void nightSecondsNoNightTest() {
-    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 8, 0);
-    LocalDateTime end = LocalDateTime.of(2026, 6, 9, 16, 0);
-
-    long nightSeconds = workLog.calculateNightSeconds(start, end);
-
-    assertThat(nightSeconds).isZero();
-  }
-
-  @Test
-  void wrongLogNightSecondsTest() {
-    LocalDateTime start = LocalDateTime.of(2026, 6, 9, 23, 0);
-    LocalDateTime end = LocalDateTime.of(2026, 6, 9, 22, 0);
-
-    long nightSeconds = workLog.calculateNightSeconds(start, end);
-
-    assertThat(nightSeconds).isZero();
+    assertThat(workLog.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 9, 16, 0));
   }
 }
