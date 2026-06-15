@@ -11,15 +11,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -88,16 +91,75 @@ class WorkLogServiceTest {
   }
 
   @Test
-  void loginWhileNotWorkingButAfterWorkingDoesNotStartWorkTest() {
+  void loginThrowsExceptionWhenUserNotFoundTest() {
     UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
 
-    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
-    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(
-        List.of(new WorkLog()));
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+    assertThrows(UserException.NotFound.class, () -> workLogService.handleUserLoginEvent(event));
+    verifyNoInteractions(timeData);
+  }
+
+  @Test
+  void loginReturnsEarlyWhenForcePasswordChangeIsTrueTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+    User mockUser = mock(User.class);
+
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(mockUser.isForcePasswordChange()).thenReturn(true);
+
+    workLogService.handleUserLoginEvent(event);
+
+    verifyNoInteractions(timeData);
+  }
+
+  @Test
+  void loginDoesNotStartWorkWhenAlreadyWorkingTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+    User mockUser = mock(User.class);
+
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(mockUser.isForcePasswordChange()).thenReturn(false);
+
+    when(timeData.isUserWorking(USER_ID)).thenReturn(true);
 
     workLogService.handleUserLoginEvent(event);
 
     verify(timeData, never()).saveWorkLog(any());
+  }
+
+  @Test
+  void loginWhileNotWorkingButAfterWorkingDoesNotStartWorkTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+    User mockUser = mock(User.class);
+
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(mockUser.isForcePasswordChange()).thenReturn(false);
+
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any()))
+        .thenReturn(List.of(new WorkLog()));
+
+    workLogService.handleUserLoginEvent(event);
+
+    verify(timeData, never()).saveWorkLog(any());
+  }
+
+  @Test
+  void loginAutoStartsWorkTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+    User mockUser = mock(User.class);
+
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(mockUser.isForcePasswordChange()).thenReturn(false);
+
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any()))
+        .thenReturn(Collections.emptyList());
+
+    workLogService.handleUserLoginEvent(event);
+
+    verify(timeData).saveWorkLog(any(WorkLog.class));
   }
 
   @Test
@@ -110,34 +172,6 @@ class WorkLogServiceTest {
     boolean result = workLogService.hasUserWorkedToday(USER_ID);
 
     assertThat(result).isFalse();
-  }
-
-  @Test
-  void loginAutoStartsWorkTest() {
-    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
-
-    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
-    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(
-        Collections.emptyList());
-
-    User mockUser = new User();
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
-    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
-    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
-
-    workLogService.handleUserLoginEvent(event);
-
-    verify(timeData).saveWorkLog(any(WorkLog.class));
-  }
-
-  @Test
-  void loginDoesNotStartWorkWhenAlreadyWorkingTest() {
-    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
-    when(timeData.isUserWorking(USER_ID)).thenReturn(true);
-
-    workLogService.handleUserLoginEvent(event);
-
-    verify(timeData, never()).saveWorkLog(any());
   }
 
   @Test

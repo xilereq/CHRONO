@@ -58,6 +58,11 @@ public class WorkLogService {
   @EventListener
   @Transactional
   public void handleUserLoginEvent(UserLoginEvent event) {
+    User user = userRepository.findById(event.userId())
+        .orElseThrow(() -> new UserException.NotFound(event.userId()));
+    if (user.isForcePasswordChange()) {
+      return;
+    }
     if (!isUserWorking(event.userId()) && !hasUserWorkedToday(event.userId())) {
       startWork(event.userId(), null);
     }
