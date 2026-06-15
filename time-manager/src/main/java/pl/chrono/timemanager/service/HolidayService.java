@@ -42,24 +42,14 @@ public class HolidayService {
   @Transactional
   @LogActivity(action = "DELETE_HOLIDAY", details = "Deleted holiday")
   public void deleteHoliday(Integer holidayId) {
-    Holiday holiday = holidayRepository.findById(holidayId)
-        .orElseThrow(() -> new HolidayException.NotFound(holidayId));
+    holidayPolicyRepository.deleteByHolidayId(holidayId);
 
-    holidayPolicyRepository.deleteByHoliday(holiday);
-    holidayRepository.delete(holiday);
+    holidayRepository.deleteByIdDirectly(holidayId);
   }
 
   @Transactional(readOnly = true)
   public boolean isHoliday(LocalDate date) {
-    return holidayRepository.findAll().stream()
-        .anyMatch(holiday -> {
-          if (holiday.getDate().equals(date)) {
-            return true;
-          }
-          return holiday.isOccursYearly()
-              && holiday.getDate().getMonth() == date.getMonth()
-              && holiday.getDate().getDayOfMonth() == date.getDayOfMonth();
-        });
+    return holidayRepository.existsByDateOrYearly(date);
   }
 }
 

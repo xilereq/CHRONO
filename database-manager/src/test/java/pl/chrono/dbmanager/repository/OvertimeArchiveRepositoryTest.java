@@ -119,12 +119,12 @@ class OvertimeArchiveRepositoryTest {
     WorkLog wl3 = persistWorkLog(user1, LocalDateTime.of(2026, 12, 31, 23, 0));
 
     persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 3600, wl1); // +
-    persistOvertimeWithWorkLog(user1, OvertimeType.MANUAL_ADDITION, 7200, wl2);
+    persistOvertimeWithWorkLog(user1, OvertimeType.MANUAL_ADDITION, 7200, wl2); // +
     persistOvertimeWithWorkLog(user1, OvertimeType.DEBT, 1800, wl3);
     em.flush();
 
     Integer sum = repository.sumEarnedOvertimeBetween(user1.getUserId(), startOfYear, endOfYear);
-    assertThat(sum).isEqualTo(3600);
+    assertThat(sum).isEqualTo(10800);
   }
 
   @Test
@@ -144,7 +144,7 @@ class OvertimeArchiveRepositoryTest {
     WorkLog wl1 = persistWorkLog(user1, LocalDateTime.of(2026, 5, 10, 15, 0));
     WorkLog wl2 = persistWorkLog(user1, LocalDateTime.of(2026, 8, 20, 10, 0));
 
-    persistOvertimeWithWorkLog(user1, OvertimeType.MANUAL_ADDITION, 7200, wl1);
+    persistOvertimeWithWorkLog(user1, OvertimeType.EXPIRED, 7200, wl1);
     persistOvertimeWithWorkLog(user1, OvertimeType.DEBT, 1800, wl2);
     em.flush();
 
@@ -225,6 +225,68 @@ class OvertimeArchiveRepositoryTest {
     assertThat(result).isEmpty();
   }
 
+  @Test
+  void calculateExpiringBalanceSecondsTest() {
+    LocalDateTime threshold = LocalDateTime.of(2026, 6, 30, 23, 59, 59);
+
+    persistOvertimeWithValidUntil(
+        user1, OvertimeType.EARNED, 3600, LocalDateTime.of(2026, 5, 1, 10, 0));
+    persistOvertimeWithValidUntil(user1, OvertimeType.MANUAL_ADDITION, 1800, threshold);
+
+    persistOvertimeWithValidUntil(
+        user1, OvertimeType.USED, 900, LocalDateTime.of(2026, 4, 1, 10, 0));
+
+    persistOvertimeWithValidUntil(
+        user1, OvertimeType.EARNED, 7200, LocalDateTime.of(2026, 7, 1, 10, 0));
+    em.flush();
+
+    Integer balance = repository.calculateExpiringBalanceSeconds(user1.getUserId(), threshold);
+
+    assertThat(balance).isEqualTo(4500);
+  }
+
+  @Test
+  void calculateExpiringBalanceSecondsNoRecordsTest() {
+    Integer balance = repository.calculateExpiringBalanceSeconds(
+        user1.getUserId(), LocalDateTime.now());
+    assertThat(balance).isZero();
+  }
+
+  @Test
+  void calculateExpiringBalanceSecondsOtherUserTest() {
+    LocalDateTime threshold = LocalDateTime.now().plusDays(10);
+    persistOvertimeWithValidUntil(user2, OvertimeType.EARNED, 3600, LocalDateTime.now());
+    em.flush();
+
+    Integer balance = repository.calculateExpiringBalanceSeconds(user1.getUserId(), threshold);
+
+    assertThat(balance).isZero();
+  }
+
+  @Test
+  void findByWorkLogIdTest() {
+    WorkLog wl1 = persistWorkLog(user1, LocalDateTime.now());
+    WorkLog wl2 = persistWorkLog(user1, LocalDateTime.now());
+
+    OvertimeArchive a1 = persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 3600, wl1);
+    OvertimeArchive a2 = persistOvertimeWithWorkLog(user1, OvertimeType.USED, 1800, wl1);
+
+    persistOvertimeWithWorkLog(user1, OvertimeType.EARNED, 7200, wl2);
+    em.flush();
+
+    List<OvertimeArchive> result = repository.findByWorkLog_WorkLogId(wl1.getWorkLogId());
+
+    assertThat(result).hasSize(2).extracting(OvertimeArchive::getId)
+        .containsExactlyInAnyOrder(a1.getId(), a2.getId());
+  }
+
+  @Test
+  void findByWorkLogIdEmptyTest() {
+    List<OvertimeArchive> result = repository.findByWorkLog_WorkLogId(999);
+
+    assertThat(result).isEmpty();
+  }
+
   private User buildUser(String name, String surname, String email) {
     User user = new User();
     user.setName(name);
@@ -274,10 +336,20 @@ class OvertimeArchiveRepositoryTest {
   }
 
   private OvertimeArchive persistOvertimeWithWorkLog(User user, OvertimeType type,
-                                                     int durationSeconds,
-                                                     WorkLog workLog) {
+                                                     int durationSeconds, WorkLog workLog) {
     OvertimeArchive archive = persistOvertime(user, type, durationSeconds);
     archive.setWorkLog(workLog);
+    return em.persist(archive);
+  }
+
+  private OvertimeArchive persistOvertimeWithValidUntil(User user, OvertimeType type,
+                                                        int durationSeconds,
+                                                        LocalDateTime validUntil) {
+    OvertimeArchive archive = new OvertimeArchive();
+    archive.setUser(user);
+    archive.setType(type);
+    archive.setDurationSeconds(durationSeconds);
+    archive.setValidUntil(validUntil);
     return em.persist(archive);
   }
 }

@@ -1,9 +1,7 @@
 package pl.chrono.timemanager.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Getter
 public class WorkException extends TimeManagerException {
 
   public WorkException(String errorCode, String message, HttpStatus status) {
@@ -71,6 +69,16 @@ public class WorkException extends TimeManagerException {
       super(
           ErrorCodes.NO_HO_APPLICATION,
           "You do not have approved application for home office for today.",
+          HttpStatus.FORBIDDEN
+      );
+    }
+  }
+
+  public static class AlreadyWorkedToday extends WorkException {
+    public AlreadyWorkedToday() {
+      super(
+          ErrorCodes.ALREADY_WORKED_TODAY,
+          "You have already worked today.",
           HttpStatus.FORBIDDEN
       );
     }

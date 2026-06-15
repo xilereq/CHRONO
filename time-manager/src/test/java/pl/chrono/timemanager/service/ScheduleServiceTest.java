@@ -4,21 +4,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.dbmanager.model.Application;
+import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.OperationLog;
+import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
@@ -43,184 +50,337 @@ class ScheduleServiceTest {
   private ApplicationEventPublisher eventPublisher;
   @Mock
   private UserRepository userRepository;
+  @Mock
+  private WorkTimeCalculationService workTimeCalculationService;
 
   @InjectMocks
   private ScheduleService scheduleService;
 
-  private WorkLog createMockWorkLog(LocalDateTime endTime, long calculatedTime, int maxAllowed,
-                                    long effectiveTime, int requiredTime,
-                                    List<Application> dailyApps) {
-    WorkLog mockWorkLog = mock(WorkLog.class);
-    User mockUser = mock(User.class);
+  private User spyUser;
 
-    lenient().when(mockWorkLog.getWorkLogId()).thenReturn(1);
-    lenient().when(mockWorkLog.getUser()).thenReturn(mockUser);
-    lenient().when(mockUser.getUserId()).thenReturn(1);
-    lenient().when(mockWorkLog.getStartTime()).thenReturn(LocalDateTime.now().minusHours(10));
+  @BeforeEach
+  void setUp() {
+    spyUser = spy(new User());
+    spyUser.setUserId(1);
 
-    lenient().when(mockWorkLog.getEffectiveWorkTime(any(LocalDateTime.class)))
-        .thenReturn(effectiveTime);
-    lenient().when(mockWorkLog.getRequiredSeconds()).thenReturn(requiredTime);
-
-    when(mockWorkLog.getEndTime()).thenReturn(endTime);
-
-    if (endTime == null) {
-      when(mockWorkLog.calculateWorkTime(any(LocalDateTime.class))).thenReturn(calculatedTime);
-      when(mockWorkLog.getMaxAllowedSeconds()).thenReturn(maxAllowed);
-    }
-
-    lenient().when(applicationRepository.findApprovedByEmployeeAndDate(eq(1), any(LocalDate.class)))
-        .thenReturn(dailyApps);
-
-    return mockWorkLog;
+    lenient().doReturn(mock(Policy.class)).when(spyUser).getPolicyForDate(any());
   }
 
+
   @Test
-  void emptyWorkLogListTest() {
+  void processWorkLogsWithoutLogsTest() {
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
     when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
 
     scheduleService.processWorkLogs();
 
-    verify(timeData, never()).saveWorkLog(any());
     verify(logRepository, never()).save(any());
   }
 
   @Test
-  void forceCloseTest() {
-    WorkLog mockWorkLog = createMockWorkLog(
-        null, 50000L, 40000, 40000L, 40000, Collections.emptyList());
+  void processWorkLogsActiveLogWithShortBreakTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
+    spyLog.setUser(spyUser);
 
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
+    LeaveLog openRecentBreak = new LeaveLog();
+    openRecentBreak.setStartTime(LocalDateTime.now().minusHours(2));
+    openRecentBreak.setEndTime(null);
+    spyLog.setLeaveLogs(List.of(openRecentBreak));
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(List.of(spyLog));
+    when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
+
+    doReturn(8 * 3600L).when(spyLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
 
     scheduleService.processWorkLogs();
 
-    verify(mockWorkLog).forceClose(any(LocalDateTime.class));
-    verify(mockWorkLog).setSettled(true);
-    verify(timeData).saveWorkLog(mockWorkLog);
+    verify(spyLog, never()).forceClose(any(), any(Integer.class));
+    verify(timeData, never()).saveWorkLog(spyLog);
+  }
+
+  @Test
+  void processWorkLogsActiveLogOverLimitTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(14));
+    spyLog.setUser(spyUser);
+    spyLog.setLeaveLogs(List.of());
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(List.of(spyLog));
+    when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
+
+    doReturn(14 * 3600L).when(spyLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
+        8 * 3600);
+
+    scheduleService.processWorkLogs();
+
+    verify(spyLog).forceClose(any(), eq(8 * 3600));
+    verify(timeData).saveWorkLog(spyLog);
+    verify(eventPublisher).publishEvent(any(LawViolationEvent.class));
+    verify(logRepository).save(any(OperationLog.class));
+  }
+
+  @Test
+  void processWorkLogsActiveLogWithTooLongBreakTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
+    spyLog.setUser(spyUser);
+
+    LeaveLog forgottenBreak = new LeaveLog();
+    forgottenBreak.setStartTime(LocalDateTime.now().minusHours(5));
+    forgottenBreak.setEndTime(null);
+    spyLog.setLeaveLogs(List.of(forgottenBreak));
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(List.of(spyLog));
+    when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
+
+    doReturn(3 * 3600L).when(spyLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+
+    scheduleService.processWorkLogs();
+
+    verify(spyLog).forceClose(any(), any(Integer.class));
+  }
+
+  @Test
+  void processWorkLogsActiveLogNullStartTimeTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(null);
+    spyLog.setUser(spyUser);
+    spyLog.setLeaveLogs(List.of());
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(List.of(spyLog));
+    when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
+
+    doReturn(14 * 3600L).when(spyLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+
+    scheduleService.processWorkLogs();
+
+    verify(spyUser).getPolicyForDate(LocalDate.now());
+  }
+
+  @Test
+  void processWorkLogsUnsettledLogsTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+
+    doReturn(8 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    scheduleService.processWorkLogs();
+
+    verify(spyLog).setSettled(true);
+    verify(overtimeService, never()).grantOvertime(any(), any());
+    verify(overtimeService, never()).registerDebt(any(), any());
+    verify(logRepository).save(any(OperationLog.class));
+  }
+
+  @Test
+  void processWorkLogsOvertimeEarnWithApplicationTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(10));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(10 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    Application app = new Application();
+    app.setType(ApplicationType.OVERTIME_EARN);
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        List.of(app));
+
+    scheduleService.processWorkLogs();
+
+    verify(overtimeService).grantOvertime(app, spyLog);
+  }
+
+  @Test
+  void processWorkLogsShortageCoveredWithApplicationTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(6));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(6 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    Application app = new Application();
+    app.setType(ApplicationType.EARLY_EXIT);
+    app.setDurationSeconds(2 * 3600);
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        List.of(app));
+
+    scheduleService.processWorkLogs();
+
+    verify(overtimeService).registerDebt(app, spyLog);
+    verify(overtimeService, never()).registerPenaltyDebt(any(), any(Integer.class));
+  }
+
+  @Test
+  void processWorkLogsShortageCoveredWithOvertimeTakeTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(6));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(6 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    Application app = new Application();
+    app.setType(ApplicationType.OVERTIME_TAKE);
+    app.setDurationSeconds(2 * 3600);
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        List.of(app));
+
+    scheduleService.processWorkLogs();
+
+    verify(overtimeService).changeOvertimeStatus(app, spyLog);
+    verify(overtimeService, never()).registerPenaltyDebt(any(), any(Integer.class));
+  }
+
+  @Test
+  void processWorkLogsPenaltyForUnexcusedShortageTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(6));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(6 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        Collections.emptyList());
+
+    scheduleService.processWorkLogs();
+
+    verify(overtimeService).registerPenaltyDebt(spyLog, 2 * 3600);
     verify(eventPublisher).publishEvent(any(LawViolationEvent.class));
   }
 
   @Test
-  void grantOvertimeTest() {
-    Application overtimeApp = new Application();
-    overtimeApp.setType(ApplicationType.OVERTIME_EARN);
+  void processWorkLogsNullApplicationDurationCausesShortagePenaltyTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(6));
+    spyLog.setUser(spyUser);
 
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 36000L, 28800, List.of(overtimeApp));
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(6 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
 
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(overtimeService).grantOvertime(overtimeApp, mockWorkLog);
-  }
-
-  @Test
-  void registerDebtTest() {
-    Application earlyExitApp = new Application();
-    earlyExitApp.setType(ApplicationType.EARLY_EXIT);
-
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 20000L, 28800, List.of(earlyExitApp));
-
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
+    Application app = new Application();
+    app.setType(ApplicationType.EARLY_EXIT);
+    app.setDurationSeconds(null);
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        List.of(app));
 
     scheduleService.processWorkLogs();
 
-    verify(overtimeService).registerDebt(earlyExitApp, mockWorkLog);
-  }
-
-  @Test
-  void changeOvertimeStatusTest() {
-    Application overtimeTakeApp = new Application();
-    overtimeTakeApp.setType(ApplicationType.OVERTIME_TAKE);
-
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 20000L, 28800, List.of(overtimeTakeApp));
-
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(overtimeService).changeOvertimeStatus(overtimeTakeApp, mockWorkLog);
-  }
-
-  @Test
-  void maxTimeNotExceededTest() {
-    WorkLog mockWorkLog = createMockWorkLog(null, 20000L, 40000, 0L, 0, Collections.emptyList());
-
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(mockWorkLog, never()).setSettled(true);
-    verify(timeData, never()).saveWorkLog(any());
-    verify(logRepository, never()).save(any());
-  }
-
-  @Test
-  void grantNoOvertimeTest() {
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 36000L, 28800, Collections.emptyList());
-
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(overtimeService, never()).grantOvertime(any(), any());
-  }
-
-  @Test
-  void noRegisterDebtTest() {
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 20000L, 28800, Collections.emptyList());
-
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(overtimeService, never()).registerDebt(any(), any());
-    verify(overtimeService, never()).changeOvertimeStatus(any(), any());
-  }
-
-  @Test
-  void overtimeWithEarlyExitApplicationTest() {
-    Application wrongApp = new Application();
-    wrongApp.setType(ApplicationType.EARLY_EXIT);
-
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 36000L, 28800, List.of(wrongApp));
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(overtimeService, never()).grantOvertime(any(), any());
-  }
-
-  @Test
-  void earlyExitWithOvertimeEarnApplicationTest() {
-    Application wrongApp = new Application();
-    wrongApp.setType(ApplicationType.OVERTIME_EARN);
-
-    WorkLog mockWorkLog = createMockWorkLog(
-        LocalDateTime.now(), 0L, 0, 20000L, 28800, List.of(wrongApp));
-    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(mockWorkLog));
-
-    scheduleService.processWorkLogs();
-
-    verify(overtimeService, never()).registerDebt(any(), any());
-    verify(overtimeService, never()).changeOvertimeStatus(any(), any());
+    verify(overtimeService).registerDebt(app, spyLog);
+    verify(overtimeService).registerPenaltyDebt(spyLog, 2 * 3600);
   }
 
   @Test
   void processOvertimeExpirationsTest() {
-    User user = new User();
-    user.setUserId(1);
-    when(userRepository.findAll()).thenReturn(List.of(user));
+    when(userRepository.findAllUserIds()).thenReturn(List.of(1, 2, 3));
 
     scheduleService.processOvertimeExpirations();
 
-    verify(overtimeService).expireUnusedOvertime(1);
-    verify(logRepository).save(any(OperationLog.class));
+    verify(overtimeService, times(3)).expireUnusedOvertime(any(Integer.class));
+
+    ArgumentCaptor<OperationLog> logCaptor = ArgumentCaptor.forClass(OperationLog.class);
+    verify(logRepository).save(logCaptor.capture());
+    assert (logCaptor.getValue().getDetails().contains("3 users"));
+  }
+
+  @Test
+  void processWorkLogOvertimeWithWrongApplicationTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(10));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(10 * 3600L).when(spyLog).getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    Application wrongApp = new Application();
+    wrongApp.setType(ApplicationType.EARLY_EXIT);
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(wrongApp));
+
+    scheduleService.processWorkLogs();
+
+    verify(overtimeService, never()).grantOvertime(any(), any());
+  }
+
+  @Test
+  void processWorkLogsPenaltyForShortWorkTimeWithOvertimeEarnApplication() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(101);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(6));
+    spyLog.setUser(spyUser);
+
+    when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    doReturn(6 * 3600L).when(spyLog).getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    Application wrongApp = new Application();
+    wrongApp.setType(ApplicationType.OVERTIME_EARN);
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(wrongApp));
+
+    scheduleService.processWorkLogs();
+
+    verify(overtimeService).registerPenaltyDebt(spyLog, 2 * 3600);
+  }
+
+  @Test
+  void processWorkLogsNoForgottenBreaksTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
+    spyLog.setUser(spyUser);
+
+    spyLog.setLeaveLogs(List.of());
+
+    LeaveLog closedBreak = new LeaveLog();
+    closedBreak.setEndTime(LocalDateTime.now().minusHours(1));
+
+    LeaveLog shortOpenBreak = new LeaveLog();
+    shortOpenBreak.setStartTime(LocalDateTime.now().minusHours(1));
+    shortOpenBreak.setEndTime(null);
+
+    spyLog.setLeaveLogs(List.of(closedBreak, shortOpenBreak));
+
+    when(timeData.findActiveWorkLogsBefore(any())).thenReturn(List.of(spyLog));
+    when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
+
+    doReturn(8 * 3600L).when(spyLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+
+    scheduleService.processWorkLogs();
+
+    verify(spyLog, never()).forceClose(any(), any(Integer.class));
   }
 }

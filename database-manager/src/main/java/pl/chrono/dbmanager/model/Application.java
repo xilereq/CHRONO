@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,10 @@ import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 
 @Entity
-@Table(name = "application")
+@Table(name = "application", indexes = {
+    @Index(name = "idx_app_emp_date_status", columnList = "employee_id, start_date, status"),
+    @Index(name = "idx_app_employee_id", columnList = "employee_id")
+})
 @Getter
 @Setter
 public class Application {

@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
@@ -26,6 +27,7 @@ import pl.chrono.dbmanager.repository.HolidayRepository;
 import pl.chrono.dbmanager.repository.PolicyRepository;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
+import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.dto.response.PolicyDto;
 import pl.chrono.timemanager.exception.HolidayException;
@@ -310,5 +312,88 @@ public class PolicyConfigurationServiceTest {
         PolicyException.NotFound.class,
         () -> policyConfigurationService.deletePolicy(policyId)
     );
+  }
+
+  @Test
+  void assignHolidaysToPolicyPolicyNotFoundExceptionTest() {
+    Integer policyId = 999;
+    MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(1, 2));
+
+    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+
+    assertThrows(
+        PolicyException.NotFound.class,
+        () -> policyConfigurationService.assignHolidaysToPolicyBulk(policyId, request)
+    );
+  }
+
+  @Test
+  void assignHolidaysToPolicyBulkNoneFoundExceptionTest() {
+    Integer policyId = 1;
+    MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(99, 100));
+    Policy policy = new Policy();
+
+    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayRepository.findAllById(request.holidayIds())).thenReturn(List.of());
+
+    assertThrows(
+        HolidayException.NoneFound.class,
+        () -> policyConfigurationService.assignHolidaysToPolicyBulk(policyId, request)
+    );
+  }
+
+  @Test
+  void assignHolidaysToPolicyAllAlreadyAssignedTest() {
+    Integer policyId = 1;
+    MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(1));
+    Policy policy = new Policy();
+
+    Holiday holiday = new Holiday();
+    holiday.setHolidayId(1);
+
+    HolidayPolicy existingHp = new HolidayPolicy();
+    existingHp.setHoliday(holiday);
+
+    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayRepository.findAllById(request.holidayIds())).thenReturn(List.of(holiday));
+
+    when(holidayPolicyRepository.findByPolicy(policy)).thenReturn(List.of(existingHp));
+
+    policyConfigurationService.assignHolidaysToPolicyBulk(policyId, request);
+
+    verify(holidayPolicyRepository, never()).saveAll(any());
+  }
+
+  @Test
+  void assignHolidaysToPolicyMixedAssignmentsTest() {
+    Integer policyId = 1;
+    MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(1, 2));
+    Policy policy = new Policy();
+
+    Holiday assignedHoliday = new Holiday();
+    assignedHoliday.setHolidayId(1);
+
+    Holiday newHoliday = new Holiday();
+    newHoliday.setHolidayId(2);
+
+    HolidayPolicy existingHp = new HolidayPolicy();
+    existingHp.setHoliday(assignedHoliday);
+
+    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
+
+    when(holidayRepository.findAllById(request.holidayIds())).thenReturn(
+        List.of(assignedHoliday, newHoliday));
+
+    when(holidayPolicyRepository.findByPolicy(policy)).thenReturn(List.of(existingHp));
+
+    policyConfigurationService.assignHolidaysToPolicyBulk(policyId, request);
+
+    ArgumentCaptor<List<HolidayPolicy>> captor = ArgumentCaptor.forClass(List.class);
+    verify(holidayPolicyRepository).saveAll(captor.capture());
+
+    List<HolidayPolicy> savedList = captor.getValue();
+
+    assertEquals(1, savedList.size());
+    assertEquals(2, savedList.getFirst().getHoliday().getHolidayId());
   }
 }

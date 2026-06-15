@@ -1,5 +1,6 @@
 package pl.chrono.timemanager.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,11 +11,9 @@ import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.WorkLogRequest;
-import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
@@ -29,8 +28,9 @@ public class WorkLogRequestService {
 
   private final UserRepository userRepository;
   private final I_TimeData timeData;
-  private final ApplicationRepository applicationRepository;
+  private final OvertimeService overtimeService;
   private final WorkLogRequestMapper mapper;
+  private final WorkTimeCalculationService workTimeCalculationService;
 
   @Transactional
   public void submitRequest(Integer employeeId, WorkLogCreateRequest requestDto) {
@@ -44,12 +44,19 @@ public class WorkLogRequestService {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
-    Policy policy = employee.getPolicyForDate(proposedStart.toLocalDate());
-    if (policy != null) {
-      long requestedSeconds = java.time.Duration.between(proposedStart, proposedEnd).getSeconds();
-      if (requestedSeconds > policy.getMaxAllowedSeconds()) {
-        throw new WorkLogRequestException.DailyLimitExceeded(policy.getMaxDailyHours());
-      }
+    LocalDate targetDate = proposedStart.toLocalDate();
+    Policy policy = employee.getPolicyForDate(targetDate);
+    long requestedSeconds = Duration.between(proposedStart, proposedEnd).getSeconds();
+
+    if (policy != null && requestedSeconds > policy.getMaxAllowedSeconds()) {
+      throw new WorkLogRequestException.DailyLimitExceeded(policy.getMaxDailyHours());
+    }
+
+    int requiredSeconds = workTimeCalculationService.getAdjustedRequiredSeconds(
+        employeeId, targetDate, policy);
+    if (requestedSeconds < requiredSeconds) {
+      throw new WorkLogRequestException.InsufficientTime(
+          workTimeCalculationService.formatSecondsToTime(requiredSeconds));
     }
 
     WorkLogRequest request = new WorkLogRequest();
@@ -74,22 +81,34 @@ public class WorkLogRequestService {
     List<WorkLog> existingLogs = timeData.findWorkLogsByUserAndDate(
         request.getEmployee().getUserId(), startOfDay, endOfDay);
 
-    for (WorkLog log : existingLogs) {
-      timeData.deleteWorkLog(log);
+    boolean hasHoApplication = workTimeCalculationService.hasApprovedHomeOffice(
+        request.getEmployee().getUserId(), targetDate);
+    WorkLocationType location = hasHoApplication ? WorkLocationType.HOME_OFFICE :
+        WorkLocationType.OFFICE;
+
+    if (existingLogs.isEmpty()) {
+      WorkLog newWorkLog = new WorkLog();
+      newWorkLog.setUser(request.getEmployee());
+      newWorkLog.setStartTime(request.getProposedStartTime());
+      newWorkLog.setEndTime(request.getProposedEndTime());
+      newWorkLog.setLocationType(location);
+      timeData.saveWorkLog(newWorkLog);
+    } else {
+      WorkLog primaryLog = existingLogs.getFirst();
+      primaryLog.setStartTime(request.getProposedStartTime());
+      primaryLog.setEndTime(request.getProposedEndTime());
+      primaryLog.setLocationType(location);
+
+      if (primaryLog.isSettled()) {
+        overtimeService.revertSettlementForWorkLog(primaryLog.getWorkLogId());
+        primaryLog.setSettled(false);
+      }
+      timeData.saveWorkLog(primaryLog);
+
+      for (int i = 1; i < existingLogs.size(); i++) {
+        timeData.deleteWorkLog(existingLogs.get(i));
+      }
     }
-
-    WorkLog newWorkLog = new WorkLog();
-    newWorkLog.setUser(request.getEmployee());
-    newWorkLog.setStartTime(request.getProposedStartTime());
-    newWorkLog.setEndTime(request.getProposedEndTime());
-
-    boolean hasHoApplication = applicationRepository.findApprovedByEmployeeAndDate(
-            request.getEmployee().getUserId(), targetDate).stream()
-        .anyMatch(app -> app.getType() == ApplicationType.HOME_OFFICE);
-    newWorkLog.setLocationType(
-        hasHoApplication ? WorkLocationType.HOME_OFFICE : WorkLocationType.OFFICE);
-
-    timeData.saveWorkLog(newWorkLog);
 
     request.setStatus(WorkLogRequestStatus.APPROVED);
     request.setManager(reviewer);

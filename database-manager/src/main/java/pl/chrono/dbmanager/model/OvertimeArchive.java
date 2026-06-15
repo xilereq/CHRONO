@@ -19,7 +19,7 @@ import pl.chrono.dbmanager.model.enums.OvertimeType;
 
 @Entity
 @Table(name = "overtime_archive", indexes = {
-    @Index(name = "idx_overtime_user_id", columnList = "user_id"),
+    @Index(name = "idx_overtime_user_type", columnList = "user_id, type"),
     @Index(name = "idx_overtime_valid_until", columnList = "valid_until, type")
 })
 @Getter

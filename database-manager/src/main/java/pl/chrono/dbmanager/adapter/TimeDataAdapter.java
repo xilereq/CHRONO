@@ -72,11 +72,6 @@ public class TimeDataAdapter implements I_TimeData {
   }
 
   @Override
-  public Optional<WorkLog> findWorkLogById(Integer workLogId) {
-    return workLogRepository.findById(workLogId);
-  }
-
-  @Override
   public WorkLogRequest saveWorkLogRequest(WorkLogRequest request) {
     return requestRepository.save(request);
   }

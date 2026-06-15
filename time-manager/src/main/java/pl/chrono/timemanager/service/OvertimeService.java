@@ -16,7 +16,6 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
-import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @Service
@@ -80,8 +79,8 @@ public class OvertimeService {
     int yearlyLimit = 150 * 3600;
     if (yearlyOvertime + duration > yearlyLimit && yearlyOvertime < yearlyLimit) {
       eventPublisher.publishEvent(new LawViolationEvent(
-          application.getEmployee().getUserId(), "VIOLATION_YEARLY_OVERTIME",
-          application.getId(), "APPLICATION",
+          application.getEmployee().getUserId(), "VIOLATION_YEARLY_OVERTIME", application.getId(),
+          "APPLICATION",
           "WARNING: You have excedeed yearly limit of 150 overtime hours in year " + currentYear
       ));
     }
@@ -137,20 +136,21 @@ public class OvertimeService {
 
   @Transactional
   public void expireUnusedOvertime(Integer userId) {
-    Integer currentBalance = getOvertimeBalance(userId);
+    LocalDateTime now = LocalDateTime.now();
+    Integer expiredBalance = overtimeData.getExpiringOvertimeBalance(userId, now);
 
-    if (currentBalance == null || currentBalance <= 0) {
+    if (expiredBalance == null || expiredBalance <= 0) {
       return;
     }
 
     OvertimeArchive archive = new OvertimeArchive();
-    archive.setUser(userRepository.findById(userId)
-        .orElseThrow(() -> new UserException.NotFound(userId)));
+    archive.setUser(userRepository.getReferenceById(userId));
     archive.setType(OvertimeType.EXPIRED);
-    archive.setDurationSeconds(currentBalance);
-    archive.setValidUntil(LocalDateTime.now());
-    archive.setNote("Automatically expired unused overtime for quarter: " + (((LocalDate.now()
-        .getMonthValue() - 1) / 3) + 1) + " of year " + LocalDate.now().getYear());
+    archive.setDurationSeconds(expiredBalance);
+    archive.setValidUntil(now);
+    archive.setNote(
+        "Automatically expired unused overtime for quarter: " +
+            (((now.getMonthValue() - 1) / 3) + 1) + " of year " + now.getYear());
     overtimeData.saveOvertimeRecord(archive);
   }
 
@@ -159,5 +159,38 @@ public class OvertimeService {
     List<OvertimeArchive> historyEntities = overtimeData.findUserOvertimeHistory(userId);
 
     return historyEntities.stream().map(overtimeMapper::toDto).toList();
+  }
+
+  @Transactional
+  public void revertSettlementForWorkLog(Integer workLogId) {
+    List<OvertimeArchive> archives = overtimeData.findByWorkLogId(workLogId);
+
+    for (OvertimeArchive archive : archives) {
+      if (archive.getType() == OvertimeType.EARNED || archive.getType() == OvertimeType.DEBT) {
+        overtimeData.deleteOvertimeRecord(archive);
+      } else if (archive.getType() == OvertimeType.USED) {
+        archive.setType(OvertimeType.LOCKED);
+        archive.setWorkLog(null);
+        archive.setNote("Reverted to LOCKED due to work log modification.");
+        overtimeData.saveOvertimeRecord(archive);
+      }
+    }
+  }
+
+  @Transactional
+  public void registerPenaltyDebt(WorkLog workLog, int missingSeconds) {
+    if (missingSeconds <= 0) {
+      return;
+    }
+    OvertimeArchive archive = new OvertimeArchive();
+    archive.setUser(workLog.getUser());
+    archive.setType(OvertimeType.DEBT);
+    archive.setDurationSeconds(missingSeconds);
+    archive.setApplication(null);
+    archive.setWorkLog(workLog);
+    archive.setValidUntil(calculateEndOfQuarter());
+    archive.setNote("Automatic penalty for incomplete workday without an application on: "
+        + workLog.getStartTime().toLocalDate());
+    overtimeData.saveOvertimeRecord(archive);
   }
 }

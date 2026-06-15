@@ -38,6 +38,7 @@ class DataRetentionSchedulerTest {
   @BeforeEach
   void setUp() {
     ReflectionTestUtils.setField(scheduler, "userRetentionYears", 10);
+    ReflectionTestUtils.setField(scheduler, "operationLogRetentionMonths", 60);
   }
 
   @Test

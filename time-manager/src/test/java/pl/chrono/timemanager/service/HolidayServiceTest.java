@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -114,23 +114,32 @@ class HolidayServiceTest {
   @Test
   void deleteHolidayTest() {
     Integer holidayId = 5;
-    Holiday entity = new Holiday();
-    when(holidayRepository.findById(holidayId)).thenReturn(Optional.of(entity));
 
     holidayService.deleteHoliday(holidayId);
 
-    verify(holidayPolicyRepository).deleteByHoliday(entity);
-    verify(holidayRepository).delete(entity);
+    verify(holidayPolicyRepository).deleteByHolidayId(holidayId);
+    verify(holidayRepository).deleteByIdDirectly(holidayId);
   }
 
   @Test
-  void deleteHolidayExceptionTest() {
-    Integer invalidId = 999;
-    when(holidayRepository.findById(invalidId)).thenReturn(Optional.empty());
+  void isHolidayTrueTest() {
+    LocalDate date = LocalDate.of(2026, 5, 1);
+    when(holidayRepository.existsByDateOrYearly(date)).thenReturn(true);
 
-    assertThrows(HolidayException.NotFound.class, () -> holidayService.deleteHoliday(invalidId));
+    boolean result = holidayService.isHoliday(date);
 
-    verifyNoInteractions(holidayPolicyRepository);
-    verify(holidayRepository, never()).delete(any());
+    assertTrue(result);
+    verify(holidayRepository).existsByDateOrYearly(date);
+  }
+
+  @Test
+  void isHolidayFalseTest() {
+    LocalDate date = LocalDate.of(2026, 5, 2);
+    when(holidayRepository.existsByDateOrYearly(date)).thenReturn(false);
+
+    boolean result = holidayService.isHoliday(date);
+
+    assertFalse(result);
+    verify(holidayRepository).existsByDateOrYearly(date);
   }
 }

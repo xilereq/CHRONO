@@ -2,37 +2,32 @@ package pl.chrono.timemanager.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
-import pl.chrono.dbmanager.model.enums.ApplicationType;
+import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
@@ -40,6 +35,7 @@ import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
 import pl.chrono.timemanager.mapper.WorkLogMapper;
+import pl.chrono.usermanager.event.UserLoginEvent;
 
 @ExtendWith(MockitoExtension.class)
 class WorkLogServiceTest {
@@ -53,453 +49,670 @@ class WorkLogServiceTest {
   @Mock
   private OvertimeService overtimeService;
   @Mock
-  private ApplicationRepository applicationRepository;
-  @Mock
   private ApplicationEventPublisher eventPublisher;
+  @Mock
+  private WorkTimeCalculationService workTimeCalculationService;
 
   @InjectMocks
   private WorkLogService workLogService;
 
-
-  private WorkLog setupActiveWorkLog(long workTimeSeconds, int requiredSeconds, int roundingSeconds,
-                                     int maxAllowedSeconds) {
-    WorkLog workLog = mock(WorkLog.class);
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.of(workLog));
-    when(timeData.isUserOnLeave(1)).thenReturn(false);
-    when(workLog.calculateWorkTime(any())).thenReturn(workTimeSeconds);
-    when(workLog.getRequiredSeconds()).thenReturn(requiredSeconds);
-    when(workLog.getRoundingSeconds()).thenReturn(roundingSeconds);
-    when(workLog.getMaxAllowedSeconds()).thenReturn(maxAllowedSeconds);
-    return workLog;
-  }
-
-  private WorkLog setupActiveWorkLogDefault(long workTimeSeconds) {
-    WorkLog workLog = setupActiveWorkLog(workTimeSeconds, 28800, 900, 40000);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of());
-    return workLog;
-  }
-
-  private Application buildApplication(ApplicationType type, Integer durationSeconds) {
-    Application app = new Application();
-    app.setType(type);
-    app.setDurationSeconds(durationSeconds);
-    return app;
-  }
-
-  private User setupUserWithPolicy(int requiredSecondsPerDay) {
-    User user = mock(User.class);
-    Policy policy = mock(Policy.class);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
-    when(user.getActivePolicy()).thenReturn(policy);
-    when(policy.getRequiredSecondsForDate(any(LocalDate.class))).thenReturn(requiredSecondsPerDay);
-    return user;
-  }
-
-  private void setupEndWorkSuccessPath(WorkLog workLog) {
-    User user = mock(User.class);
-    when(workLog.getUser()).thenReturn(user);
-    when(timeData.saveWorkLog(workLog)).thenReturn(workLog);
-    when(workLogMapper.toDto(workLog)).thenReturn(new WorkLogDto());
-  }
+  private final Integer USER_ID = 1;
 
   @Test
-  void startWorkAlreadyStartedExceptionTest() {
-    when(timeData.isUserWorking(1)).thenReturn(true);
-    assertThrows(WorkException.WorkStarted.class, () -> workLogService.startWork(1,
-        null));
-  }
-
-  @Test
-  void startWorkUserNotFoundTest() {
-    when(timeData.isUserWorking(1)).thenReturn(false);
-    when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(UserException.NotFound.class, () -> workLogService.startWork(1, null));
-  }
-
-  /*
-  @Test
-  void startWorkTest() {
-    WorkLog savedWorkLog = new WorkLog();
+  void getWorkLogsByDateTest() {
+    LocalDate date = LocalDate.of(2026, 6, 15);
+    WorkLog workLog = new WorkLog();
     WorkLogDto dto = new WorkLogDto();
-    dto.setWorkLogId(1);
 
-    when(timeData.isUserWorking(1)).thenReturn(false);
-    when(timeData.findLastClosedWorkLog(1)).thenReturn(Optional.empty());
-    when(userRepository.findById(1)).thenReturn(Optional.of(new User()));
-    when(timeData.saveWorkLog(any(WorkLog.class))).thenReturn(savedWorkLog);
-    when(workLogMapper.toDto(savedWorkLog)).thenReturn(dto);
+    when(timeData.findWorkLogsByUserAndDate(
+        eq(USER_ID), any(LocalDateTime.class),
+        any(LocalDateTime.class)
+    )).thenReturn(List.of(workLog));
+    when(workLogMapper.toDto(workLog)).thenReturn(dto);
 
-    assertEquals(dto, workLogService.startWork(1, null));
+    List<WorkLogDto> result = workLogService.getWorkLogsByDate(USER_ID, date);
+
+    assertThat(result).hasSize(1).contains(dto);
+  }
+
+  @Test
+  void hasWorkedTodayTest() {
+    when(timeData.findWorkLogsByUserAndDate(
+        eq(USER_ID), any(LocalDateTime.class),
+        any(LocalDateTime.class)
+    )).thenReturn(List.of(new WorkLog()));
+
+    boolean result = workLogService.hasUserWorkedToday(USER_ID);
+
+    assertThat(result).isTrue();
+  }
+
+  @Test
+  void loginWhileNotWorkingButAfterWorkingDoesNotStartWorkTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(
+        List.of(new WorkLog()));
+
+    workLogService.handleUserLoginEvent(event);
+
+    verify(timeData, never()).saveWorkLog(any());
+  }
+
+  @Test
+  void hasNotWorkedTodayTest() {
+    when(timeData.findWorkLogsByUserAndDate(
+        eq(USER_ID), any(LocalDateTime.class),
+        any(LocalDateTime.class)
+    )).thenReturn(Collections.emptyList());
+
+    boolean result = workLogService.hasUserWorkedToday(USER_ID);
+
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  void loginAutoStartsWorkTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(
+        Collections.emptyList());
+
+    User mockUser = new User();
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
+
+    workLogService.handleUserLoginEvent(event);
+
     verify(timeData).saveWorkLog(any(WorkLog.class));
   }
-  */
 
   @Test
-  void endWorkNoActiveWorkTest() {
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.empty());
-    assertThrows(WorkException.NoActiveWork.class, () -> workLogService.endWork(1));
+  void loginDoesNotStartWorkWhenAlreadyWorkingTest() {
+    UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
+    when(timeData.isUserWorking(USER_ID)).thenReturn(true);
+
+    workLogService.handleUserLoginEvent(event);
+
+    verify(timeData, never()).saveWorkLog(any());
+  }
+
+  @Test
+  void startWorkWorkStartedExceptionTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(true);
+
+    assertThatThrownBy(
+        () -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE)).isInstanceOf(
+        WorkException.WorkStarted.class);
+  }
+
+  @Test
+  void startWorkAlreadyWorkedTodayExceptionTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(
+        List.of(new WorkLog()));
+
+    assertThatThrownBy(
+        () -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE)).isInstanceOf(
+        WorkException.AlreadyWorkedToday.class);
+  }
+
+  @Test
+  void startWorkUserNotFoundExceptionTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(
+        () -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE)).isInstanceOf(
+        UserException.NotFound.class);
+  }
+
+  @Test
+  void startWorkNoHomeOfficeApplicationExceptionTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(new User()));
+
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+
+    assertThatThrownBy(
+        () -> workLogService.startWork(USER_ID, WorkLocationType.HOME_OFFICE)).isInstanceOf(
+        WorkException.NoHomeOfficeApplication.class);
+  }
+
+  @Test
+  void startWorkHomeOfficeLocationWithApplicationIfNotSpecifiedTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(new User()));
+
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(true);
+
+    WorkLog savedLog = new WorkLog();
+    when(timeData.saveWorkLog(any())).thenReturn(savedLog);
+
+    workLogService.startWork(USER_ID, null);
+
+    ArgumentCaptor<WorkLog> logCaptor = ArgumentCaptor.forClass(WorkLog.class);
+    verify(timeData).saveWorkLog(logCaptor.capture());
+
+    assertThat(logCaptor.getValue().getLocationType()).isEqualTo(WorkLocationType.HOME_OFFICE);
+  }
+
+  @Test
+  void startWorkOfficeLocationWithoutApplicationIfNotSpecifiedTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(new User()));
+
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+
+    WorkLog savedLog = new WorkLog();
+    when(timeData.saveWorkLog(any())).thenReturn(savedLog);
+
+    workLogService.startWork(USER_ID, null);
+
+    ArgumentCaptor<WorkLog> logCaptor = ArgumentCaptor.forClass(WorkLog.class);
+    verify(timeData).saveWorkLog(logCaptor.capture());
+
+    assertThat(logCaptor.getValue().getLocationType()).isEqualTo(WorkLocationType.OFFICE);
+  }
+
+  @Test
+  void startWorkWithHOApplicationPassesTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(new User()));
+
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(true);
+    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
+
+    assertThatCode(() -> workLogService.startWork(
+        USER_ID,
+        WorkLocationType.HOME_OFFICE
+    )).doesNotThrowAnyException();
+  }
+
+  @Test
+  void startWorkWithHOOfficeApplicationButChoseOfficeTest() {
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(new User()));
+
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
+
+    assertThatCode(() -> workLogService.startWork(
+        USER_ID,
+        WorkLocationType.OFFICE
+    )).doesNotThrowAnyException();
+  }
+
+  @Test
+  void cancelWorkNoActiveWorkExceptionTest() {
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> workLogService.cancelWork(USER_ID)).isInstanceOf(
+        WorkException.NoActiveWork.class);
+  }
+
+  @Test
+  void cancelWorkExpiredCancellationExceptionTest() {
+    WorkLog workLog = new WorkLog();
+    workLog.setStartTime(LocalDateTime.now().minusMinutes(20));
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(workLog));
+
+    assertThatThrownBy(() -> workLogService.cancelWork(USER_ID)).isInstanceOf(
+        WorkException.CancellationExpired.class);
+  }
+
+  @Test
+  void cancelWorkProperlyDeletesLogTest() {
+    WorkLog workLog = new WorkLog();
+    workLog.setStartTime(LocalDateTime.now().minusMinutes(5));
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(workLog));
+
+    assertThatCode(() -> workLogService.cancelWork(USER_ID)).doesNotThrowAnyException();
+
+    verify(timeData).deleteWorkLog(workLog);
+  }
+
+  @Test
+  void endWorkNoActiveWorkExceptionTest() {
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> workLogService.endWork(USER_ID)).isInstanceOf(
+        WorkException.NoActiveWork.class);
   }
 
   @Test
   void endWorkUserOnLeaveExceptionTest() {
-    WorkLog workLog = mock(WorkLog.class);
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.of(workLog));
-    when(timeData.isUserOnLeave(1)).thenReturn(true);
-    assertThrows(WorkException.LeaveStarted.class, () -> workLogService.endWork(1));
-  }
-
-  @Test
-  void endWorkExcessiveWorkNotificationTest() {
-    User user = new User();
-    user.setUserId(1);
     WorkLog workLog = new WorkLog();
-    workLog.setWorkLogId(1);
-    workLog.setUser(user);
-    workLog.setStartTime(LocalDateTime.now().minusHours(15));
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(workLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(true);
 
-    WorkLog spyLog = spy(workLog);
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.of(spyLog));
-    when(timeData.isUserOnLeave(1)).thenReturn(false);
-    when(timeData.saveWorkLog(any())).thenReturn(spyLog);
-    doReturn(50000L).when(spyLog).calculateWorkTime(any());
-    doReturn(40000).when(spyLog).getMaxAllowedSeconds();
-    doReturn(28800).when(spyLog).getRequiredSeconds();
-    doReturn(900).when(spyLog).getRoundingSeconds();
-
-    workLogService.endWork(1);
-
-    verify(spyLog).forceClose(any());
-    verify(timeData).saveWorkLog(spyLog);
-    verify(eventPublisher).publishEvent(any(LawViolationEvent.class));
+    assertThatThrownBy(() -> workLogService.endWork(USER_ID)).isInstanceOf(
+        WorkException.LeaveStarted.class);
   }
 
   @Test
   void endWorkInsufficientWorkTimeExceptionTest() {
-    setupActiveWorkLogDefault(20000L);
-    assertThrows(WorkException.InsufficientWorkTime.class, () -> workLogService.endWork(1));
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDateTime.now().minusHours(4));
+    User user = new User();
+    user.setUserId(USER_ID);
+    spyLog.setUser(user);
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+
+    doReturn(14400L).when(spyLog).calculateWorkTime(any());
+
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(
+        eq(USER_ID), any(),
+        any()
+    )).thenReturn(8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(15 * 60);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(workTimeCalculationService.formatSecondsToTime(any(Long.class))).thenReturn("04:00:00");
+
+    assertThatThrownBy(() -> workLogService.endWork(USER_ID)).isInstanceOf(
+        WorkException.InsufficientWorkTime.class).hasMessageContaining("04:00:00");
   }
 
   @Test
-  void endWorkTest() {
-    WorkLog workLog = setupActiveWorkLogDefault(28000L);
-    setupEndWorkSuccessPath(workLog);
+  void endWorkMaxTimeExceededTodayEventTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(99);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(14));
+    User user = new User();
+    user.setUserId(USER_ID);
+    spyLog.setUser(user);
 
-    assertNotNull(workLogService.endWork(1));
-    verify(workLog).setEndTime(any(LocalDateTime.class));
-  }
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
 
-  @Test
-  void earlyExitApplicationReducesWorkTimeTest() {
-    WorkLog workLog = setupActiveWorkLog(21000L, 28800, 900, 40000);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
-        List.of(buildApplication(ApplicationType.EARLY_EXIT, 7200)));
-    setupEndWorkSuccessPath(workLog);
+    doReturn(14 * 3600L).when(spyLog).calculateWorkTime(any());
 
-    assertNotNull(workLogService.endWork(1));
-  }
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(
+        eq(USER_ID), any(),
+        any()
+    )).thenReturn(8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(15 * 60);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
 
-  @Test
-  void overtimeTakeApplicationReducesWorkTimeTest() {
-    WorkLog workLog = setupActiveWorkLog(21000L, 28800, 900, 40000);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
-        List.of(buildApplication(ApplicationType.OVERTIME_TAKE, 7200)));
-    setupEndWorkSuccessPath(workLog);
+    WorkLogDto mockDto = new WorkLogDto();
+    when(timeData.saveWorkLog(any())).thenReturn(spyLog);
+    when(workLogMapper.toDto(any())).thenReturn(mockDto);
 
-    assertNotNull(workLogService.endWork(1));
-  }
+    workLogService.endWork(USER_ID);
 
-  @Test
-  void overtimeEarnApplicationIncreasesWorkTimeTest() {
-    setupActiveWorkLog(28000L, 28800, 900, 40000);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
-        List.of(buildApplication(ApplicationType.OVERTIME_EARN, 3600)));
-
-    assertThrows(WorkException.InsufficientWorkTime.class, () -> workLogService.endWork(1));
-  }
-
-  @Test
-  void nullDurationApplicationTest() {
-    WorkLog workLog = setupActiveWorkLog(28000L, 28800, 900, 40000);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
-        List.of(buildApplication(ApplicationType.EARLY_EXIT, null)));
-    setupEndWorkSuccessPath(workLog);
-
-    assertNotNull(workLogService.endWork(1));
-  }
-
-  @Test
-  void otherApplicationTypeDoesNotChangeWorkTimeTest() {
-    setupActiveWorkLog(20000L, 28800, 900, 40000);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
-        List.of(buildApplication(ApplicationType.HOLIDAY_LEAVE, 3600)));
-
-    assertThrows(WorkException.InsufficientWorkTime.class, () -> workLogService.endWork(1));
-  }
-
-  @Test
-  void isUserWorkingTest() {
-    when(timeData.isUserWorking(1)).thenReturn(true);
-    assertTrue(workLogService.isUserWorking(1));
-  }
-
-  @Test
-  void getActiveWorkTimeTest() {
-    WorkLog workLog = mock(WorkLog.class);
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.of(workLog));
-    when(workLog.calculateWorkTime(any())).thenReturn(3665L);
-
-    assertEquals("01:01:05", workLogService.getActiveWorkTime(1));
-  }
-
-  @Test
-  void getActiveWorkTimeZeroTest() {
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.empty());
-    assertEquals("00:00:00", workLogService.getActiveWorkTime(1));
-  }
-
-  @Test
-  void getMonthlyStatsUserNotFoundTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(UserException.NotFound.class, () -> workLogService.getMonthlyStats(1));
-  }
-
-  @Test
-  void getMonthlyStatsWithPolicyTest() {
-    setupUserWithPolicy(28800);
-
-    WorkLog pastLog = mock(WorkLog.class);
-    when(pastLog.getEndTime()).thenReturn(LocalDate.now().minusDays(1).atStartOfDay());
-    when(pastLog.getEffectiveWorkTime(any())).thenReturn(36000L);
-
-    when(timeData.findUserWorkLogsAfter(eq(1), any(LocalDateTime.class))).thenReturn(
-        List.of(pastLog));
-    when(overtimeService.getOvertimeBalance(1)).thenReturn(7200);
-
-    WorkStats result = workLogService.getMonthlyStats(1);
-
-    assertNotNull(result);
-    assertEquals(10, result.totalWorkTime());
-    assertEquals(7200, result.overtimeSeconds());
-    assertTrue(result.totalMonthlyHours() > 0);
-  }
-
-  @Test
-  void getMonthlyStatsWithoutPolicyTest() {
-    User user = mock(User.class);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
-    when(user.getActivePolicy()).thenReturn(null);
-    when(timeData.findUserWorkLogsAfter(eq(1), any(LocalDateTime.class))).thenReturn(List.of());
-    when(overtimeService.getOvertimeBalance(1)).thenReturn(0);
-
-    WorkStats result = workLogService.getMonthlyStats(1);
-
-    assertNotNull(result);
-    assertTrue(result.totalMonthlyHours() > 0);
-  }
-
-  @Test
-  void getMonthlyStatsFiltersInCalculateTotalHoursWorkedTest() {
-    User user = mock(User.class);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
-    when(user.getActivePolicy()).thenReturn(null);
-
-    LocalDate today = LocalDate.now();
-    WorkLog validLog = mock(WorkLog.class);
-    when(validLog.getEndTime()).thenReturn(today.minusDays(1).atStartOfDay());
-    when(validLog.getEffectiveWorkTime(any())).thenReturn(36000L);
-
-    WorkLog activeLog = mock(WorkLog.class);
-    when(activeLog.getEndTime()).thenReturn(null);
-
-    WorkLog todayLog = mock(WorkLog.class);
-    when(todayLog.getEndTime()).thenReturn(today.atStartOfDay().plusHours(2));
-
-    when(timeData.findUserWorkLogsAfter(eq(1), any(LocalDateTime.class))).thenReturn(
-        List.of(validLog, activeLog, todayLog));
-    when(overtimeService.getOvertimeBalance(1)).thenReturn(0);
-
-    WorkStats result = workLogService.getMonthlyStats(1);
-
-    assertNotNull(result);
-    assertEquals(10, result.totalWorkTime());
-  }
-
-  @Test
-  void zeroRequiredSecondsPolicyTest() {
-    setupUserWithPolicy(0);
-    when(timeData.findUserWorkLogsAfter(eq(1), any(LocalDateTime.class))).thenReturn(List.of());
-    when(overtimeService.getOvertimeBalance(1)).thenReturn(0);
-
-    WorkStats result = workLogService.getMonthlyStats(1);
-
-    assertNotNull(result);
-    assertEquals(0, result.totalMonthlyHours());
-  }
-
-  @Test
-  void getTodayTargetWithDifferentApplicationsTest() {
-    setupUserWithPolicy(28800);
-
-    when(applicationRepository.findApprovedByEmployeeAndDate(
-        eq(1),
-        any(LocalDate.class)
-    )).thenReturn(List.of(
-        buildApplication(ApplicationType.EARLY_EXIT, 1800),
-        buildApplication(ApplicationType.OVERTIME_TAKE, 3600),
-        buildApplication(ApplicationType.OVERTIME_EARN, 7200),
-        buildApplication(ApplicationType.HOLIDAY_LEAVE, null)
-    ));
-
-    assertEquals("08:30:00", workLogService.getTodayTarget(1));
-  }
-
-  @Test
-  void getTodayTargetNegativeTargetTest() {
-    User user = mock(User.class);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
-    when(user.getActivePolicy()).thenReturn(null);
-    when(applicationRepository.findApprovedByEmployeeAndDate(
-        eq(1),
-        any(LocalDate.class)
-    )).thenReturn(List.of(buildApplication(ApplicationType.EARLY_EXIT, 72000)));
-
-    assertEquals("00:00:00", workLogService.getTodayTarget(1));
-  }
-
-  @Test
-  void getTodayTargetUserNotFoundExceptionTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.empty());
-    assertThrows(UserException.NotFound.class, () -> workLogService.getTodayTarget(1));
-  }
-
-  @Test
-  void getTodayTargetOnWeekendWithNoPolicyTest() {
-    User user = mock(User.class);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
-    when(user.getActivePolicy()).thenReturn(null);
-
-    LocalDate saturday = LocalDate.of(2026, 6, 13);
-    try (MockedStatic<LocalDate> mockedLocalDate = mockStatic(LocalDate.class)) {
-      mockedLocalDate.when(LocalDate::now).thenReturn(saturday);
-      when(applicationRepository.findApprovedByEmployeeAndDate(eq(1), eq(saturday))).thenReturn(
-          List.of());
-
-      assertEquals("00:00:00", workLogService.getTodayTarget(1));
-    }
-  }
-
-  @Test
-  void getTodayTargetDefaultPolicyTest() {
-    User user = mock(User.class);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
-    when(user.getActivePolicy()).thenReturn(null);
-
-    LocalDate monday = LocalDate.of(2026, 6, 9);
-    try (MockedStatic<LocalDate> mockedLocalDate = mockStatic(LocalDate.class)) {
-      mockedLocalDate.when(LocalDate::now).thenReturn(monday);
-      when(applicationRepository.findApprovedByEmployeeAndDate(eq(1), eq(monday))).thenReturn(
-          List.of());
-
-      assertEquals("08:00:00", workLogService.getTodayTarget(1));
-    }
-  }
-
-  private WorkLog setupWeeklyLimitTest(int currentLogHours, int pastLogHours, int maxWeeklyHours) {
-    WorkLog currentLog = mock(WorkLog.class);
-    WorkLog pastLog = mock(WorkLog.class);
-    User user = mock(User.class);
-    Policy policy = mock(Policy.class);
-
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.of(currentLog));
-    when(timeData.isUserOnLeave(1)).thenReturn(false);
-    when(currentLog.getUser()).thenReturn(user);
-    when(user.getActivePolicy()).thenReturn(policy);
-    lenient().when(policy.getMaxWeeklyHours()).thenReturn(maxWeeklyHours);
-    lenient().when(currentLog.getWorkLogId()).thenReturn(1);
-
-    long currentSeconds = (long) currentLogHours * 3600;
-    long pastSeconds = (long) pastLogHours * 3600;
-    when(currentLog.getEffectiveWorkTime(any())).thenReturn(currentSeconds);
-    when(pastLog.getEffectiveWorkTime(any())).thenReturn(pastSeconds);
-    when(timeData.findUserWorkLogsAfter(any(), any())).thenReturn(List.of(currentLog, pastLog));
-
-    when(currentLog.calculateWorkTime(any())).thenReturn(currentSeconds);
-    when(currentLog.getRequiredSeconds()).thenReturn(4 * 3600);
-    when(currentLog.getRoundingSeconds()).thenReturn(0);
-    when(currentLog.getMaxAllowedSeconds()).thenReturn(12 * 3600);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of());
-    when(timeData.saveWorkLog(currentLog)).thenReturn(currentLog);
-
-    return currentLog;
-  }
-
-  @Test
-  void weeklyLimitNotificationTest() {
-    WorkLog currentLog = setupWeeklyLimitTest(5, 40, 40);
-    when(workLogMapper.toDto(currentLog)).thenReturn(new WorkLogDto());
-
-    workLogService.endWork(1);
+    verify(spyLog).forceClose(any(), eq(8 * 3600));
 
     ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(
         LawViolationEvent.class);
     verify(eventPublisher).publishEvent(eventCaptor.capture());
-    assertEquals("VIOLATION_MAX_WEEKLY_WORK", eventCaptor.getValue().violationType());
-    assertTrue(eventCaptor.getValue().message().contains("40 hours"));
+    assertThat(eventCaptor.getValue().violationType()).isEqualTo("VIOLATION_MAX_WORK");
   }
 
   @Test
-  void weeklyLimitAlreadyExceededTest() {
-    WorkLog currentLog = setupWeeklyLimitTest(5, 50, 40);
-    when(workLogMapper.toDto(currentLog)).thenReturn(new WorkLogDto());
+  void endWorkRestViolationEventTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
+    User user = new User();
+    user.setUserId(USER_ID);
+    spyLog.setUser(user);
 
-    workLogService.endWork(1);
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
 
-    verify(eventPublisher, never()).publishEvent(any());
+    doReturn(8 * 3600L).when(spyLog).calculateWorkTime(any());
+
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(
+        eq(USER_ID), any(),
+        any()
+    )).thenReturn(8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(15 * 60);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(timeData.saveWorkLog(any())).thenReturn(spyLog);
+
+    doNothing().when(spyLog).setEndTime(any());
+
+    WorkLog lastLog = new WorkLog();
+    lastLog.setWorkLogId(99);
+    lastLog.setEndTime(spyLog.getStartTime().minusHours(5));
+    when(timeData.findLastClosedWorkLog(USER_ID)).thenReturn(Optional.of(lastLog));
+
+    workLogService.endWork(USER_ID);
+
+    ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(
+        LawViolationEvent.class);
+    verify(eventPublisher).publishEvent(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().violationType()).isEqualTo("VIOLATION_REST");
   }
 
   @Test
-  void weeklyLimitNotExceededTest() {
-    WorkLog currentLog = setupWeeklyLimitTest(4, 30, 40);
-    when(workLogMapper.toDto(currentLog)).thenReturn(new WorkLogDto());
+  void endWorkWeeklyLimitEventTest() {
+    WorkLog spyCurrentLog = spy(new WorkLog());
+    spyCurrentLog.setWorkLogId(100);
+    spyCurrentLog.setStartTime(LocalDateTime.now().minusHours(8));
 
-    workLogService.endWork(1);
+    User spyUser = spy(new User());
+    spyUser.setUserId(USER_ID);
 
-    verify(eventPublisher, never()).publishEvent(any());
+    Policy policy = new Policy();
+    policy.setMaxWeeklyHours(40);
+
+    doReturn(policy).when(spyUser).getPolicyForDate(any());
+
+    spyCurrentLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyCurrentLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+
+    doReturn(8 * 3600L).when(spyCurrentLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(
+        eq(USER_ID), any(),
+        any()
+    )).thenReturn(8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(timeData.saveWorkLog(any())).thenReturn(spyCurrentLog);
+
+    WorkLog spyPastLog = spy(new WorkLog());
+    spyPastLog.setStartTime(LocalDateTime.now().minusDays(2));
+    spyPastLog.setUser(spyUser);
+
+    doReturn(35 * 3600L).when(spyPastLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    doReturn(8 * 3600L).when(spyCurrentLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    when(timeData.findUserWorkLogsAfter(eq(USER_ID), any())).thenReturn(
+        List.of(spyPastLog, spyCurrentLog));
+
+    workLogService.endWork(USER_ID);
+
+    ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(
+        LawViolationEvent.class);
+    verify(eventPublisher).publishEvent(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().violationType()).isEqualTo("VIOLATION_MAX_WEEKLY_WORK");
   }
 
   @Test
-  void default48HoursWeeklyLimitTest() {
-    WorkLog currentLog = mock(WorkLog.class);
-    WorkLog pastLog = mock(WorkLog.class);
-    User user = mock(User.class);
-    Policy policy = mock(Policy.class);
+  void endWorkNotPublishRestViolationEventTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    User user = new User();
+    user.setUserId(USER_ID);
+    spyLog.setUser(user);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
 
-    when(timeData.findActiveWorkLog(1)).thenReturn(Optional.of(currentLog));
-    when(timeData.isUserOnLeave(1)).thenReturn(false);
-    when(currentLog.getUser()).thenReturn(user);
-    when(user.getActivePolicy()).thenReturn(policy);
-    when(policy.getMaxWeeklyHours()).thenReturn(null);
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+    doReturn(8 * 3600L).when(spyLog).calculateWorkTime(any());
 
-    long currentSeconds = 5 * 3600L;
-    long pastSeconds = 48 * 3600L;
-    when(currentLog.getEffectiveWorkTime(any())).thenReturn(currentSeconds);
-    when(pastLog.getEffectiveWorkTime(any())).thenReturn(pastSeconds);
-    when(timeData.findUserWorkLogsAfter(any(), any())).thenReturn(List.of(currentLog, pastLog));
-    lenient().when(currentLog.getWorkLogId()).thenReturn(1);
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
+        8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(timeData.saveWorkLog(any())).thenReturn(spyLog);
 
-    when(currentLog.calculateWorkTime(any())).thenReturn(currentSeconds);
-    when(currentLog.getRequiredSeconds()).thenReturn(4 * 3600);
-    when(currentLog.getRoundingSeconds()).thenReturn(0);
-    when(currentLog.getMaxAllowedSeconds()).thenReturn(12 * 3600);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of());
-    when(timeData.saveWorkLog(currentLog)).thenReturn(currentLog);
-    when(workLogMapper.toDto(currentLog)).thenReturn(new WorkLogDto());
+    WorkLog sameLog = new WorkLog();
+    sameLog.setWorkLogId(100);
+    sameLog.setStartTime(
+        LocalDateTime.now().minusHours(8));
+    when(timeData.findLastClosedWorkLog(USER_ID)).thenReturn(Optional.of(sameLog));
 
-    workLogService.endWork(1);
+    workLogService.endWork(USER_ID);
+
+    verify(eventPublisher, never()).publishEvent(any(LawViolationEvent.class));
+  }
+
+  @Test
+  void endWorkProperlyIgnoresEventInsufficientWorkEventTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(LocalDateTime.now().minusHours(8));
+    User user = new User();
+    user.setUserId(USER_ID);
+    spyLog.setUser(user);
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+    doReturn(8 * 3600L).when(spyLog).calculateWorkTime(any());
+
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
+        8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(timeData.saveWorkLog(any())).thenReturn(spyLog);
+
+    WorkLog lastLog = new WorkLog();
+    lastLog.setWorkLogId(99);
+    lastLog.setStartTime(LocalDateTime.now().minusHours(24));
+    lastLog.setEndTime(spyLog.getStartTime().minusHours(12));
+    when(timeData.findLastClosedWorkLog(USER_ID)).thenReturn(Optional.of(lastLog));
+
+    workLogService.endWork(USER_ID);
+
+    verify(eventPublisher, never()).publishEvent(any(LawViolationEvent.class));
+  }
+
+  @Test
+  void getActiveWorkTimeWhileWorkingTest() {
+    WorkLog spyLog = spy(new WorkLog());
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    doReturn(3600L).when(spyLog).calculateWorkTime(any());
+    when(workTimeCalculationService.formatSecondsToTime(3600L)).thenReturn("01:00:00");
+
+    String result = workLogService.getActiveWorkTime(USER_ID);
+
+    assertThat(result).isEqualTo("01:00:00");
+  }
+
+  @Test
+  void endWorkNullStartTimeTest() {
+    WorkLog spyLog = org.mockito.Mockito.spy(new WorkLog());
+    spyLog.setWorkLogId(100);
+    spyLog.setStartTime(null);
+
+    User spyUser = org.mockito.Mockito.spy(new User());
+    spyUser.setUserId(USER_ID);
+    spyLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+
+    doReturn(1000L).when(spyLog).calculateWorkTime(any());
+
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+    when(workTimeCalculationService.formatSecondsToTime(any(Long.class))).thenReturn("00:16:40");
+
+    assertThatThrownBy(() -> workLogService.endWork(USER_ID))
+        .isInstanceOf(WorkException.InsufficientWorkTime.class);
+
+    verify(spyUser).getPolicyForDate(LocalDate.now());
+  }
+
+  @Test
+  void getActiveWorkTimeWhileNotWorkingTest() {
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.empty());
+
+    String result = workLogService.getActiveWorkTime(USER_ID);
+
+    assertThat(result).isEqualTo("00:00:00");
+  }
+
+  @Test
+  void todayTargetUserNotFoundTest() {
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> workLogService.getTodayTarget(USER_ID)).isInstanceOf(
+        UserException.NotFound.class);
+  }
+
+  @Test
+  void getTodayTargetTest() {
+    User user = new User();
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(
+        eq(USER_ID), any(),
+        any()
+    )).thenReturn(28800);
+    when(workTimeCalculationService.formatSecondsToTime(28800)).thenReturn("08:00:00");
+
+    String result = workLogService.getTodayTarget(USER_ID);
+
+    assertThat(result).isEqualTo("08:00:00");
+  }
+
+  @Test
+  void getMonthlyStatsUserNotFoundTest() {
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> workLogService.getMonthlyStats(USER_ID)).isInstanceOf(
+        UserException.NotFound.class);
+  }
+
+  @Test
+  void getMonthlyStatsProperTest() {
+    User user = new User();
+    user.setUserId(USER_ID);
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+    when(overtimeService.getOvertimeBalance(USER_ID)).thenReturn(3600);
+
+    WorkLog spyLog = spy(new WorkLog());
+    spyLog.setStartTime(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+    spyLog.setEndTime(spyLog.getStartTime().plusHours(8));
+    spyLog.setUser(user);
+    doReturn(8 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+
+    when(timeData.findUserWorkLogsAfter(eq(USER_ID), any())).thenReturn(List.of(spyLog));
+
+    WorkStats stats = workLogService.getMonthlyStats(USER_ID);
+
+    assertThat(stats).isNotNull();
+    assertThat(stats.totalWorkTime()).isEqualTo(8);
+    assertThat(stats.overtimeSeconds()).isEqualTo(3600);
+    assertThat(stats.totalMonthlyHours()).isGreaterThan(0);
+  }
+
+  @Test
+  void getMonthlyStatsFiltersOutNullEndTimesAndFutureLogsTest() {
+    User user = new User();
+    user.setUserId(USER_ID);
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
+
+    WorkLog openLog = new WorkLog();
+    openLog.setStartTime(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+    openLog.setEndTime(null);
+
+    WorkLog futureLog = new WorkLog();
+    futureLog.setStartTime(LocalDate.now().atStartOfDay());
+    futureLog.setEndTime(LocalDate.now().atStartOfDay().plusHours(4));
+
+    when(timeData.findUserWorkLogsAfter(eq(USER_ID), any())).thenReturn(
+        List.of(openLog, futureLog));
+
+    WorkStats stats = workLogService.getMonthlyStats(USER_ID);
+
+    assertThat(stats.totalWorkTime()).isZero();
+  }
+
+  @Test
+  void endWorkDefault48HoursWeeklyLimitTest() {
+    WorkLog spyCurrentLog = spy(new WorkLog());
+    spyCurrentLog.setWorkLogId(100);
+    spyCurrentLog.setStartTime(LocalDateTime.now().minusHours(8));
+    User spyUser = spy(new User());
+    spyUser.setUserId(USER_ID);
+
+    Policy policy = new Policy();
+    policy.setMaxWeeklyHours(null);
+    doReturn(policy).when(spyUser).getPolicyForDate(any());
+    spyCurrentLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyCurrentLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(spyCurrentLog);
+
+    doReturn(8 * 3600L).when(spyCurrentLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
+        8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+
+    WorkLog spyPastLog = spy(new WorkLog());
+    spyPastLog.setUser(spyUser);
+    spyPastLog.setStartTime(LocalDateTime.now().minusDays(2));
+
+    doReturn(45 * 3600L).when(spyPastLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    doReturn(5 * 3600L).when(spyCurrentLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    when(timeData.findUserWorkLogsAfter(eq(USER_ID), any())).thenReturn(
+        List.of(spyPastLog, spyCurrentLog));
+
+    workLogService.endWork(USER_ID);
 
     ArgumentCaptor<LawViolationEvent> captor = ArgumentCaptor.forClass(LawViolationEvent.class);
     verify(eventPublisher).publishEvent(captor.capture());
-    assertEquals("VIOLATION_MAX_WEEKLY_WORK", captor.getValue().violationType());
-    assertTrue(captor.getValue().message().contains("48 hours"));
+    assertThat(captor.getValue().message()).contains("48 hours");
   }
+
+  @Test
+  void endWorkNoDuplicateWeeklyLimitEventTest() {
+    WorkLog spyCurrentLog = spy(new WorkLog());
+    spyCurrentLog.setWorkLogId(100);
+    spyCurrentLog.setStartTime(LocalDateTime.now().minusHours(8));
+    User spyUser = spy(new User());
+    spyUser.setUserId(USER_ID);
+
+    Policy policy = new Policy();
+    policy.setMaxWeeklyHours(40);
+    doReturn(policy).when(spyUser).getPolicyForDate(any());
+    spyCurrentLog.setUser(spyUser);
+
+    when(timeData.findActiveWorkLog(USER_ID)).thenReturn(Optional.of(spyCurrentLog));
+    when(timeData.isUserOnLeave(USER_ID)).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(spyCurrentLog);
+
+    doReturn(8 * 3600L).when(spyCurrentLog).calculateWorkTime(any());
+    when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
+        8 * 3600);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+    when(workTimeCalculationService.getMaxAllowedSeconds(any())).thenReturn(12 * 3600);
+
+    WorkLog spyPastLog = spy(new WorkLog());
+    spyPastLog.setUser(spyUser);
+    spyPastLog.setStartTime(LocalDateTime.now().minusDays(2));
+
+    doReturn(42 * 3600L).when(spyPastLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    doReturn(5 * 3600L).when(spyCurrentLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    when(timeData.findUserWorkLogsAfter(eq(USER_ID), any())).thenReturn(
+        List.of(spyPastLog, spyCurrentLog));
+
+    workLogService.endWork(USER_ID);
+
+    verify(eventPublisher, never()).publishEvent(any(LawViolationEvent.class));
+  }
+
+
+
 }

@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -20,7 +21,10 @@ import lombok.Setter;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 
 @Entity
-@Table(name = "work_log")
+@Table(name = "work_log", indexes = {
+    @Index(name = "idx_worklog_user_time", columnList = "user_id, start_time"),
+    @Index(name = "idx_worklog_settled", columnList = "is_settled")
+})
 @Getter
 @Setter
 public class WorkLog {
@@ -60,99 +64,48 @@ public class WorkLog {
     if (this.getLeaveLogs() == null || this.getLeaveLogs().isEmpty()) {
       return 0L;
     }
-    return this.getLeaveLogs().stream()
-        .mapToLong(leave -> {
-          LocalDateTime leaveStart = leave.getStartTime();
-          LocalDateTime leaveEnd = leave.getEndTime() != null ? leave.getEndTime() : boundaryTime;
+    return this.getLeaveLogs().stream().mapToLong(leave -> {
+      LocalDateTime leaveStart = leave.getStartTime();
+      LocalDateTime leaveEnd = leave.getEndTime() != null ? leave.getEndTime() : boundaryTime;
+      return leaveStart.isAfter(leaveEnd) ? 0L : Duration.between(leaveStart, leaveEnd)
+          .getSeconds();
+    }).sum();
+  }
 
-          if (leaveStart.isAfter(leaveEnd)) {
-            return 0L;
-          }
-          return Duration.between(leaveStart, leaveEnd).getSeconds();
-        })
+  private long calculateClosedBreakTime() {
+    if (this.getLeaveLogs() == null || this.getLeaveLogs().isEmpty()) {
+      return 0L;
+    }
+    return this.getLeaveLogs().stream().filter(leave -> leave.getEndTime() != null)
+        .mapToLong(leave -> Duration.between(leave.getStartTime(), leave.getEndTime()).getSeconds())
         .sum();
   }
 
-  public int getRequiredSeconds() {
-    if (this.user != null && this.user.getActivePolicy() != null && this.startTime != null) {
-      return this.user.getActivePolicy().getRequiredSecondsForDate(this.startTime.toLocalDate());
-    }
-    return 8 * 3600;
-  }
 
-  public int getMaxAllowedSeconds() {
-    if (this.user != null && this.user.getActivePolicy() != null) {
-      return this.user.getActivePolicy().getMaxAllowedSeconds();
-    }
-    return 12 * 3600;
-  }
-
-  public int getRoundingSeconds() {
-    if (this.user != null && this.user.getActivePolicy() != null
-        && this.user.getActivePolicy().getRoundingMinutes() != null) {
-      return this.user.getActivePolicy().getRoundingMinutes() * 60;
-    }
-    return 0;
-  }
-
-  public void forceClose(LocalDateTime boundaryTime) {
+  public void forceClose(LocalDateTime boundaryTime, int targetSeconds) {
     if (this.getStartTime() == null) {
       return;
     }
-
-    int requiredSeconds = getRequiredSeconds();
-
-    LocalDateTime autoCloseTime = this.startTime
-        .plusSeconds(requiredSeconds)
-        .plusSeconds(calculateBreakTime(boundaryTime));
+    LocalDateTime baseEndTime = this.startTime.plusSeconds(targetSeconds);
+    LocalDateTime autoCloseTime = baseEndTime.plusSeconds(calculateClosedBreakTime());
+    if (autoCloseTime.isAfter(boundaryTime)) {
+      autoCloseTime = boundaryTime;
+    }
     if (this.leaveLogs != null) {
+      LocalDateTime finalAutoCloseTime = autoCloseTime;
       this.leaveLogs.stream().filter(
           leave -> leave.getEndTime() == null)
-          .forEach(leave -> leave.setEndTime(autoCloseTime));
+          .forEach(leave -> leave.setEndTime(finalAutoCloseTime));
     }
     this.endTime = autoCloseTime;
   }
 
-  public long getEffectiveWorkTime(LocalDateTime boundaryTime) {
+  public long getEffectiveWorkTime(LocalDateTime boundaryTime, int requiredSeconds,
+                                   int roundingSeconds) {
     long exactWorkTime = calculateWorkTime(boundaryTime);
-    int requiredSeconds = getRequiredSeconds();
-    int roundingSeconds = getRoundingSeconds();
     if (exactWorkTime >= (requiredSeconds - roundingSeconds) && exactWorkTime < requiredSeconds) {
       return requiredSeconds;
     }
     return exactWorkTime;
-  }
-
-  public long calculateNightSeconds(LocalDateTime start, LocalDateTime end) {
-    if (start == null || end == null) return 0;
-    long nightSeconds = 0;
-    LocalDateTime current = start;
-
-    while (current.isBefore(end)) {
-      LocalDateTime nextDay = current.toLocalDate().plusDays(1).atStartOfDay();
-      LocalDateTime chunkEnd = end.isBefore(nextDay) ? end : nextDay;
-
-      LocalDateTime nightStart = current.toLocalDate().atTime(21, 0);
-      LocalDateTime nightEnd = current.toLocalDate().plusDays(1).atTime(7, 0);
-
-      LocalDateTime morningNightStart = current.toLocalDate().atStartOfDay();
-      LocalDateTime morningNightEnd = current.toLocalDate().atTime(7, 0);
-
-      nightSeconds += getOverlapSeconds(current, chunkEnd, morningNightStart, morningNightEnd);
-      nightSeconds += getOverlapSeconds(current, chunkEnd, nightStart, nightEnd);
-
-      current = chunkEnd;
-    }
-    return nightSeconds;
-  }
-
-  private long getOverlapSeconds(LocalDateTime workStart, LocalDateTime workEnd,
-                                 LocalDateTime nightStart, LocalDateTime nightEnd) {
-    LocalDateTime overlapStart = workStart.isAfter(nightStart) ? workStart : nightStart;
-    LocalDateTime overlapEnd = workEnd.isBefore(nightEnd) ? workEnd : nightEnd;
-    if (overlapStart.isBefore(overlapEnd)) {
-      return Duration.between(overlapStart, overlapEnd).getSeconds();
-    }
-    return 0;
   }
 }

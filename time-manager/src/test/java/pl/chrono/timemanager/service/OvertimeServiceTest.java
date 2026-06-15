@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
@@ -18,7 +20,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.verification.VerificationMode;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.OvertimeArchive;
@@ -30,7 +31,6 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
-import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -290,7 +290,8 @@ class OvertimeServiceTest {
 
     overtimeService.grantOvertime(app, workLog);
 
-    ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(LawViolationEvent.class);
+    ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(
+        LawViolationEvent.class);
     verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
 
     LawViolationEvent firedEvent = eventCaptor.getValue();
@@ -319,47 +320,35 @@ class OvertimeServiceTest {
   }
 
   @Test
-  void nullBalanceExpireOvertimeTest() {
-    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(null);
+  void expireOvertimeNullBalanceTest() {
+    when(overtimeData.getExpiringOvertimeBalance(eq(1), any(LocalDateTime.class))).thenReturn(null);
 
     overtimeService.expireUnusedOvertime(1);
 
-    verify(userRepository, never()).findById(any());
+    verify(userRepository, never()).getReferenceById(any());
     verify(overtimeData, never()).saveOvertimeRecord(any());
   }
 
   @Test
-  void zeroOrNegativeBalanceExpireOvertimeTest() {
-    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(0);
+  void expireOvertimeZeroOrNegativeBalanceTest() {
+    when(overtimeData.getExpiringOvertimeBalance(eq(1), any(LocalDateTime.class))).thenReturn(0);
     overtimeService.expireUnusedOvertime(1);
 
-    when(overtimeData.getUserOvertimeBalance(2)).thenReturn(-3600);
+    when(overtimeData.getExpiringOvertimeBalance(eq(2), any(LocalDateTime.class))).thenReturn(
+        -3600);
     overtimeService.expireUnusedOvertime(2);
 
-    verify(userRepository, never()).findById(any());
+    verify(userRepository, never()).getReferenceById(any());
     verify(overtimeData, never()).saveOvertimeRecord(any());
   }
 
   @Test
-  void expireOvertimeNoUserExceptionTest() {
-    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(3600);
-    when(userRepository.findById(1)).thenReturn(Optional.empty());
-
-    assertThrows(
-        UserException.NotFound.class,
-        () -> overtimeService.expireUnusedOvertime(1)
-    );
-
-    verify(overtimeData, never()).saveOvertimeRecord(any());
-  }
-
-  @Test
-  void properExpireForPositiveBalanceTest() {
+  void expireOvertimePositiveBalanceExpireTest() {
     User user = new User();
     user.setUserId(1);
 
-    when(overtimeData.getUserOvertimeBalance(1)).thenReturn(7200);
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(overtimeData.getExpiringOvertimeBalance(eq(1), any(LocalDateTime.class))).thenReturn(7200);
+    when(userRepository.getReferenceById(1)).thenReturn(user);
 
     overtimeService.expireUnusedOvertime(1);
 
@@ -373,4 +362,82 @@ class OvertimeServiceTest {
     assertNotNull(saved.getValidUntil());
     assertTrue(saved.getNote().contains("Automatically expired unused overtime for quarter:"));
   }
+
+  @Test
+  void revertSettlementForWorkLogDeleteRecordTest() {
+    OvertimeArchive earned = new OvertimeArchive();
+    earned.setType(OvertimeType.EARNED);
+
+    OvertimeArchive debt = new OvertimeArchive();
+    debt.setType(OvertimeType.DEBT);
+
+    when(overtimeData.findByWorkLogId(100)).thenReturn(List.of(earned, debt));
+
+    overtimeService.revertSettlementForWorkLog(100);
+
+    verify(overtimeData).deleteOvertimeRecord(earned);
+    verify(overtimeData).deleteOvertimeRecord(debt);
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void revertSettlementForWorkLogRevertToLockedTest() {
+    OvertimeArchive used = new OvertimeArchive();
+    used.setType(OvertimeType.USED);
+    used.setWorkLog(new WorkLog());
+
+    when(overtimeData.findByWorkLogId(100)).thenReturn(List.of(used));
+
+    overtimeService.revertSettlementForWorkLog(100);
+
+    verify(overtimeData, never()).deleteOvertimeRecord(any());
+    verify(overtimeData).saveOvertimeRecord(used);
+
+    assertEquals(OvertimeType.LOCKED, used.getType());
+    assertNull(used.getWorkLog());
+    assertEquals("Reverted to LOCKED due to work log modification.", used.getNote());
+  }
+
+  @Test
+  void revertSettlementForWorkLog_OtherTypes_AreIgnored() {
+    OvertimeArchive locked = new OvertimeArchive();
+    locked.setType(OvertimeType.LOCKED);
+
+    when(overtimeData.findByWorkLogId(100)).thenReturn(List.of(locked));
+
+    overtimeService.revertSettlementForWorkLog(100);
+
+    verify(overtimeData, never()).deleteOvertimeRecord(any());
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void registerPenaltyDebt_ZeroOrNegativeSeconds_ReturnsEarly() {
+    WorkLog workLog = new WorkLog();
+
+    overtimeService.registerPenaltyDebt(workLog, 0);
+    overtimeService.registerPenaltyDebt(workLog, -3600);
+
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void registerPenaltyDebt_PositiveSeconds_SavesDebt() {
+    User user = new User();
+    WorkLog workLog = createWorkLog(user);
+
+    overtimeService.registerPenaltyDebt(workLog, 3600);
+
+    ArgumentCaptor<OvertimeArchive> captor = ArgumentCaptor.forClass(OvertimeArchive.class);
+    verify(overtimeData).saveOvertimeRecord(captor.capture());
+
+    OvertimeArchive saved = captor.getValue();
+    assertEquals(user, saved.getUser());
+    assertEquals(OvertimeType.DEBT, saved.getType());
+    assertEquals(3600, saved.getDurationSeconds());
+    assertNull(saved.getApplication());
+    assertEquals(workLog, saved.getWorkLog());
+    assertTrue(saved.getNote().contains("Automatic penalty for incomplete workday"));
+  }
+
 }
