@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { applicationService } from '../../services';
 import { Button } from '../../components';
+import { useLanguage } from '../../context/LanguageContext';
 import './requests.css';
 
 const SINGLE_DATE_TYPES = ['EARLY_EXIT', 'OVERTIME_EARN', 'OVERTIME_TAKE'];
 
 const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -59,7 +61,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
             const effectiveEndDate = isSingleDateType ? formData.startDate : formData.endDate;
 
             if (!isSingleDateType && new Date(formData.startDate) > new Date(effectiveEndDate)) {
-                throw new Error('Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.');
+                throw new Error(t('requests.dateError', 'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.'));
             }
 
             const payload = {
@@ -76,11 +78,11 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
 
             await applicationService.createApplication(payload);
             alert(oldApplicationId
-                ? 'Wniosek zaktualizowany! Nowy wniosek trafił do kierownika.'
-                : 'Wniosek wysłany pomyślnie!');
+                ? t('requests.updateSuccess', 'Wniosek zaktualizowany! Nowy wniosek trafił do kierownika.')
+                : t('requests.submitSuccess', 'Wniosek wysłany pomyślnie!'));
             if (onSuccess) onSuccess();
         } catch (err) {
-            setError(err.message || 'Wystąpił błąd podczas wysyłania wniosku.');
+            setError(err.message || t('requests.submitError', 'Wystąpił błąd podczas wysyłania wniosku.'));
         } finally {
             setLoading(false);
         }
@@ -88,43 +90,43 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
 
     return (
         <div className="section-panel form-top request-form-container">
-            <h3 className="section-title">Nowy Wniosek</h3>
+            <h3 className="section-title">{t('requests.createRequest', 'Nowy Wniosek')}</h3>
             {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
             <form onSubmit={handleSubmit} className="request-form">
                 <div className="request-form-grid">
                     <label className="field field-full-width">
-                        <span className="field-label">Tytuł wniosku</span>
+                        <span className="field-label">{t('requests.requestTitle', 'Tytuł wniosku')}</span>
                         <input
                             className="field-input"
                             name="title"
                             value={formData.title}
                             onChange={handleChange}
-                            placeholder="np. Wyjazd rodzinny"
+                            placeholder={t('requests.titlePlaceholder', 'np. Wyjazd rodzinny')}
                             required
                         />
                     </label>
 
                     <label className="field">
-                        <span className="field-label">Typ wniosku</span>
+                        <span className="field-label">{t('requests.requestType', 'Typ wniosku')}</span>
                         <select
                             className="field-input"
                             name="type"
                             value={formData.type}
                             onChange={handleChange}
                         >
-                            <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
-                            <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
-                            <option value="HOME_OFFICE">Praca zdalna (Home Office)</option>
-                            <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
-                            <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
-                            <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
+                            <option value="HOLIDAY_LEAVE">{t('dashboard.leaveRequest', 'Urlop wypoczynkowy')}</option>
+                            <option value="SICK_LEAVE">{t('requests.sickLeave', 'Zwolnienie lekarskie')}</option>
+                            <option value="HOME_OFFICE">{t('dashboard.workFromHome', 'Praca zdalna (Home Office)')}</option>
+                            <option value="EARLY_EXIT">{t('dashboard.quick.earlyExit', 'Wcześniejsze wyjście')}</option>
+                            <option value="OVERTIME_EARN">{t('requests.overtimeEarn', 'Zgłoszenie nadgodzin')}</option>
+                            <option value="OVERTIME_TAKE">{t('dashboard.quick.overtime', 'Odbiór nadgodzin')}</option>
                         </select>
                     </label>
 
                     {(formData.type === 'EARLY_EXIT' || formData.type === 'OVERTIME_EARN' || formData.type === 'OVERTIME_TAKE') && (
                         <label className="field">
-                            <span className="field-label">Liczba godzin</span>
+                            <span className="field-label">{t('requests.hoursCount', 'Liczba godzin')}</span>
                             <input
                                 className="field-input"
                                 type="number"
@@ -139,7 +141,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
 
                     {isSingleDateType ? (
                         <label className="field" style={{ gridColumn: 'span 2' }}>
-                            <span className="field-label">Data</span>
+                            <span className="field-label">{t('requests.date', 'Data')}</span>
                             <input
                                 className="field-input"
                                 type="date"
@@ -152,7 +154,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
                     ) : (
                         <div className="field-row" style={{ gridColumn: 'span 2' }}>
                             <label className="field field-flex">
-                                <span className="field-label">Od</span>
+                                <span className="field-label">{t('requests.dateFrom', 'Od')}</span>
                                 <input
                                     className="field-input"
                                     type="date"
@@ -163,7 +165,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
                                 />
                             </label>
                             <label className="field field-flex">
-                                <span className="field-label">Do</span>
+                                <span className="field-label">{t('requests.dateTo', 'Do')}</span>
                                 <input
                                     className="field-input"
                                     type="date"
@@ -177,7 +179,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
                     )}
 
                     <label className="field field-full-width">
-                        <span className="field-label">Powód (opcjonalnie)</span>
+                        <span className="field-label">{t('requests.reasonOptional', 'Powód (opcjonalnie)')}</span>
                         <textarea
                             className="field-input textarea-input"
                             name="reason"
@@ -194,10 +196,10 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
                         className="btn-submit-size"
                         disabled={loading}
                     >
-                        {loading ? 'Wysyłanie...' : (
+                        {loading ? t('common.sending', 'Wysyłanie...') : (
                             <>
                                 <PlusCircle size={18} />
-                                <span>Wyślij</span>
+                                <span>{t('common.submit', 'Wyślij')}</span>
                             </>
                         )}
                     </Button>
@@ -206,7 +208,7 @@ const RequestForm = ({ onCancel, onSuccess, initialData, oldApplicationId }) => 
                         className="action-btn btn-cancel-custom"
                         onClick={onCancel}
                     >
-                        Anuluj
+                        {t('common.cancel', 'Anuluj')}
                     </button>
                 </div>
             </form>

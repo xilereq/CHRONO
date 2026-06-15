@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Clock, CalendarClock } from 'lucide-react';
+import { User, Clock, CalendarClock, DoorOpen } from 'lucide-react'; // Dodano DoorOpen
 import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '../../components';
 import ScheduleChangeForm from "./ScheduleChangeForm";
@@ -10,29 +10,57 @@ export default function QuickRequests() {
     const { t } = useLanguage();
     const [showScheduleForm, setShowScheduleForm] = useState(false);
 
+    const actionBtnStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem 0.5rem',
+        gap: '8px',
+        height: '100%',
+        textAlign: 'center',
+        lineHeight: '1.2'
+    };
+
     return (
         <Card title={t('dashboard.quickRequestsTitle', 'SZYBKIE AKCJE')}>
-            <div className="quick-requests-list">
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
 
                 <Button
-                    className="btn-large"
+                    className="btn-outline-rounded"
+                    style={actionBtnStyle}
                     onClick={() => navigate('/requests', { state: { openForm: true, prefillType: 'HOLIDAY_LEAVE' } })}
                 >
-                    <User size={20} /> {t('dashboard.leaveRequestBtn', 'ZŁÓŻ WNIOSEK URLOPOWY')}
+                    <User size={24} />
+                    <span style={{ fontSize: '0.85rem' }}>{t('dashboard.quick.leave', 'Urlop')}</span>
                 </Button>
 
                 <Button
-                    className="btn-large"
+                    className="btn-outline-rounded"
+                    style={actionBtnStyle}
                     onClick={() => navigate('/requests', { state: { openForm: true, prefillType: 'OVERTIME_TAKE' } })}
                 >
-                    <Clock size={20} /> {t('dashboard.overtimeTakeBtn', 'ODBIERZ NADGODZINY')}
+                    <Clock size={24} />
+                    <span style={{ fontSize: '0.85rem' }}>{t('dashboard.quick.overtime', 'Odbiór godzin')}</span>
                 </Button>
 
                 <Button
-                    className="btn-large"
+                    className="btn-outline-rounded"
+                    style={actionBtnStyle}
+                    onClick={() => navigate('/requests', { state: { openForm: true, prefillType: 'EARLY_EXIT' } })}
+                >
+                    <DoorOpen size={24} />
+                    <span style={{ fontSize: '0.85rem' }}>{t('dashboard.quick.earlyExit', 'Wyjście prywatne')}</span>
+                </Button>
+
+                <Button
+                    className="btn-outline-rounded"
+                    style={actionBtnStyle}
                     onClick={() => setShowScheduleForm(!showScheduleForm)}
                 >
-                    <CalendarClock size={20} /> {t('dashboard.scheduleChangeBtn', 'KOREKCJA CZASU PRACY')}
+                    <CalendarClock size={24} />
+                    <span style={{ fontSize: '0.85rem' }}>{t('dashboard.quick.schedule', 'Korekta czasu')}</span>
                 </Button>
 
             </div>
