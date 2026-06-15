@@ -49,7 +49,9 @@ public class HolidayService {
 
   @Transactional(readOnly = true)
   public boolean isHoliday(LocalDate date) {
-    return holidayRepository.existsByDateOrYearly(date);
+    int month = date.getMonthValue();
+    int day = date.getDayOfMonth();
+    return holidayRepository.existsByDateOrYearly(date, month, day);
   }
 }
 

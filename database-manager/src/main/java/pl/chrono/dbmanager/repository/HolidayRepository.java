@@ -11,9 +11,8 @@ import java.util.Set;
 
 @Repository
 public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
-  @Query("SELECT COUNT(h) > 0 FROM Holiday h WHERE h.date = :date OR (h.occursYearly = true AND " +
-      "MONTH(h.date) = MONTH(:date) AND DAY(h.date) = DAY(:date))")
-  boolean existsByDateOrYearly(@Param("date") LocalDate date);
+  @Query("SELECT COUNT(h) > 0 FROM Holiday h WHERE h.date = :date OR (h.occursYearly = true AND MONTH(h.date) = :month AND DAY(h.date) = :day)")
+  boolean existsByDateOrYearly(@Param("date") LocalDate date, @Param("month") int month, @Param("day") int day);
 
   @Query("SELECT h.date FROM Holiday h WHERE h.date BETWEEN :start AND :end OR h.occursYearly = true")
   Set<LocalDate> findHolidayDatesBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);

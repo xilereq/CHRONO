@@ -23,8 +23,8 @@ class HolidayRepositoryTest {
     persistHoliday(LocalDate.of(2026, 5, 1), false);
     em.flush();
 
-    boolean exists = repository.existsByDateOrYearly(LocalDate.of(2026, 5, 1));
-    boolean notExists = repository.existsByDateOrYearly(LocalDate.of(2026, 5, 2));
+    boolean exists = repository.existsByDateOrYearly(LocalDate.of(2026, 5, 1), 5, 1);
+    boolean notExists = repository.existsByDateOrYearly(LocalDate.of(2026, 5, 2), 5, 2);
 
     assertThat(exists).isTrue();
     assertThat(notExists).isFalse();
@@ -35,9 +35,9 @@ class HolidayRepositoryTest {
     persistHoliday(LocalDate.of(2025, 12, 25), true);
     em.flush();
 
-    boolean exists2026 = repository.existsByDateOrYearly(LocalDate.of(2026, 12, 25));
-    boolean exists2027 = repository.existsByDateOrYearly(LocalDate.of(2027, 12, 25));
-    boolean notExists = repository.existsByDateOrYearly(LocalDate.of(2026, 12, 24));
+    boolean exists2026 = repository.existsByDateOrYearly(LocalDate.of(2026, 12, 25), 12, 25);
+    boolean exists2027 = repository.existsByDateOrYearly(LocalDate.of(2027, 12, 25), 12, 25);
+    boolean notExists = repository.existsByDateOrYearly(LocalDate.of(2026, 12, 24), 12, 24);
 
     assertThat(exists2026).isTrue();
     assertThat(exists2027).isTrue();

@@ -124,22 +124,22 @@ class HolidayServiceTest {
   @Test
   void isHolidayTrueTest() {
     LocalDate date = LocalDate.of(2026, 5, 1);
-    when(holidayRepository.existsByDateOrYearly(date)).thenReturn(true);
+    when(holidayRepository.existsByDateOrYearly(date, 5, 1)).thenReturn(true);
 
     boolean result = holidayService.isHoliday(date);
 
     assertTrue(result);
-    verify(holidayRepository).existsByDateOrYearly(date);
+    verify(holidayRepository).existsByDateOrYearly(date, 5, 1);
   }
 
   @Test
   void isHolidayFalseTest() {
     LocalDate date = LocalDate.of(2026, 5, 2);
-    when(holidayRepository.existsByDateOrYearly(date)).thenReturn(false);
+    when(holidayRepository.existsByDateOrYearly(date, 5, 2)).thenReturn(false);
 
     boolean result = holidayService.isHoliday(date);
 
     assertFalse(result);
-    verify(holidayRepository).existsByDateOrYearly(date);
+    verify(holidayRepository).existsByDateOrYearly(date, 5, 2);
   }
 }
