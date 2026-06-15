@@ -1,6 +1,7 @@
 package pl.chrono.timemanager.service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -22,6 +24,7 @@ import pl.chrono.dbmanager.repository.PolicyRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.UsersPolicyRepository;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
+import pl.chrono.timemanager.dto.request.MassAssignPolicyRequest;
 import pl.chrono.timemanager.exception.PolicyException;
 
 @ExtendWith(MockitoExtension.class)
@@ -179,5 +182,40 @@ class PolicyManagementServiceTest {
 
     assertEquals(newPolicy, createdNew.getPolicy());
     assertEquals(startDate, createdNew.getValidFrom());
+  }
+
+  @Test
+  void assignPolicyToUsersSuccessTest() {
+    Integer policyId = 2;
+    LocalDate startDate = LocalDate.now().plusDays(1);
+    MassAssignPolicyRequest request = new MassAssignPolicyRequest(policyId, List.of(1, 2), startDate);
+
+    Policy newPolicy = new Policy();
+    newPolicy.setPolicyId(policyId);
+    User user1 = new User();
+    User user2 = new User();
+
+    when(policyRepository.findById(policyId)).thenReturn(Optional.of(newPolicy));
+
+    when(usersPolicyRepository.findActiveByUserId(1)).thenReturn(Optional.empty());
+    when(usersPolicyRepository.findActiveByUserId(2)).thenReturn(Optional.empty());
+
+    when(userRepository.getReferenceById(1)).thenReturn(user1);
+    when(userRepository.getReferenceById(2)).thenReturn(user2);
+
+    policyManagementService.assignPolicyToUsersBulk(request);
+
+    verify(usersPolicyRepository, times(2)).save(any(UsersPolicy.class));
+  }
+
+  @Test
+  void assignPolicyToUsersBulkEmptyListTest() {
+    Integer policyId = 2;
+    LocalDate startDate = LocalDate.now().plusDays(1);
+    MassAssignPolicyRequest request = new MassAssignPolicyRequest(policyId, List.of(), startDate);
+
+    policyManagementService.assignPolicyToUsersBulk(request);
+
+    verifyNoInteractions(policyRepository, usersPolicyRepository, userRepository);
   }
 }

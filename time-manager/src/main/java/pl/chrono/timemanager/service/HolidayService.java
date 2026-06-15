@@ -44,7 +44,6 @@ public class HolidayService {
   public void deleteHoliday(Integer holidayId) {
     holidayPolicyRepository.deleteByHolidayId(holidayId);
 
-    // Potem usuwamy główne święto
     holidayRepository.deleteByIdDirectly(holidayId);
   }
 

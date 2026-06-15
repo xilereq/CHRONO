@@ -1,17 +1,14 @@
 package pl.chrono.timemanager.service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
-import pl.chrono.dbmanager.repository.HolidayRepository;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor

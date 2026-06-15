@@ -48,10 +48,8 @@ public class WorkLogRequestService {
     Policy policy = employee.getPolicyForDate(targetDate);
     long requestedSeconds = Duration.between(proposedStart, proposedEnd).getSeconds();
 
-    if (policy != null) {
-      if (requestedSeconds > policy.getMaxAllowedSeconds()) {
-        throw new WorkLogRequestException.DailyLimitExceeded(policy.getMaxDailyHours());
-      }
+    if (policy != null && requestedSeconds > policy.getMaxAllowedSeconds()) {
+      throw new WorkLogRequestException.DailyLimitExceeded(policy.getMaxDailyHours());
     }
 
     int requiredSeconds = workTimeCalculationService.getAdjustedRequiredSeconds(

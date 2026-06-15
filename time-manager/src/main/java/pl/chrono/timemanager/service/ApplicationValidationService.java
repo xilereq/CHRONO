@@ -1,5 +1,6 @@
 package pl.chrono.timemanager.service;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,8 +10,6 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.exception.ApplicationValidationException;
 import pl.chrono.timemanager.exception.UserException;
-
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor

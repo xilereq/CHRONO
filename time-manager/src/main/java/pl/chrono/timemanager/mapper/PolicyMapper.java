@@ -1,15 +1,15 @@
 package pl.chrono.timemanager.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import pl.chrono.dbmanager.model.Policy;
-import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
-import pl.chrono.timemanager.dto.response.PolicyDto;
 import java.time.DayOfWeek;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import pl.chrono.dbmanager.model.Policy;
+import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
+import pl.chrono.timemanager.dto.response.PolicyDto;
 
 @Mapper(componentModel = "spring")
 public interface PolicyMapper {

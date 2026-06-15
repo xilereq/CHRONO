@@ -16,7 +16,6 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
-import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @Service
