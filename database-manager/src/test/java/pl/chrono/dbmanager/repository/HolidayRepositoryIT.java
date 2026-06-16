@@ -10,7 +10,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import pl.chrono.dbmanager.model.Holiday;
 
 @DataJpaTest
-class HolidayRepositoryTest {
+class HolidayRepositoryIT {
 
   @Autowired
   private TestEntityManager em;

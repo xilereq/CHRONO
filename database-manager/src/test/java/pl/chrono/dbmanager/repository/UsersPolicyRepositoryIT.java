@@ -13,7 +13,7 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.UsersPolicy;
 
 @DataJpaTest
-class UsersPolicyRepositoryTest {
+class UsersPolicyRepositoryIT {
 
   @Autowired
   private TestEntityManager em;

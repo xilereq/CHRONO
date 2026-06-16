@@ -14,7 +14,7 @@ import pl.chrono.dbmanager.model.HolidayPolicy;
 import pl.chrono.dbmanager.model.Policy;
 
 @DataJpaTest
-class HolidayPolicyRepositoryTest {
+class HolidayPolicyRepositoryIT {
 
   @Autowired
   private TestEntityManager em;

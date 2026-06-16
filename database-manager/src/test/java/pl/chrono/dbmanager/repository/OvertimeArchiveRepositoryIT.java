@@ -19,7 +19,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 
 @DataJpaTest
-class OvertimeArchiveRepositoryTest {
+class OvertimeArchiveRepositoryIT {
 
   @Autowired
   private TestEntityManager em;

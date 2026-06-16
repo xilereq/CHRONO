@@ -14,7 +14,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 
 @DataJpaTest
-class ApplicationRepositoryTest {
+class ApplicationRepositoryIT {
 
   @Autowired
   private TestEntityManager em;

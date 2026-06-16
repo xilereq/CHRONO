@@ -14,7 +14,7 @@ import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
 
 @DataJpaTest
-class UserRepositoryTest {
+class UserRepositoryIT {
 
   @Autowired
   private TestEntityManager em;

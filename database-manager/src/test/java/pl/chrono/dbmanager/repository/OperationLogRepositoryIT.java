@@ -10,7 +10,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import pl.chrono.dbmanager.model.OperationLog;
 
 @DataJpaTest
-class OperationLogRepositoryTest {
+class OperationLogRepositoryIT {
 
   @Autowired
   private TestEntityManager em;
