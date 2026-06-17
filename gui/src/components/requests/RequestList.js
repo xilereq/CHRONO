@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { RequestCard, RequestForm, Button } from '../../components';
 import { applicationService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import './requests.css';
 
 const RequestList = () => {
+    const { t } = useLanguage();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -62,11 +64,11 @@ const RequestList = () => {
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                 >
-                    <option value="">Status</option>
-                    <option value="APPROVED">Zatwierdzony</option>
-                    <option value="PENDING">Weryfikacja</option>
-                    <option value="REJECTED">Odrzucony</option>
-                    <option value="CANCELLED">Anulowany</option>
+                    <option value="">{t('requests.status', 'Status')}</option>
+                    <option value="APPROVED">{t('requests.approved', 'Zatwierdzony')}</option>
+                    <option value="PENDING">{t('requests.pending', 'Oczekujący')}</option>
+                    <option value="REJECTED">{t('requests.rejected', 'Odrzucony')}</option>
+                    <option value="CANCELLED">{t('requests.cancelled', 'Anulowany')}</option>
                 </select>
 
                 <select
@@ -74,13 +76,13 @@ const RequestList = () => {
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                 >
-                    <option value="">Typ</option>
-                    <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
-                    <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
-                    <option value="HOME_OFFICE">Praca zdalna (HO)</option>
-                    <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
-                    <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
-                    <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
+                    <option value="">{t('requests.requestType', 'Typ')}</option>
+                    <option value="HOLIDAY_LEAVE">{t('requests.types.holiday', 'Urlop wypoczynkowy')}</option>
+                    <option value="SICK_LEAVE">{t('requests.types.sick', 'Zwolnienie lekarskie')}</option>
+                    <option value="HOME_OFFICE">{t('reports.homeOffice', 'Praca zdalna (HO)')}</option>
+                    <option value="EARLY_EXIT">{t('requests.types.earlyExit', 'Wcześniejsze wyjście')}</option>
+                    <option value="OVERTIME_EARN">{t('requests.types.overtimeEarn', 'Zgłoszenie nadgodzin')}</option>
+                    <option value="OVERTIME_TAKE">{t('requests.types.overtimeTake', 'Odbiór nadgodzin')}</option>
                 </select>
 
                 <div className="filters-date-row">
@@ -106,23 +108,23 @@ const RequestList = () => {
             </div>
 
             <div className="section-panel">
-                <div className="section-title">Lista moich wniosków</div>
+                <div className="section-title">{t('requests.myRequestsList', 'Lista moich wniosków')}</div>
                 {loading ? (
-                    <div className="empty">Ładowanie danych z serwera...</div>
-                ) : !filteredRequests || filteredRequests.length === 0 ? ( // Użyto filteredRequests
-                    <div className="empty">Brak wniosków spełniających kryteria.</div>
+                    <div className="empty">{t('requests.loadingList', 'Ładowanie danych z serwera...')}</div>
+                ) : !filteredRequests || filteredRequests.length === 0 ? (
+                    <div className="empty">{t('requests.noFilteredRequests', 'Brak wniosków spełniających kryteria.')}</div>
                 ) : (
                     <div className="requests-table-container">
                         <table className="requests-table">
                             <thead>
                             <tr>
-                                <th>Typ Wniosku</th>
-                                <th>Okres / Data</th>
-                                <th className="col-hide-mobile">Liczba Dni/Godz.</th>
-                                <th className="col-hide-mobile">Data Złożenia</th>
-                                <th>Status</th>
-                                <th>Zatwierdzający</th>
-                                <th>Akcje</th>
+                                <th>{t('requests.typeColumn', 'Typ Wniosku')}</th>
+                                <th>{t('requests.periodColumn', 'Okres / Data')}</th>
+                                <th className="col-hide-mobile">{t('requests.durationColumn', 'Liczba Dni/Godz.')}</th>
+                                <th className="col-hide-mobile">{t('requests.submitDateColumn', 'Data Złożenia')}</th>
+                                <th>{t('requests.status', 'Status')}</th>
+                                <th>{t('requests.approverColumn', 'Zatwierdzający')}</th>
+                                <th>{t('requests.actionsColumn', 'Akcje')}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -181,7 +183,7 @@ const RequestList = () => {
                         variant="primary"
                         onClick={() => setShowForm(true)}
                     >
-                        Utwórz wniosek
+                        {t('requests.newRequestBtn', 'Utwórz wniosek')}
                     </Button>
                 </div>
             )}

@@ -1,45 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { applicationService, userService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../components/requests/requests.css';
 import './ApprovalList.css';
 
-const translateType = (type) => {
-    switch (type) {
-        case 'HOLIDAY_LEAVE':  return 'Urlop wypoczynkowy';
-        case 'SICK_LEAVE':     return 'Zwolnienie lekarskie';
-        case 'EARLY_EXIT':     return 'Wcześniejsze wyjście';
-        case 'OVERTIME_EARN':  return 'Zgłoszenie nadgodzin';
-        case 'OVERTIME_TAKE':  return 'Odbiór nadgodzin';
-        case 'HOME_OFFICE':    return 'Praca zdalna (HO)';
-        default:               return type || 'Inny';
-    }
-};
-
-const translateStatus = (status) => {
-    switch (status) {
-        case 'APPROVED':   return 'Zatwierdzony';
-        case 'PENDING':    return 'Oczekujący';
-        case 'REJECTED':   return 'Odrzucony';
-        case 'CANCELLED':  return 'Anulowany';
-        default:           return status || '-';
-    }
-};
-
 const HOURLY_TYPES = ['EARLY_EXIT', 'OVERTIME_EARN', 'OVERTIME_TAKE'];
 
-const getDuration = (request) => {
-    if (HOURLY_TYPES.includes(request.type)) {
-        if (!request.durationSeconds) return '-';
-        return `${Math.round(request.durationSeconds / 3600)} godz.`;
-    }
-    if (!request.startDate || !request.endDate) return '-';
-    const start = new Date(request.startDate);
-    const end   = new Date(request.endDate);
-    const days  = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    return `${days} dni`;
-};
-
 const ApprovalList = () => {
+    const { t } = useLanguage();
     const [userRole, setUserRole]               = useState(null);
     const [pendingRequests, setPendingRequests] = useState([]);
     const [loading, setLoading]                 = useState(true);
@@ -125,7 +93,7 @@ const ApprovalList = () => {
             setActionReason('');
             loadRequests();
         } catch {
-            alert('Nie udało się zmienić statusu wniosku.');
+            alert(t('approvals.statusError', 'Nie udało się zmienić statusu wniosku.'));
         } finally {
             setProcessingId(null);
         }
@@ -134,6 +102,34 @@ const ApprovalList = () => {
     const handlePageChange = (page) => {
         setCurrentPage(page);
         setActiveAction({ id: null, type: null });
+    };
+
+    const typeLabels = {
+        HOLIDAY_LEAVE: t('requests.types.holiday', 'Urlop wypoczynkowy'),
+        SICK_LEAVE:    t('requests.types.sick', 'Zwolnienie lekarskie'),
+        EARLY_EXIT:    t('requests.types.earlyExit', 'Wcześniejsze wyjście'),
+        OVERTIME_EARN: t('requests.types.overtimeEarn', 'Zgłoszenie nadgodzin'),
+        OVERTIME_TAKE: t('requests.types.overtimeTake', 'Odbiór nadgodzin'),
+        HOME_OFFICE:   t('reports.homeOffice', 'Praca zdalna (HO)'),
+    };
+
+    const statusLabels = {
+        APPROVED:  t('requests.approved', 'Zatwierdzony'),
+        PENDING:   t('requests.pending', 'Oczekujący'),
+        REJECTED:  t('requests.rejected', 'Odrzucony'),
+        CANCELLED: t('requests.cancelled', 'Anulowany'),
+    };
+
+    const getDuration = (request) => {
+        if (HOURLY_TYPES.includes(request.type)) {
+            if (!request.durationSeconds) return '-';
+            return `${Math.round(request.durationSeconds / 3600)} ${t('manager.hoursCountLabel', 'godz.')}`;
+        }
+        if (!request.startDate || !request.endDate) return '-';
+        const start = new Date(request.startDate);
+        const end   = new Date(request.endDate);
+        const days  = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        return `${days} ${t('reports.daysUnit', 'dni')}`;
     };
 
     const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
@@ -145,7 +141,7 @@ const ApprovalList = () => {
     const colSpan   = userRole === 'ADMIN' ? 7 : 6;
 
     if (!userRole || loading) {
-        return <div className="table-empty-cell">Ładowanie wniosków...</div>;
+        return <div className="table-empty-cell">{t('approvals.loadingApprovals', 'Ładowanie wniosków...')}</div>;
     }
 
     return (
@@ -153,25 +149,25 @@ const ApprovalList = () => {
 
             <div className="section-panel filters-bar">
                 <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
-                    <option value="">Typ</option>
-                    <option value="HOLIDAY_LEAVE">Urlop wypoczynkowy</option>
-                    <option value="SICK_LEAVE">Zwolnienie lekarskie</option>
-                    <option value="HOME_OFFICE">Praca zdalna (HO)</option>
-                    <option value="EARLY_EXIT">Wcześniejsze wyjście</option>
-                    <option value="OVERTIME_EARN">Zgłoszenie nadgodzin</option>
-                    <option value="OVERTIME_TAKE">Odbiór nadgodzin</option>
+                    <option value="">{t('requests.requestType', 'Typ')}</option>
+                    <option value="HOLIDAY_LEAVE">{t('requests.types.holiday', 'Urlop wypoczynkowy')}</option>
+                    <option value="SICK_LEAVE">{t('requests.types.sick', 'Zwolnienie lekarskie')}</option>
+                    <option value="HOME_OFFICE">{t('reports.homeOffice', 'Praca zdalna (HO)')}</option>
+                    <option value="EARLY_EXIT">{t('requests.types.earlyExit', 'Wcześniejsze wyjście')}</option>
+                    <option value="OVERTIME_EARN">{t('requests.types.overtimeEarn', 'Zgłoszenie nadgodzin')}</option>
+                    <option value="OVERTIME_TAKE">{t('requests.types.overtimeTake', 'Odbiór nadgodzin')}</option>
                 </select>
 
                 <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                    <option value="">Status</option>
-                    <option value="PENDING">Oczekujący</option>
-                    <option value="APPROVED">Zatwierdzony</option>
-                    <option value="REJECTED">Odrzucony</option>
-                    <option value="CANCELLED">Anulowany</option>
+                    <option value="">{t('requests.status', 'Status')}</option>
+                    <option value="PENDING">{t('requests.pending', 'Oczekujący')}</option>
+                    <option value="APPROVED">{t('requests.approved', 'Zatwierdzony')}</option>
+                    <option value="REJECTED">{t('requests.rejected', 'Odrzucony')}</option>
+                    <option value="CANCELLED">{t('requests.cancelled', 'Anulowany')}</option>
                 </select>
 
                 <select className="filter-select" value={filterEmployeeId} onChange={e => setFilterEmployeeId(e.target.value)}>
-                    <option value="">Pracownik</option>
+                    <option value="">{t('approvals.employeeColumn', 'Pracownik')}</option>
                     {employees.map(emp => (
                         <option key={emp.id} value={String(emp.id)}>{emp.email}</option>
                     ))}
@@ -201,7 +197,7 @@ const ApprovalList = () => {
 
             <div className="section-panel">
                 <div className="section-title">
-                    {userRole === 'MANAGER' ? 'Wnioski pracownicze' : 'Wnioski w systemie'}
+                    {userRole === 'MANAGER' ? t('approvals.employeeRequestsTitle', 'Wnioski pracownicze') : t('approvals.systemRequestsTitle', 'Wnioski w systemie')}
                     {filteredRequests.length !== pendingRequests.length && (
                         <span style={{ fontWeight: 400, fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '0.75rem' }}>
                             ({filteredRequests.length} z {pendingRequests.length})
@@ -210,26 +206,26 @@ const ApprovalList = () => {
                 </div>
 
                 {filteredRequests.length === 0 ? (
-                    <div className="table-empty-cell">Brak wniosków spełniających kryteria.</div>
+                    <div className="table-empty-cell">{t('approvals.noApprovals', 'Brak wniosków spełniających kryteria.')}</div>
                 ) : (
                     <div className="requests-table-container">
                         <table className="requests-table">
                             <thead>
                                 <tr>
-                                    <th>Typ wniosku</th>
-                                    <th>Okres / Data</th>
-                                    <th className="col-hide-mobile">Czas trwania</th>
-                                    <th className="col-hide-mobile">Powód</th>
-                                    <th>Pracownik</th>
-                                    {userRole === 'ADMIN' && <th>Status</th>}
-                                    <th>Akcje</th>
+                                    <th>{t('approvals.typeColumn', 'Typ wniosku')}</th>
+                                    <th>{t('requests.periodColumn', 'Okres / Data')}</th>
+                                    <th className="col-hide-mobile">{t('approvals.durationColumn', 'Czas trwania')}</th>
+                                    <th className="col-hide-mobile">{t('approvals.reasonColumn', 'Powód')}</th>
+                                    <th>{t('approvals.employeeColumn', 'Pracownik')}</th>
+                                    {userRole === 'ADMIN' && <th>{t('approvals.statusColumn', 'Status')}</th>}
+                                    <th>{t('approvals.actionsColumn', 'Akcje')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {pageItems.map(r => (
                                     <React.Fragment key={r.id}>
                                         <tr>
-                                            <td className="request-card-title-cell">{translateType(r.type)}</td>
+                                            <td className="request-card-title-cell">{typeLabels[r.type] || r.type || '-'}</td>
                                             <td>{r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ''}</td>
                                             <td className="col-hide-mobile">{getDuration(r)}</td>
                                             <td className="col-hide-mobile">{r.reason || '-'}</td>
@@ -238,7 +234,7 @@ const ApprovalList = () => {
                                             {userRole === 'ADMIN' && (
                                                 <td>
                                                     <span className={`status-dot ${r.status}`} style={{ marginRight: '6px' }} />
-                                                    {translateStatus(r.status)}
+                                                    {statusLabels[r.status] || r.status || '-'}
                                                 </td>
                                             )}
 
@@ -249,13 +245,13 @@ const ApprovalList = () => {
                                                             className="action-btn action-btn-approve"
                                                             onClick={() => initiateAction(r.id, 'APPROVED')}
                                                         >
-                                                            Zatwierdź
+                                                            {t('approvals.approve', 'Zatwierdź')}
                                                         </button>
                                                         <button
                                                             className="action-btn action-btn-reject"
                                                             onClick={() => initiateAction(r.id, 'REJECTED')}
                                                         >
-                                                            Odrzuć
+                                                            {t('approvals.reject', 'Odrzuć')}
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -270,15 +266,15 @@ const ApprovalList = () => {
                                                     <div className="action-panel-container">
                                                         <span className={`action-panel-label ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                             {activeAction.type === 'APPROVED'
-                                                                ? 'Uwagi do akceptacji (opcjonalne):'
-                                                                : 'Powód odrzucenia (opcjonalne):'}
+                                                                ? t('approvals.approveNotesLabel', 'Uwagi do akceptacji (opcjonalne):')
+                                                                : t('approvals.rejectNotesLabel', 'Powód odrzucenia (opcjonalne):')}
                                                         </span>
                                                         <input
                                                             type="text"
                                                             className="field-input action-panel-input"
                                                             value={actionReason}
                                                             onChange={(e) => setActionReason(e.target.value)}
-                                                            placeholder="Wpisz tutaj..."
+                                                            placeholder={t('approvals.inputPlaceholder', 'Wpisz tutaj...')}
                                                             autoFocus
                                                         />
                                                         <button
@@ -286,14 +282,14 @@ const ApprovalList = () => {
                                                             onClick={submitAction}
                                                             disabled={processingId === r.id}
                                                         >
-                                                            {processingId === r.id ? 'Zapisywanie...' : 'Potwierdź'}
+                                                            {processingId === r.id ? t('common.saving', 'Zapisywanie...') : t('approvals.confirmBtn', 'Potwierdź')}
                                                         </button>
                                                         <button
                                                             className="action-panel-btn-cancel"
                                                             onClick={() => setActiveAction({ id: null, type: null })}
                                                             disabled={processingId === r.id}
                                                         >
-                                                            Anuluj
+                                                            {t('common.cancel', 'Anuluj')}
                                                         </button>
                                                     </div>
                                                 </td>

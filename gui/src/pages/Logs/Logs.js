@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { logService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../components/requests/requests.css';
 import '../main.css';
 import './Logs.css';
 
 const Logs = () => {
+    const { t } = useLanguage();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -80,7 +82,7 @@ const Logs = () => {
 
     return (
         <div className="requests-container">
-            <h2 className="dashboard-title">Logi systemowe</h2>
+            <h2 className="dashboard-title">{t('logs.title', 'Logi systemowe')}</h2>
 
             <div className="section-panel filters-bar">
                 <select
@@ -88,7 +90,7 @@ const Logs = () => {
                     value={filterAction}
                     onChange={(e) => setFilterAction(e.target.value)}
                 >
-                    <option value="">Wszystkie akcje</option>
+                    <option value="">{t('logs.allActions', 'Wszystkie akcje')}</option>
                     {uniqueActions.map(action => (
                         <option key={action} value={action}>{action}</option>
                     ))}
@@ -99,7 +101,7 @@ const Logs = () => {
                     value={filterEmail}
                     onChange={(e) => setFilterEmail(e.target.value)}
                 >
-                    <option value="">Wszyscy użytkownicy</option>
+                    <option value="">{t('logs.allUsers', 'Wszyscy użytkownicy')}</option>
                     {uniqueEmails.map(email => (
                         <option key={email} value={email}>{email}</option>
                     ))}
@@ -111,7 +113,7 @@ const Logs = () => {
                         className="filter-input"
                         value={filterDate}
                         onChange={(e) => setFilterDate(e.target.value)}
-                        title="Filtruj po dacie"
+                        title={t('logs.filterByDate', 'Filtruj po dacie')}
                     />
                     <input
                         type="time"
@@ -123,7 +125,7 @@ const Logs = () => {
                             setFilterTimeFrom(val);
                             if (filterTimeTo && val > filterTimeTo) setFilterTimeTo('');
                         }}
-                        title="Godzina od"
+                        title={t('logs.timeFrom', 'Godzina od')}
                     />
                     <input
                         type="time"
@@ -134,7 +136,7 @@ const Logs = () => {
                             const val = e.target.value;
                             if (!filterTimeFrom || val >= filterTimeFrom) setFilterTimeTo(val);
                         }}
-                        title="Godzina do"
+                        title={t('logs.timeTo', 'Godzina do')}
                     />
                 </div>
 
@@ -143,25 +145,25 @@ const Logs = () => {
                     onClick={handleClearFilters}
                     style={{ height: '40px', padding: '0 1.5rem', fontWeight: '500' }}
                 >
-                    Wyczyść filtry
+                    {t('logs.clearFilters', 'Wyczyść filtry')}
                 </button>
             </div>
 
             <div className="section-panel">
                 {loading ? (
-                    <div className="empty">Pobieranie logów...</div>
+                    <div className="empty">{t('logs.loading', 'Pobieranie logów...')}</div>
                 ) : filteredLogs.length === 0 ? (
-                    <div className="empty">Brak logów spełniających kryteria.</div>
+                    <div className="empty">{t('logs.noLogsFiltered', 'Brak logów spełniających kryteria.')}</div>
                 ) : (
                     <div className="requests-table-container logs-table-scroll">
                         <table className="requests-table">
                             <thead>
                             <tr>
-                                <th className="log-hide-mobile">ID</th>
-                                <th>Data i czas</th>
-                                <th>Użytkownik</th>
-                                <th>Akcja</th>
-                                <th className="log-hide-mobile">Szczegóły</th>
+                                <th className="log-hide-mobile">{t('logs.idColumn', 'ID')}</th>
+                                <th>{t('logs.dateTimeColumn', 'Data i czas')}</th>
+                                <th>{t('logs.user', 'Użytkownik')}</th>
+                                <th>{t('logs.action', 'Akcja')}</th>
+                                <th className="log-hide-mobile">{t('logs.details', 'Szczegóły')}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -169,7 +171,7 @@ const Logs = () => {
                                 <tr key={log.logID}>
                                     <td className="log-hide-mobile" style={{ fontWeight: 600 }}>#{log.logID}</td>
                                     <td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(log.timestamp)}</td>
-                                    <td className="log-user-email">{log.userEmail || 'Brak danych'}</td>
+                                    <td className="log-user-email">{log.userEmail || t('logs.noData', 'Brak danych')}</td>
                                     <td className="log-action">{log.action}</td>
                                     <td className="log-hide-mobile">{log.details}</td>
                                 </tr>

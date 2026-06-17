@@ -71,7 +71,7 @@ const RecentRequests = () => {
                             <td>{translateType(req.type)}</td>
                             <td>{req.creationDateTime ? new Date(req.creationDateTime).toLocaleDateString(t('common.locale', 'pl-PL')) : '-'}</td>
                             <td>{req.startDate} - {req.endDate}</td>
-                            <td><Badge status={translateStatus(req.status)} /></td>
+                            <td><Badge status={req.status} label={translateStatus(req.status)} /></td>
                         </tr>
                     ))
                 )}

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { authService } from '../../services';
 import { Eye, EyeOff } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../pages/Login/Login.css';
 
 const ChangePasswordModal = ({ onPasswordChanged }) => {
+    const { t } = useLanguage();
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,15 +20,15 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
         setError('');
 
         if (newPassword !== confirmPassword) {
-            setError('Nowe hasła nie są zgodne.');
+            setError(t('changePasswordModal.newPasswordsMismatch', 'Nowe hasła nie są zgodne.'));
             return;
         }
         if (newPassword.length < 8) {
-            setError('Nowe hasło musi mieć co najmniej 8 znaków.');
+            setError(t('changePasswordModal.passwordMin', 'Nowe hasło musi mieć co najmniej 8 znaków.'));
             return;
         }
         if (newPassword === oldPassword) {
-            setError('Nowe hasło nie może być takie samo jak tymczasowe.');
+            setError(t('changePasswordModal.passwordSameAsTemp', 'Nowe hasło nie może być takie samo jak tymczasowe.'));
             return;
         }
 
@@ -35,7 +37,7 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
             await authService.changeFirstPassword(oldPassword, newPassword);
             onPasswordChanged();
         } catch (err) {
-            setError(err.message || 'Nie udało się zmienić hasła.');
+            setError(err.message || t('changePasswordModal.changeError', 'Nie udało się zmienić hasła.'));
         } finally {
             setLoading(false);
         }
@@ -53,9 +55,9 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                     </div>
                 </div>
 
-                <h1 className="login-title">Ustaw nowe hasło</h1>
+                <h1 className="login-title">{t('changePasswordModal.firstLoginTitle', 'Ustaw nowe hasło')}</h1>
                 <p className="login-subtitle">
-                    To Twoje pierwsze logowanie. Zmień tymczasowe hasło, aby kontynuować.
+                    {t('changePasswordModal.firstLoginSubtitle', 'To Twoje pierwsze logowanie. Zmień tymczasowe hasło, aby kontynuować.')}
                 </p>
 
                 {error && <div className="login-error" role="alert">{error}</div>}
@@ -63,7 +65,7 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                 <form className="login-form" onSubmit={handleSubmit} noValidate>
 
                     <label className="field">
-                        <span className="field-label">Nowe hasło</span>
+                        <span className="field-label">{t('changePasswordModal.newPasswordLabel', 'Nowe hasło')}</span>
                         <div className="password-wrapper">
                             <input
                                 className="field-input"
@@ -71,17 +73,17 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 autoComplete="new-password"
-                                placeholder="Minimum 8 znaków"
+                                placeholder={t('changePasswordModal.placeholderMin8', 'Minimum 8 znaków')}
                                 required
                             />
-                            <button type="button" className="password-toggle" onClick={() => setShowNew(v => !v)} aria-label={showNew ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                            <button type="button" className="password-toggle" onClick={() => setShowNew(v => !v)} aria-label={showNew ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}>
                                 {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
                     </label>
 
                     <label className="field">
-                        <span className="field-label">Powtórz nowe hasło</span>
+                        <span className="field-label">{t('changePasswordModal.repeatNewPasswordLabel', 'Powtórz nowe hasło')}</span>
                         <div className="password-wrapper">
                             <input
                                 className="field-input"
@@ -89,17 +91,17 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 autoComplete="new-password"
-                                placeholder="Powtórz nowe hasło"
+                                placeholder={t('changePasswordModal.placeholderRepeat', 'Powtórz nowe hasło')}
                                 required
                             />
-                            <button type="button" className="password-toggle" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                            <button type="button" className="password-toggle" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}>
                                 {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
                     </label>
 
                     <button className="btn-primary" type="submit" disabled={loading}>
-                        {loading ? 'Zapisywanie...' : 'Ustaw nowe hasło'}
+                        {loading ? t('changePasswordModal.saving', 'Zapisywanie...') : t('changePasswordModal.setPasswordBtn', 'Ustaw nowe hasło')}
                     </button>
                 </form>
 
@@ -115,7 +117,7 @@ const ChangePasswordModal = ({ onPasswordChanged }) => {
                             textDecoration: 'underline',
                         }}
                     >
-                        Wyloguj się
+                        {t('common.logout', 'Wyloguj się')}
                     </button>
                 </div>
             </div>
