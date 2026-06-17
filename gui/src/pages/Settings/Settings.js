@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button } from '../../components';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { authService } from '../../services';
 import { Eye, EyeOff } from 'lucide-react';
 import '../main.css';
@@ -8,6 +9,7 @@ import '../Policies/policies.css';
 
 const Settings = () => {
     const { theme, toggleTheme } = useTheme();
+    const { t } = useLanguage();
 
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -25,27 +27,27 @@ const Settings = () => {
         setSuccess('');
 
         if (newPassword !== confirmPassword) {
-            setError('Nowe hasła nie są zgodne.');
+            setError(t('settings.newPasswordsMismatch', 'Nowe hasła nie są zgodne.'));
             return;
         }
         if (newPassword.length < 8) {
-            setError('Nowe hasło musi mieć co najmniej 8 znaków.');
+            setError(t('settings.passwordMin', 'Nowe hasło musi mieć co najmniej 8 znaków.'));
             return;
         }
         if (newPassword === oldPassword) {
-            setError('Nowe hasło nie może być takie samo jak obecne.');
+            setError(t('settings.passwordSame', 'Nowe hasło nie może być takie samo jak obecne.'));
             return;
         }
 
         setLoading(true);
         try {
             await authService.changePassword(oldPassword, newPassword);
-            setSuccess('Hasło zostało zmienione pomyślnie.');
+            setSuccess(t('settings.passwordChanged', 'Hasło zostało zmienione pomyślnie.'));
             setOldPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (err) {
-            setError(err.message || 'Nie udało się zmienić hasła.');
+            setError(err.message || t('settings.changeError', 'Nie udało się zmienić hasła.'));
         } finally {
             setLoading(false);
         }
@@ -53,21 +55,21 @@ const Settings = () => {
 
     return (
         <div className="page-container">
-            <h2 className="page-title-no-margin">Ustawienia</h2>
+            <h2 className="page-title-no-margin">{t('settings.title', 'Ustawienia')}</h2>
 
-            <Card title="Wygląd">
+            <Card title={t('settings.appearance', 'Wygląd')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <span style={{ color: 'var(--text-main)', width: '200px' }}>
-                        Aktualny motyw: {theme === 'light' ? 'Jasny' : 'Ciemny'}
+                        {t('settings.currentTheme', 'Aktualny motyw:')} {theme === 'light' ? t('settings.light', 'Jasny') : t('settings.dark', 'Ciemny')}
                     </span>
                     <Button onClick={toggleTheme} style={{ width: 'auto' }}>
-                        Zmień motyw
+                        {t('settings.changeTheme', 'Zmień motyw')}
                     </Button>
                 </div>
             </Card>
 
             <div style={{ marginTop: '1.5rem' }}>
-                <Card title="Zmiana hasła">
+                <Card title={t('settings.changePasswordTitle', 'Zmiana hasła')}>
                     {error && (
                         <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>
                             {error}
@@ -81,7 +83,7 @@ const Settings = () => {
                     <form onSubmit={handlePasswordChange}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
                             <div className="form-group">
-                                <span className="form-label">Obecne hasło</span>
+                                <span className="form-label">{t('settings.currentPassword', 'Obecne hasło')}</span>
                                 <div className="password-wrapper">
                                     <input
                                         className="form-input"
@@ -89,16 +91,16 @@ const Settings = () => {
                                         value={oldPassword}
                                         onChange={(e) => setOldPassword(e.target.value)}
                                         autoComplete="current-password"
-                                        placeholder="Wprowadź obecne hasło"
+                                        placeholder={t('settings.currentPasswordPlaceholder', 'Wprowadź obecne hasło')}
                                         required
                                     />
-                                    <button type="button" className="password-toggle" onClick={() => setShowOld(v => !v)} aria-label={showOld ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                                    <button type="button" className="password-toggle" onClick={() => setShowOld(v => !v)} aria-label={showOld ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}>
                                         {showOld ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
                             </div>
                             <div className="form-group">
-                                <span className="form-label">Nowe hasło</span>
+                                <span className="form-label">{t('settings.newPassword', 'Nowe hasło')}</span>
                                 <div className="password-wrapper">
                                     <input
                                         className="form-input"
@@ -106,16 +108,16 @@ const Settings = () => {
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         autoComplete="new-password"
-                                        placeholder="Minimum 8 znaków"
+                                        placeholder={t('settings.newPasswordPlaceholder', 'Minimum 8 znaków')}
                                         required
                                     />
-                                    <button type="button" className="password-toggle" onClick={() => setShowNew(v => !v)} aria-label={showNew ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                                    <button type="button" className="password-toggle" onClick={() => setShowNew(v => !v)} aria-label={showNew ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}>
                                         {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
                             </div>
                             <div className="form-group">
-                                <span className="form-label">Powtórz nowe hasło</span>
+                                <span className="form-label">{t('settings.repeatNewPassword', 'Powtórz nowe hasło')}</span>
                                 <div className="password-wrapper">
                                     <input
                                         className="form-input"
@@ -123,17 +125,17 @@ const Settings = () => {
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         autoComplete="new-password"
-                                        placeholder="Powtórz nowe hasło"
+                                        placeholder={t('settings.confirmPasswordPlaceholder', 'Powtórz nowe hasło')}
                                         required
                                     />
-                                    <button type="button" className="password-toggle" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? 'Ukryj hasło' : 'Pokaż hasło'}>
+                                    <button type="button" className="password-toggle" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? t('topbar.hidePassword', 'Ukryj hasło') : t('topbar.showPassword', 'Pokaż hasło')}>
                                         {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
                             </div>
                             <div>
                                 <button type="submit" className="btn-yellow" disabled={loading} style={{ width: '100%' }}>
-                                    {loading ? 'Zapisywanie...' : 'Zmień hasło'}
+                                    {loading ? t('settings.changing', 'Zapisywanie...') : t('settings.changePasswordButton', 'Zmień hasło')}
                                 </button>
                             </div>
                         </div>

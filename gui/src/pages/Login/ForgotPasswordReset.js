@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Globe } from 'lucide-react'; // Dodano Globe
+import { Eye, EyeOff, Globe } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import './Login.css';
 
@@ -101,7 +101,7 @@ const ForgotPasswordReset = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="new-password"
-                                placeholder={t('resetPassword.passwordTooShort', 'Minimum 6 znaków')}
+                                placeholder={t('resetPassword.passwordTooShort', 'Minimum 8 znaków')}
                             />
                             <button
                                 type="button"

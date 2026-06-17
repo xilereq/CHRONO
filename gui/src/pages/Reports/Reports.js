@@ -2,15 +2,11 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Clock, CalendarOff, TrendingUp, TrendingDown, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from '../../components';
 import { userService, reportService } from '../../services';
+import { useLanguage } from '../../context/LanguageContext';
 import '../main.css';
 import './reports.css';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-const MONTHS = [
-    'Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec',
-    'Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień',
-];
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -24,19 +20,19 @@ const monthBounds = (year, month) => {
 
 const toH = (sec) => +(Math.abs(sec) / 3600).toFixed(1);
 
-const ABSENCE_META = {
-    HOLIDAY_LEAVE:  { label: 'Urlop wypoczynkowy',   color: '#FFDE42' },
-    SICK_LEAVE:     { label: 'Zwolnienie lekarskie',  color: '#ef4444' },
-    HOME_OFFICE:    { label: 'Praca zdalna (HO)',      color: '#3b82f6' },
-    EARLY_EXIT:     { label: 'Wcześniejsze wyjście',  color: '#f97316' },
-    OVERTIME_EARN:  { label: 'Nadgodziny zapl.',       color: '#16a34a' },
-    OVERTIME_TAKE:  { label: 'Odbiór nadgodzin',       color: '#6b7280' },
+const ABSENCE_COLORS = {
+    HOLIDAY_LEAVE: '#FFDE42',
+    SICK_LEAVE:    '#ef4444',
+    HOME_OFFICE:   '#3b82f6',
+    EARLY_EXIT:    '#f97316',
+    OVERTIME_EARN: '#16a34a',
+    OVERTIME_TAKE: '#6b7280',
 };
 
 // ── Bar chart ────────────────────────────────────────────────────────────────
 
-const BarChart = ({ data }) => {
-    if (!data || !data.length) return <div className="empty">Brak danych do wyświetlenia.</div>;
+const BarChart = ({ data, emptyLabel }) => {
+    if (!data || !data.length) return <div className="empty">{emptyLabel || 'Brak danych.'}</div>;
     const maxRaw = Math.max(...data.map(d => Math.max(d.plan, d.przepr, 0)));
     const roundedMax = Math.ceil(maxRaw / 2) * 2 || 8;
     const W = 560, H = 200, padL = 40, padB = 28, padT = 10, padR = 10;
@@ -99,6 +95,7 @@ const FormatPicker = ({ value, onChange }) => (
 const today = new Date();
 
 const Reports = () => {
+    const { t, language } = useLanguage();
     const [month, setMonth] = useState(today.getMonth());
     const [year,  setYear]  = useState(today.getFullYear());
 
@@ -137,7 +134,7 @@ const Reports = () => {
             const { startDate, endDate } = monthBounds(year, month);
             setTimesheetData(await reportService.fetchMyTimesheetData(startDate, endDate));
         } catch {
-            setError('Nie udało się załadować danych. Sprawdź, czy backend jest uruchomiony.');
+            setError(t('reports.errorLoading', 'Nie udało się załadować danych. Sprawdź, czy backend jest uruchomiony.'));
             setTimesheetData(null);
         } finally {
             setLoading(false);
@@ -168,16 +165,24 @@ const Reports = () => {
 
     const absenceBreakdown = useMemo(() => {
         if (!timesheetData?.dailyEntries) return [];
+        const absenceTypeLabels = {
+            HOLIDAY_LEAVE: t('requests.types.holiday', 'Urlop wypoczynkowy'),
+            SICK_LEAVE:    t('requests.types.sick', 'Zwolnienie lekarskie'),
+            HOME_OFFICE:   t('reports.homeOffice', 'Praca zdalna (HO)'),
+            EARLY_EXIT:    t('requests.types.earlyExit', 'Wcześniejsze wyjście'),
+            OVERTIME_EARN: t('requests.types.overtimeEarn', 'Nadgodziny zapl.'),
+            OVERTIME_TAKE: t('requests.types.overtimeTake', 'Odbiór nadgodzin'),
+        };
         const counts = {};
         timesheetData.dailyEntries.forEach(e => {
             if (e.applicationType) counts[e.applicationType] = (counts[e.applicationType] || 0) + 1;
         });
         return Object.entries(counts).map(([type, days]) => ({
-            label: ABSENCE_META[type]?.label || type,
-            color: ABSENCE_META[type]?.color || '#d1d5db',
+            label: absenceTypeLabels[type] || type,
+            color: ABSENCE_COLORS[type] || '#d1d5db',
             days,
         }));
-    }, [timesheetData]);
+    }, [timesheetData, t]);
 
     const overtimeByWeek = useMemo(() => {
         if (!timesheetData?.dailyEntries?.length) return [];
@@ -207,15 +212,15 @@ const Reports = () => {
     // ── Download handler ──────────────────────────────────────────────────────
 
     const handleDownload = async () => {
-        if (!dlStartDate || !dlEndDate) { alert('Wybierz zakres dat.'); return; }
-        if (dlStartDate > dlEndDate)    { alert('Data "Od" musi być wcześniejsza niż "Do".'); return; }
+        if (!dlStartDate || !dlEndDate) { alert(t('reports.errorDateRange', 'Wybierz zakres dat.')); return; }
+        if (dlStartDate > dlEndDate)    { alert(t('reports.errorDateOrder', 'Data "Od" musi być wcześniejsza niż "Do".')); return; }
         setDownloading(true);
         try {
             if (dlTab === 'own') {
                 if (dlType === 'timesheet') await reportService.downloadMyTimesheet(dlStartDate, dlEndDate, dlFormat);
                 else                        await reportService.downloadMyOvertime(dlStartDate, dlEndDate, dlFormat);
             } else if (dlTab === 'employee') {
-                if (!dlEmployeeId) { alert('Wybierz pracownika.'); return; }
+                if (!dlEmployeeId) { alert(t('reports.errorNoEmployee', 'Wybierz pracownika.')); return; }
                 await reportService.downloadEmployeeTimesheet(dlEmployeeId, dlStartDate, dlEndDate, dlFormat);
             } else if (dlTab === 'team') {
                 if (dlType === 'workload')  await reportService.downloadTeamWorkload(dlStartDate, dlEndDate, dlFormat);
@@ -223,7 +228,7 @@ const Reports = () => {
                 else                        await reportService.downloadTeamOvertime(dlStartDate, dlEndDate, dlFormat);
             }
         } catch (e) {
-            alert(e.message || 'Błąd podczas pobierania raportu.');
+            alert(e.message || t('reports.errorDownloading', 'Błąd podczas pobierania raportu.'));
         } finally {
             setDownloading(false);
         }
@@ -236,10 +241,12 @@ const Reports = () => {
 
             {/* Nagłówek */}
             <div className="raporty-header">
-                <h2 className="dashboard-title">Raporty</h2>
+                <h2 className="dashboard-title">{t('reports.title', 'Raporty')}</h2>
                 <div className="month-selector">
                     <button className="month-nav" onClick={prevMonth}><ChevronLeft size={16} /></button>
-                    <span className="month-label">{MONTHS[month]} {year}</span>
+                    <span className="month-label">
+                        {new Date(year, month, 1).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { month: 'long', year: 'numeric' })}
+                    </span>
                     <button className="month-nav" onClick={nextMonth}><ChevronRight size={16} /></button>
                 </div>
             </div>
@@ -252,15 +259,15 @@ const Reports = () => {
                     <div className="tile-icon tile-icon--yellow"><Clock size={20} /></div>
                     <div className="tile-content">
                         <span className="tile-value">{loading ? '…' : workH}<span className="tile-unit">h</span></span>
-                        <span className="tile-label">Przepracowane</span>
-                        <span className="tile-sub">Plan: {loading ? '…' : planH}h</span>
+                        <span className="tile-label">{t('reports.workedHours', 'Przepracowane')}</span>
+                        <span className="tile-sub">{t('reports.planPrefix', 'Plan:')} {loading ? '…' : planH}h</span>
                     </div>
                     {!loading && planH > 0 && (
                         <>
                             <div className="tile-progress-track">
                                 <div className="tile-progress-fill" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="tile-pct">{pct}% planu</span>
+                            <span className="tile-pct">{pct}{t('reports.percentPlan', '% planu')}</span>
                         </>
                     )}
                 </div>
@@ -274,42 +281,42 @@ const Reports = () => {
                             {loading ? '…' : `${balH > 0 ? '+' : ''}${balH}`}
                             <span className="tile-unit">h</span>
                         </span>
-                        <span className="tile-label">Bilans</span>
-                        <span className="tile-sub">nadgodziny / niedobór</span>
+                        <span className="tile-label">{t('reports.balance', 'Bilans')}</span>
+                        <span className="tile-sub">{t('reports.balanceSubtitle', 'nadgodziny / niedobór')}</span>
                     </div>
                 </div>
 
                 <div className="raporty-tile">
                     <div className="tile-icon tile-icon--red"><CalendarOff size={20} /></div>
                     <div className="tile-content">
-                        <span className="tile-value">{loading ? '…' : absTotal}<span className="tile-unit">dni</span></span>
-                        <span className="tile-label">Nieobecności</span>
-                        <span className="tile-sub">w tym miesiącu</span>
+                        <span className="tile-value">{loading ? '…' : absTotal}<span className="tile-unit">{t('reports.daysUnit', 'dni')}</span></span>
+                        <span className="tile-label">{t('reports.absencesCount', 'Nieobecności')}</span>
+                        <span className="tile-sub">{t('reports.absencesThisMonth', 'w tym miesiącu')}</span>
                     </div>
                 </div>
             </div>
 
             {/* Wykres */}
-            <Card title="Godziny pracy — tygodniowo">
+            <Card title={t('reports.workHoursChart', 'Godziny pracy — tygodniowo')}>
                 <div className="chart-controls">
                     <div className="raporty-legend">
                         <span className="raporty-legend-item">
-                            <span className="raporty-legend-box raporty-legend-box--gray" /> Plan
+                            <span className="raporty-legend-box raporty-legend-box--gray" /> {t('reports.legendPlan', 'Plan')}
                         </span>
                         <span className="raporty-legend-item">
-                            <span className="raporty-legend-box raporty-legend-box--yellow" /> Przepracowane
+                            <span className="raporty-legend-box raporty-legend-box--yellow" /> {t('reports.legendWorked', 'Przepracowane')}
                         </span>
                     </div>
                 </div>
-                {loading ? <div className="empty">Ładowanie danych…</div> : <BarChart data={chartData} />}
+                {loading ? <div className="empty">{t('reports.loading', 'Ładowanie danych…')}</div> : <BarChart data={chartData} emptyLabel={t('reports.noDataToShow', 'Brak danych do wyświetlenia.')} />}
             </Card>
 
             {/* Dolny rząd */}
             <div className="raporty-bottom">
-                <Card title="Nieobecności w miesiącu">
-                    {loading ? <div className="empty">Ładowanie…</div>
+                <Card title={t('reports.absencesCardTitle', 'Nieobecności w miesiącu')}>
+                    {loading ? <div className="empty">{t('reports.loadingShort', 'Ładowanie…')}</div>
                         : absenceBreakdown.length === 0
-                            ? <div className="empty">Brak nieobecności w tym okresie.</div>
+                            ? <div className="empty">{t('reports.noAbsences', 'Brak nieobecności w tym okresie.')}</div>
                             : (
                                 <div className="absence-list">
                                     {absenceBreakdown.map(item => (
@@ -318,7 +325,7 @@ const Reports = () => {
                                                 <span className="absence-dot" style={{ background: item.color }} />
                                                 <span className="absence-name">{item.label}</span>
                                             </div>
-                                            <span className="absence-days">{item.days} dni</span>
+                                            <span className="absence-days">{item.days} {t('reports.daysUnit', 'dni')}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -326,10 +333,10 @@ const Reports = () => {
                     }
                 </Card>
 
-                <Card title="Bilans tygodniowy">
-                    {loading ? <div className="empty">Ładowanie…</div>
+                <Card title={t('reports.weeklyBalanceTitle', 'Bilans tygodniowy')}>
+                    {loading ? <div className="empty">{t('reports.loadingShort', 'Ładowanie…')}</div>
                         : overtimeByWeek.length === 0
-                            ? <div className="empty">Brak danych.</div>
+                            ? <div className="empty">{t('reports.noData', 'Brak danych.')}</div>
                             : (
                                 <div className="overtime-list">
                                     {overtimeByWeek.map(item => (
@@ -356,25 +363,25 @@ const Reports = () => {
 
             {/* Sekcja pobierania */}
             <div style={{ marginTop: '1.5rem' }}>
-            <Card title="Pobierz raport">
+            <Card title={t('reports.downloadSection', 'Pobierz raport')}>
                 <div className="dl-section">
 
                     {/* Zakładki: Moje / Pracownika / Zespołu */}
                     <div className="dl-tabs">
                         <button className={`period-tab ${dlTab === 'own' ? 'active' : ''}`}
                             onClick={() => { setDlTab('own'); setDlType('timesheet'); }}>
-                            Moje raporty
+                            {t('reports.myReports', 'Moje raporty')}
                         </button>
                         {canViewEmployee && (
                             <button className={`period-tab ${dlTab === 'employee' ? 'active' : ''}`}
                                 onClick={() => { setDlTab('employee'); setDlType('timesheet'); }}>
-                                Raport pracownika
+                                {t('reports.employeeReport', 'Raport pracownika')}
                             </button>
                         )}
                         {isManager && (
                             <button className={`period-tab ${dlTab === 'team' ? 'active' : ''}`}
                                 onClick={() => { setDlTab('team'); setDlType('workload'); }}>
-                                Raporty zespołu
+                                {t('reports.teamReports', 'Raporty zespołu')}
                             </button>
                         )}
                     </div>
@@ -383,18 +390,18 @@ const Reports = () => {
                     <div className="dl-type-row">
                         {dlTab === 'own' && (
                             <>
-                                <button className={`period-tab ${dlType === 'timesheet' ? 'active' : ''}`} onClick={() => setDlType('timesheet')}>Karta pracy</button>
-                                <button className={`period-tab ${dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}>Nadgodziny</button>
+                                <button className={`period-tab ${dlType === 'timesheet' ? 'active' : ''}`} onClick={() => setDlType('timesheet')}>{t('reports.timesheet', 'Karta pracy')}</button>
+                                <button className={`period-tab ${dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}>{t('reports.overtime', 'Nadgodziny')}</button>
                             </>
                         )}
                         {dlTab === 'employee' && (
-                            <button className="period-tab active">Karta pracy</button>
+                            <button className="period-tab active">{t('reports.timesheet', 'Karta pracy')}</button>
                         )}
                         {dlTab === 'team' && (
                             <>
-                                <button className={`period-tab ${dlType === 'workload'  ? 'active' : ''}`} onClick={() => setDlType('workload')}>Obciążenie</button>
-                                <button className={`period-tab ${dlType === 'absences'  ? 'active' : ''}`} onClick={() => setDlType('absences')}>Absencje</button>
-                                <button className={`period-tab ${dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}>Nadgodziny</button>
+                                <button className={`period-tab ${dlType === 'workload'  ? 'active' : ''}`} onClick={() => setDlType('workload')}>{t('reports.workload', 'Obciążenie')}</button>
+                                <button className={`period-tab ${dlType === 'absences'  ? 'active' : ''}`} onClick={() => setDlType('absences')}>{t('reports.absencesType', 'Absencje')}</button>
+                                <button className={`period-tab ${dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}>{t('reports.overtime', 'Nadgodziny')}</button>
                             </>
                         )}
                     </div>
@@ -402,7 +409,7 @@ const Reports = () => {
                     {/* Wybór pracownika */}
                     {dlTab === 'employee' && (
                         <select className="filter-select" value={dlEmployeeId} onChange={e => setDlEmployeeId(e.target.value)}>
-                            <option value="">-- Wybierz pracownika --</option>
+                            <option value="">{t('reports.selectEmployee', '-- Wybierz pracownika --')}</option>
                             {subordinates.map(s => (
                                 <option key={s.userID} value={s.userID}>{s.name} {s.surname} ({s.email})</option>
                             ))}
@@ -411,10 +418,10 @@ const Reports = () => {
 
                     {/* Zakres dat */}
                     <div className="dl-date-row">
-                        <span className="dl-label">Od</span>
+                        <span className="dl-label">{t('reports.dateFrom', 'Od')}</span>
                         <input type="date" className="filter-input" value={dlStartDate}
                             onChange={e => { setDlStartDate(e.target.value); if (dlEndDate && e.target.value > dlEndDate) setDlEndDate(''); }} />
-                        <span className="dl-label">Do</span>
+                        <span className="dl-label">{t('reports.dateTo', 'Do')}</span>
                         <input type="date" className="filter-input" value={dlEndDate}
                             min={dlStartDate || undefined}
                             onChange={e => setDlEndDate(e.target.value)} />
@@ -425,7 +432,7 @@ const Reports = () => {
                         <FormatPicker value={dlFormat} onChange={setDlFormat} />
                         <button className="report-dl-btn" onClick={handleDownload} disabled={downloading}>
                             <Download size={16} />
-                            {downloading ? 'Generowanie…' : 'Pobierz raport'}
+                            {downloading ? t('reports.generating', 'Generowanie…') : t('reports.downloadBtn', 'Pobierz raport')}
                         </button>
                     </div>
                 </div>

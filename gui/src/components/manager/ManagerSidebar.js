@@ -23,7 +23,7 @@ const ManagerSidebar = ({ activeTab, setActiveTab }) => {
                     className={`policies-nav-item ${activeTab === 'approvals' ? 'active' : ''}`}
                     onClick={() => setActiveTab('approvals')}
                 >
-                    <ClipboardList size={18} /> Wnioski pracownicze
+                    <ClipboardList size={18} /> {t('manager.employeeApprovals', 'Wnioski pracownicze')}
                 </button>
 
                 <button
