@@ -2,8 +2,12 @@ package pl.chrono.reportmanager.generator;
 
 import pl.chrono.reportmanager.dto.ReportFormat;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public interface I_ReportGenerator<T> {
+  DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+
   byte[] generate(T reportData, ReportFormat format);
 
   default String formatSeconds(Long totalSeconds) {
@@ -17,5 +21,9 @@ public interface I_ReportGenerator<T> {
 
   default byte[] addUtf8Bom(String content) {
     return ("\uFEFF" + content).getBytes(StandardCharsets.UTF_8);
+  }
+
+  default String formatTime(LocalTime time) {
+    return time != null ? time.format(TIME_FORMATTER) : "-";
   }
 }

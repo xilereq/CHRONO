@@ -52,8 +52,8 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
 
     for (DailyTimesheetEntry entry : report.dailyEntries()) {
       sb.append(entry.date()).append(";");
-      sb.append(entry.startTime() != null ? entry.startTime().toString() : "-").append(";");
-      sb.append(entry.endTime() != null ? entry.endTime().toString() : "-").append(";");
+      sb.append(formatTime(entry.startTime())).append(";");
+      sb.append(formatTime(entry.endTime())).append(";");
       sb.append(formatSeconds(entry.effectiveWorkSeconds())).append(";");
       sb.append(formatSeconds((long) entry.requiredSeconds())).append(";");
       sb.append(formatSeconds(entry.balanceSeconds())).append(";");
@@ -92,8 +92,8 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
 
     for (DailyTimesheetEntry entry : report.dailyEntries()) {
       table.addCell(entry.date().toString());
-      table.addCell(entry.startTime() != null ? entry.startTime().toString() : "-");
-      table.addCell(entry.endTime() != null ? entry.endTime().toString() : "-");
+      table.addCell(formatTime(entry.startTime()));
+      table.addCell(formatTime(entry.endTime()));
       table.addCell(formatSeconds(entry.effectiveWorkSeconds()));
       table.addCell(formatSeconds((long) entry.requiredSeconds()));
       table.addCell(formatSeconds(entry.balanceSeconds()));
@@ -127,8 +127,8 @@ public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimes
       for (DailyTimesheetEntry entry : report.dailyEntries()) {
         Row row = sheet.createRow(rowIdx++);
         row.createCell(0).setCellValue(entry.date().toString());
-        row.createCell(1).setCellValue(entry.startTime() != null ? entry.startTime().toString() : "-");
-        row.createCell(2).setCellValue(entry.endTime() != null ? entry.endTime().toString() : "-");
+        row.createCell(1).setCellValue(formatTime(entry.startTime()));
+        row.createCell(2).setCellValue(formatTime(entry.endTime()));
         row.createCell(3).setCellValue(formatSeconds(entry.effectiveWorkSeconds()));
         row.createCell(4).setCellValue(formatSeconds((long) entry.requiredSeconds()));
         row.createCell(5).setCellValue(formatSeconds(entry.balanceSeconds()));
