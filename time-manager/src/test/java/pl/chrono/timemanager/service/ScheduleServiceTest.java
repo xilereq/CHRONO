@@ -325,11 +325,13 @@ class ScheduleServiceTest {
 
     when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
-    doReturn(10 * 3600L).when(spyLog).getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    doReturn(10 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
 
     Application wrongApp = new Application();
     wrongApp.setType(ApplicationType.EARLY_EXIT);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(wrongApp));
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        List.of(wrongApp));
 
     scheduleService.processWorkLogs();
 
@@ -345,11 +347,13 @@ class ScheduleServiceTest {
 
     when(timeData.findUnsettledWorkLogs()).thenReturn(List.of(spyLog));
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
-    doReturn(6 * 3600L).when(spyLog).getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
+    doReturn(6 * 3600L).when(spyLog)
+        .getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
 
     Application wrongApp = new Application();
     wrongApp.setType(ApplicationType.OVERTIME_EARN);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(wrongApp));
+    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(
+        List.of(wrongApp));
 
     scheduleService.processWorkLogs();
 

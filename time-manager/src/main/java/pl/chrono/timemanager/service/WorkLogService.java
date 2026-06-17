@@ -70,6 +70,9 @@ public class WorkLogService {
 
   @Transactional
   public WorkLogDto startWork(Integer userId, WorkLocationType location) {
+    User user = userRepository.findByIdWithPessimisticLock(userId)
+        .orElseThrow(() -> new UserException.NotFound(userId));
+
     if (isUserWorking(userId)) {
       throw new WorkException.WorkStarted(userId);
     }
@@ -79,8 +82,7 @@ public class WorkLogService {
     }
 
     WorkLog workLog = new WorkLog();
-    workLog.setUser(userRepository.findById(userId)
-        .orElseThrow(() -> new UserException.NotFound(userId)));
+    workLog.setUser(user);
     workLog.setStartTime(LocalDateTime.now());
 
     boolean hasHoApplication = workTimeCalculationService.hasApprovedHomeOffice(
@@ -103,8 +105,7 @@ public class WorkLogService {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
         .orElseThrow(() -> new WorkException.NoActiveWork(userId));
 
-    long minutesPassed = Duration.between(workLog.getStartTime(), LocalDateTime.now()).toMinutes();
-    if (minutesPassed > 15) {
+    if (workLog.calculateWorkTime(LocalDateTime.now()) > 900) {
       throw new WorkException.CancellationExpired();
     }
 

@@ -40,7 +40,8 @@ class WorkTaskSchedulerTest {
   @Test
   void overtimeExpirationDoneThisQuarterTest() {
     when(operationLogRepository.existsByActionAndTimestampBetween(
-        eq("SYSTEM_EXPIRE_OVERTIME"), any(LocalDateTime.class), any(LocalDateTime.class)
+        eq("SYSTEM_EXPIRE_OVERTIME"),
+        any(LocalDateTime.class), any(LocalDateTime.class)
     )).thenReturn(true);
 
     workTaskScheduler.runOnStartup();
@@ -52,7 +53,8 @@ class WorkTaskSchedulerTest {
   @Test
   void overtimeExpirationFailedThisQuarterTest() {
     when(operationLogRepository.existsByActionAndTimestampBetween(
-        eq("SYSTEM_EXPIRE_OVERTIME"), any(LocalDateTime.class), any(LocalDateTime.class)
+        eq("SYSTEM_EXPIRE_OVERTIME"),
+        any(LocalDateTime.class), any(LocalDateTime.class)
     )).thenReturn(false);
 
     workTaskScheduler.runOnStartup();

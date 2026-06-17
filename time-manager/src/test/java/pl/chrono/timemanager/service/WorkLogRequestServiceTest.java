@@ -39,27 +39,21 @@ import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
 @ExtendWith(MockitoExtension.class)
 class WorkLogRequestServiceTest {
 
-  @Mock
-  private UserRepository userRepository;
-
-  @Mock
-  private I_TimeData timeData;
-
-  @Mock
-  private OvertimeService overtimeService;
-
-  @Mock
-  private WorkLogRequestMapper mapper;
-
-  @Mock
-  private WorkTimeCalculationService workTimeCalculationService;
-
-  @InjectMocks
-  private WorkLogRequestService requestService;
-
   private final Integer EMPLOYEE_ID = 5;
   private final Integer MANAGER_ID = 10;
   private final Long REQUEST_ID = 1L;
+  @Mock
+  private UserRepository userRepository;
+  @Mock
+  private I_TimeData timeData;
+  @Mock
+  private OvertimeService overtimeService;
+  @Mock
+  private WorkLogRequestMapper mapper;
+  @Mock
+  private WorkTimeCalculationService workTimeCalculationService;
+  @InjectMocks
+  private WorkLogRequestService requestService;
 
   @Test
   void submitRequestInvalidTimeRangeExceptionTest() {

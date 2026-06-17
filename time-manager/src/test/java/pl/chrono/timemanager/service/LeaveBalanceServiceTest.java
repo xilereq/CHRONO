@@ -1,20 +1,19 @@
 package pl.chrono.timemanager.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
@@ -28,19 +27,15 @@ import pl.chrono.timemanager.exception.UserException;
 @ExtendWith(MockitoExtension.class)
 class LeaveBalanceServiceTest {
 
+  private final Integer USER_ID = 1;
   @Mock
   private ApplicationRepository applicationRepository;
-
   @Mock
   private WorkTimeCalculationService workingDaysCalculationService;
-
   @Mock
   private UserRepository userRepository;
-
   @InjectMocks
   private LeaveBalanceService leaveBalanceService;
-
-  private final Integer USER_ID = 1;
 
   @Test
   void calculateAnnualLeaveLimitBaseLimitTest() {
@@ -108,10 +103,11 @@ class LeaveBalanceServiceTest {
     app2.setStartDate(LocalDate.of(2026, 7, 1));
     app2.setEndDate(LocalDate.of(2026, 7, 2));
 
-    when(applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
-        eq(USER_ID),
-        eq(ApplicationType.HOLIDAY_LEAVE), eq(ApplicationStatus.APPROVED), any(), any()
-    )).thenReturn(List.of(app1, app2));
+    when(
+        applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
+            eq(USER_ID), eq(ApplicationType.HOLIDAY_LEAVE), eq(ApplicationStatus.APPROVED), any(),
+            any()
+        )).thenReturn(List.of(app1, app2));
 
     when(workingDaysCalculationService.calculateWorkingDays(
         app1.getStartDate(), app1.getEndDate(),
@@ -145,10 +141,11 @@ class LeaveBalanceServiceTest {
     Application app = new Application();
     app.setStartDate(LocalDate.of(2025, 1, 1));
     app.setEndDate(LocalDate.of(2025, 1, 1));
-    when(applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
-        eq(USER_ID),
-        eq(ApplicationType.HOLIDAY_LEAVE), eq(ApplicationStatus.APPROVED), any(), any()
-    )).thenReturn(List.of(app));
+    when(
+        applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
+            eq(USER_ID), eq(ApplicationType.HOLIDAY_LEAVE), eq(ApplicationStatus.APPROVED), any(),
+            any()
+        )).thenReturn(List.of(app));
 
     when(workingDaysCalculationService.calculateWorkingDays(any(), any(), any())).thenReturn(30);
 

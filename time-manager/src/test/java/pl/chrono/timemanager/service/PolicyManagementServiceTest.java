@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -188,7 +188,8 @@ class PolicyManagementServiceTest {
   void assignPolicyToUsersSuccessTest() {
     Integer policyId = 2;
     LocalDate startDate = LocalDate.now().plusDays(1);
-    MassAssignPolicyRequest request = new MassAssignPolicyRequest(policyId, List.of(1, 2), startDate);
+    MassAssignPolicyRequest request = new MassAssignPolicyRequest(
+        policyId, List.of(1, 2), startDate);
 
     Policy newPolicy = new Policy();
     newPolicy.setPolicyId(policyId);

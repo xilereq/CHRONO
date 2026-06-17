@@ -45,10 +45,7 @@ class LeaveLogServiceTest {
     Integer userId = 1;
     when(timeData.findActiveWorkLog(userId)).thenReturn(Optional.empty());
 
-    assertThrows(
-        WorkException.NoActiveWork.class,
-        () -> leaveLogService.startLeave(userId)
-    );
+    assertThrows(WorkException.NoActiveWork.class, () -> leaveLogService.startLeave(userId));
 
     verifyNoInteractions(userRepository, leaveLogMapper);
   }
@@ -61,10 +58,7 @@ class LeaveLogServiceTest {
     when(timeData.findActiveWorkLog(userId)).thenReturn(Optional.of(workLog));
     when(timeData.isUserOnLeave(userId)).thenReturn(true);
 
-    assertThrows(
-        WorkException.LeaveStarted.class,
-        () -> leaveLogService.startLeave(userId)
-    );
+    assertThrows(WorkException.LeaveStarted.class, () -> leaveLogService.startLeave(userId));
   }
 
   @Test
@@ -76,8 +70,7 @@ class LeaveLogServiceTest {
     when(timeData.isUserOnLeave(userId)).thenReturn(false);
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-    assertThrows(
-        UserException.NotFound.class, () -> leaveLogService.startLeave(userId));
+    assertThrows(UserException.NotFound.class, () -> leaveLogService.startLeave(userId));
   }
 
   @Test
