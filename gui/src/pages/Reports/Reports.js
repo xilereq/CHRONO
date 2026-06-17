@@ -90,9 +90,10 @@ const BarChart = ({ data, emptyLabel }) => {
                 );
             })}
 
-            {/* Axis lines */}
-            <line x1={padL} y1={padT} x2={padL} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
-            <line x1={padL} y1={padT + chartH} x2={padL + chartW} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
+            {/* Chart border — full rectangle */}
+            <line x1={padL}          y1={padT}          x2={padL}          y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
+            <line x1={padL}          y1={padT + chartH} x2={padL + chartW} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
+            <line x1={padL + chartW} y1={padT}          x2={padL + chartW} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
         </svg>
     );
 };
@@ -180,9 +181,12 @@ const Reports = () => {
             if (!weeks[key]) {
                 const fri = new Date(mon);
                 fri.setDate(mon.getDate() + 4);
+                const lastDayOfMonth = new Date(mon.getFullYear(), mon.getMonth() + 1, 0).getDate();
                 const label = mon.getMonth() === fri.getMonth()
                     ? `${mon.getDate()}-${fri.getDate()}.${pad(mon.getMonth() + 1)}`
-                    : `${mon.getDate()}.${pad(mon.getMonth() + 1)}`;
+                    : mon.getDate() === lastDayOfMonth
+                        ? `${mon.getDate()}.${pad(mon.getMonth() + 1)}`
+                        : `${mon.getDate()}-${lastDayOfMonth}.${pad(mon.getMonth() + 1)}`;
                 weeks[key] = { przepr: 0, plan: 0, label };
             }
             weeks[key].przepr += e.workSeconds;
