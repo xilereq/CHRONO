@@ -217,7 +217,6 @@ export const en = {
         statusLabel: 'Status:',
         submitDateLabel: 'Submitted:',
         editBtn: 'Edit Request',
-        editWarning: 'Submitting a modified request cancels the previous one and sends a new one to the manager.',
     },
 
     // ============= APPROVALS PAGE =============
@@ -298,6 +297,9 @@ export const en = {
         teamReports: 'Team Reports',
         timesheet: 'Timesheet',
         overtime: 'Overtime',
+        overtimeNote: 'overtime this month',
+        weekRemaining: 'To Work Off',
+        weekRemainingNote: 'deficit this month',
         workload: 'Workload',
         absencesType: 'Absences',
         generating: 'Generating…',
