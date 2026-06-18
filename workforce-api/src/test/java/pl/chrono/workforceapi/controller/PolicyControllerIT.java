@@ -20,6 +20,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -84,6 +85,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void createPolicyOkTest() throws Exception {
     CreatePolicyRequest request = new CreatePolicyRequest(
         "Standard", 8, 12, 48, 0,
@@ -118,6 +120,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getAllPoliciesTest() throws Exception {
     when(configService.getAllPolicies()).thenReturn(List.of(samplePolicyDto(), samplePolicyDto()));
 
@@ -126,6 +129,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getAllPoliciesEmptyListTest() throws Exception {
     when(configService.getAllPolicies()).thenReturn(List.of());
 
@@ -134,6 +138,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getPolicyByIdTesty() throws Exception {
     when(configService.getPolicyById(POLICY_ID)).thenReturn(samplePolicyDto());
 
@@ -144,6 +149,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getPolicyByIdNotFound4xxTest() throws Exception {
     when(configService.getPolicyById(999)).thenThrow(new PolicyException.NotFound(999));
 
@@ -152,6 +158,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void deletePolicyTest() throws Exception {
     doNothing().when(configService).deletePolicy(POLICY_ID);
 
@@ -161,6 +168,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void deletePolicyNotFound4xxTest() throws Exception {
     doThrow(new PolicyException.NotFound(999)).when(configService).deletePolicy(999);
 
@@ -169,6 +177,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void assignPolicyTest() throws Exception {
     AssignPolicyRequest request = new AssignPolicyRequest(POLICY_ID, LocalDate.now());
     doNothing().when(managementService)
@@ -191,6 +200,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getHolidaysForPolicyListTest() throws Exception {
     when(configService.getHolidaysForPolicy(POLICY_ID)).thenReturn(List.of(sampleHolidayDto()));
 
@@ -203,6 +213,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void assignHolidayToPolicyTest() throws Exception {
     AssignHolidayRequest request = new AssignHolidayRequest(HOLIDAY_ID);
     doNothing().when(configService)
@@ -215,6 +226,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void removeHolidayFromPolicyTest() throws Exception {
     doNothing().when(configService).removeHolidayFromPolicy(POLICY_ID, HOLIDAY_ID);
 
@@ -224,6 +236,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void assignPolicyBulkTest() throws Exception {
     MassAssignPolicyRequest request = new MassAssignPolicyRequest(
         POLICY_ID, List.of(1, 2, 3), LocalDate.now());
@@ -235,6 +248,7 @@ class PolicyControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void assignHolidaysToPolicyBulkTest() throws Exception {
     MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(1, 2, 3));
     doNothing().when(configService)

@@ -20,6 +20,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -131,6 +132,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getPendingRequestsListTest() throws Exception {
     when(requestService.getPendingRequestsForReviewer(EMPLOYEE_ID)).thenReturn(
         List.of(sampleDto(WorkLogRequestStatus.PENDING)));
@@ -141,6 +143,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void getPendingRequestsEmptyListTest() throws Exception {
     when(requestService.getPendingRequestsForReviewer(EMPLOYEE_ID)).thenReturn(List.of());
 
@@ -149,6 +152,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void approveRequestOkTest() throws Exception {
     WorkLogResolveRequest resolve = new WorkLogResolveRequest("Wygląda dobrze");
     doNothing().when(requestService)
@@ -162,6 +166,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void approveRequestNoCommentTest() throws Exception {
     doNothing().when(requestService).approveRequest(eq(REQUEST_ID), eq(EMPLOYEE_ID), isNull());
 
@@ -172,6 +177,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void approveRequestNotFound4xxTest() throws Exception {
     doThrow(new WorkLogRequestException.NotFound(REQUEST_ID)).when(requestService)
         .approveRequest(eq(999L), eq(EMPLOYEE_ID), any());
@@ -182,6 +188,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void rejectRequestOkTest() throws Exception {
     WorkLogResolveRequest resolve = new WorkLogResolveRequest("Godziny się nie zgadzają");
     doNothing().when(requestService)
@@ -194,6 +201,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void rejectRequestNoCommentTest() throws Exception {
     doNothing().when(requestService).rejectRequest(eq(REQUEST_ID), eq(EMPLOYEE_ID), isNull());
 
@@ -204,6 +212,7 @@ class WorkLogRequestControllerIT {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void rejectRequestNotFound4xxTest() throws Exception {
     doThrow(new WorkLogRequestException.NotFound(REQUEST_ID)).when(requestService)
         .rejectRequest(eq(999L), eq(EMPLOYEE_ID), any());

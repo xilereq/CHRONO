@@ -6,6 +6,7 @@ import java.util.Map;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.chrono.applicationmanager.exception.ApplicationManagerException;
@@ -46,5 +47,13 @@ public class GlobalExceptionHandler {
     body.put("message", ex.getMessage());
     body.put("timestamp", LocalDateTime.now());
     return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<Object> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
+    Map<String, Object> body = new HashMap<>();
+    body.put("message", "Access Denied");
+    body.put("timestamp", LocalDateTime.now());
+    return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
   }
 }
