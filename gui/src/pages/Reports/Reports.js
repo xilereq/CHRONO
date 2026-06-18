@@ -23,10 +23,8 @@ const toH = (sec) => +(Math.abs(sec) / 3600).toFixed(1);
 const ABSENCE_COLORS = {
     HOLIDAY_LEAVE: '#FFDE42',
     SICK_LEAVE:    '#ef4444',
-    HOME_OFFICE:   '#3b82f6',
-    EARLY_EXIT:    '#f97316',
-    OVERTIME_EARN: '#16a34a',
     OVERTIME_TAKE: '#6b7280',
+    UNEXCUSED:     '#9ca3af',
 };
 
 // ── Bar chart ────────────────────────────────────────────────────────────────
@@ -200,14 +198,22 @@ const Reports = () => {
         const absenceTypeLabels = {
             HOLIDAY_LEAVE: t('requests.types.holiday', 'Urlop wypoczynkowy'),
             SICK_LEAVE:    t('requests.types.sick', 'Zwolnienie lekarskie'),
-            HOME_OFFICE:   t('reports.homeOffice', 'Praca zdalna (HO)'),
-            EARLY_EXIT:    t('requests.types.earlyExit', 'Wcześniejsze wyjście'),
-            OVERTIME_EARN: t('requests.types.overtimeEarn', 'Nadgodziny zapl.'),
             OVERTIME_TAKE: t('requests.types.overtimeTake', 'Odbiór nadgodzin'),
+            UNEXCUSED:     t('reports.unexcused', 'Nieobecność bez wniosku'),
         };
+        const todayStr = new Date().toISOString().slice(0, 10);
         const counts = {};
         timesheetData.dailyEntries.forEach(e => {
-            if (e.applicationType) counts[e.applicationType] = (counts[e.applicationType] || 0) + 1;
+            if (e.date > todayStr) return;
+            if (e.requiredSeconds === 0) return;
+            const fullDayOff = e.workSeconds === 0 && e.requiredSeconds > 0;
+            if (e.applicationType === 'HOLIDAY_LEAVE' || e.applicationType === 'SICK_LEAVE') {
+                counts[e.applicationType] = (counts[e.applicationType] || 0) + 1;
+            } else if (e.applicationType === 'OVERTIME_TAKE' && e.workSeconds === 0 && e.requiredSeconds > 0) {
+                counts['OVERTIME_TAKE'] = (counts['OVERTIME_TAKE'] || 0) + 1;
+            } else if (fullDayOff) {
+                counts['UNEXCUSED'] = (counts['UNEXCUSED'] || 0) + 1;
+            }
         });
         return Object.entries(counts).map(([type, days]) => ({
             label: absenceTypeLabels[type] || type,
