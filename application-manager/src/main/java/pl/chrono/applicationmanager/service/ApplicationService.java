@@ -43,7 +43,7 @@ public class ApplicationService implements I_UserApplication {
     User employee = userRepository.findById(employeeId)
         .orElseThrow(() -> new ApplicationUserException.NotFound(employeeId));
 
-    return internalCreateApplication(request, employee, ApplicationStatus.PENDING);
+    return internalCreateApplication(request, employee);
   }
 
   @Override
@@ -65,12 +65,12 @@ public class ApplicationService implements I_UserApplication {
       throw new ApplicationSecurityException.UnauthorizedCreation();
     }
 
-    ApplicationResponse response = internalCreateApplication(request, employee, ApplicationStatus.PENDING);
+    ApplicationResponse response = internalCreateApplication(request, employee);
 
     return changeStatus(response.id(), ApplicationStatus.APPROVED.name(), managerId, "Application submitted and approved automatically on behalf of the employee", true);
   }
 
-  private ApplicationResponse internalCreateApplication(CreateApplicationRequest request, User employee, ApplicationStatus initialStatus) {
+  private ApplicationResponse internalCreateApplication(CreateApplicationRequest request, User employee) {
     ApplicationType type = ApplicationType.valueOf(request.type());
 
     applicationValidationService.validateApplicationLimits(
@@ -87,7 +87,7 @@ public class ApplicationService implements I_UserApplication {
     application.setStartDate(request.startDate());
     application.setEndDate(request.endDate());
     application.setReason(request.reason());
-    application.setStatus(initialStatus);
+    application.setStatus(ApplicationStatus.PENDING);
     application.setCreationDateTime(LocalDateTime.now());
     application.setDurationSeconds(request.durationSeconds());
 
@@ -107,7 +107,7 @@ public class ApplicationService implements I_UserApplication {
         employee.getUserId(),
         managerId,
         "CREATED",
-        initialStatus.name(),
+        ApplicationStatus.PENDING.name(),
         null
     ));
 

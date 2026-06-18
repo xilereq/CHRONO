@@ -1,4 +1,4 @@
-package pl.chrono.applicationmanager;
+package pl.chrono.applicationmanager.service;
 
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.applicationmanager.exception.ApplicationException;
 import pl.chrono.applicationmanager.exception.ApplicationSecurityException;
-import pl.chrono.applicationmanager.service.ApplicationService;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;

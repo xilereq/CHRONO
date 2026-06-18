@@ -1,4 +1,4 @@
-package pl.chrono.applicationmanager;
+package pl.chrono.applicationmanager.service;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -22,7 +22,6 @@ import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.applicationmanager.exception.ApplicationSecurityException;
 import pl.chrono.applicationmanager.exception.ApplicationUserException;
-import pl.chrono.applicationmanager.service.ApplicationService;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
