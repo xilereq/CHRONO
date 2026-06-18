@@ -70,7 +70,7 @@ public class WorkLogRequestService {
     request.setStatus(WorkLogRequestStatus.PENDING);
 
     timeData.saveWorkLogRequest(request);
-    publishNotificationEvent(request, "STATUS_CHANGED", null);
+    publishNotificationEvent(request, "CREATED", null);
   }
 
   @Transactional

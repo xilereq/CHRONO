@@ -6,9 +6,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
+import pl.chrono.dbmanager.model.WorkLogRequest;
+import pl.chrono.dbmanager.repository.WorkLogRequestRepository;
 import pl.chrono.notificationmanager.service.NotificationService;
 import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,6 +24,9 @@ class NotificationListenerTest {
 
   @Mock
   private NotificationService notificationService;
+
+  @Mock
+  private WorkLogRequestRepository workLogRequestRepository;
 
   @InjectMocks
   private NotificationListener notificationListener;
@@ -84,16 +92,20 @@ class NotificationListenerTest {
 
   @Test
   void handleWorkLogRequestNotification_ShouldSendToManager_WhenCreated() {
-    WorkLogRequestNotificationEvent event = mock(WorkLogRequestNotificationEvent.class);
-    when(event.action()).thenReturn("CREATED");
-    when(event.managerId()).thenReturn(3);
-    when(event.requestId()).thenReturn(200L);
+    LocalDate fixedDate = LocalDate.of(2026, 1, 1);
+    WorkLogRequestNotificationEvent event = new WorkLogRequestNotificationEvent(
+        200L, 1, 3, "CREATED", "PENDING", null
+    );
+
+    WorkLogRequest mockRequest = new WorkLogRequest();
+    mockRequest.setProposedStartTime(fixedDate.atStartOfDay());
+    when(workLogRequestRepository.findById(200L)).thenReturn(Optional.of(mockRequest));
 
     notificationListener.handleWorkLogRequestNotification(event);
 
     verify(notificationService, times(1)).sendNotification(
         eq(3),
-        argThat(msg -> msg.contains("200")),
+        argThat(msg ->  msg.contains("2026-01-01")),
         eq(200L),
         eq("WORK_LOG_REQUEST"),
         eq("WORK_LOG_REQUEST_CREATED")
@@ -102,9 +114,13 @@ class NotificationListenerTest {
 
   @Test
   void handleWorkLogRequestNotification_ShouldDoNothing_WhenCreatedButNoManager() {
-    WorkLogRequestNotificationEvent event = mock(WorkLogRequestNotificationEvent.class);
-    when(event.action()).thenReturn("CREATED");
-    when(event.managerId()).thenReturn(null);
+    WorkLogRequestNotificationEvent event = new WorkLogRequestNotificationEvent(
+        200L, 1, null, "CREATED", "PENDING", null
+    );
+
+    WorkLogRequest mockRequest = new WorkLogRequest();
+    mockRequest.setProposedStartTime(LocalDateTime.now());
+    when(workLogRequestRepository.findById(200L)).thenReturn(Optional.of(mockRequest));
 
     notificationListener.handleWorkLogRequestNotification(event);
 
@@ -119,6 +135,10 @@ class NotificationListenerTest {
     when(event.requestId()).thenReturn(200L);
     when(event.status()).thenReturn("APPROVED");
     when(event.reviewerName()).thenReturn("Anna Nowak");
+
+    WorkLogRequest mockRequest = new WorkLogRequest();
+    mockRequest.setProposedStartTime(LocalDateTime.now());
+    when(workLogRequestRepository.findById(200L)).thenReturn(Optional.of(mockRequest));
 
     notificationListener.handleWorkLogRequestNotification(event);
 
@@ -140,6 +160,10 @@ class NotificationListenerTest {
     when(event.status()).thenReturn("REJECTED");
     when(event.reviewerName()).thenReturn(null);
 
+    WorkLogRequest mockRequest = new WorkLogRequest();
+    mockRequest.setProposedStartTime(LocalDateTime.now());
+    when(workLogRequestRepository.findById(200L)).thenReturn(Optional.of(mockRequest));
+
     notificationListener.handleWorkLogRequestNotification(event);
 
     verify(notificationService, times(1)).sendNotification(
@@ -153,8 +177,13 @@ class NotificationListenerTest {
 
   @Test
   void handleWorkLogRequestNotification_ShouldDoNothing_WhenActionIsUnknown() {
-    WorkLogRequestNotificationEvent event = mock(WorkLogRequestNotificationEvent.class);
-    when(event.action()).thenReturn("UNKNOWN_ACTION");
+    WorkLogRequestNotificationEvent event = new WorkLogRequestNotificationEvent(
+        200L, 1, null, "UNKNOWN", "PENDING", null
+    );
+
+    WorkLogRequest mockRequest = new WorkLogRequest();
+    mockRequest.setProposedStartTime(LocalDateTime.now());
+    when(workLogRequestRepository.findById(200L)).thenReturn(Optional.of(mockRequest));
 
     notificationListener.handleWorkLogRequestNotification(event);
 
