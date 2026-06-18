@@ -9,4 +9,5 @@ public interface I_ReportFacade {
   byte[] getTeamAbsences(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
   byte[] getEmployeeOvertime(Integer employeeId, LocalDate startDate, LocalDate endDate, ReportFormat format);
   byte[] getTeamOvertime(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
+  byte[] getTeamAnomalyReport(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
 }

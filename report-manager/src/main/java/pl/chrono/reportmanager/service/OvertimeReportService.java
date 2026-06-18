@@ -42,6 +42,7 @@ public class OvertimeReportService {
           EmployeeOvertimeReport empReport = generateEmployeeReport(user.getUserId(), startDate, endDate);
           return new TeamOvertimeEntry(user.getUserId(), empReport.employeeFullName(), empReport.totalOvertimeSeconds());
         })
+        .filter(entry -> entry.totalOvertimeSeconds() > 0)
         .toList();
 
     return new TeamOvertimeReport(managerId, startDate, endDate, entries);

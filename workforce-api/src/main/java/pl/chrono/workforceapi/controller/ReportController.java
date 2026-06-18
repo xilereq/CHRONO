@@ -116,6 +116,21 @@ public class ReportController extends BaseController {
     return createResponse(reportData, filename, format);
   }
 
+  @GetMapping("/anomalies/team")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<byte[]> getTeamAnomalyReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer managerId = extractId(token);
+    byte[] reportData = reportFacade.getTeamAnomalyReport(managerId, startDate, endDate, format);
+
+    String filename = String.format("team_anomalies_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    return createResponse(reportData, filename, format);
+  }
+
   private ResponseEntity<byte[]> createResponse(byte[] fileData, String filename, ReportFormat format) {
     MediaType mediaType = switch (format) {
       case CSV -> MediaType.parseMediaType("text/csv; charset=UTF-8");

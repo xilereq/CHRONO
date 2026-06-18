@@ -10,11 +10,13 @@ import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamAbsencesReport;
 import pl.chrono.reportmanager.dto.TeamOvertimeReport;
 import pl.chrono.reportmanager.dto.TeamWorkloadReport;
+import pl.chrono.reportmanager.dto.TeamAnomalyReport;
 import pl.chrono.reportmanager.generator.AbsenceReportGenerator;
 import pl.chrono.reportmanager.generator.EmployeeOvertimeReportGenerator;
 import pl.chrono.reportmanager.generator.TeamOvertimeReportGenerator;
 import pl.chrono.reportmanager.generator.TimesheetReportGenerator;
 import pl.chrono.reportmanager.generator.WorkloadReportGenerator;
+import pl.chrono.reportmanager.generator.AnomalyReportGenerator;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,8 @@ public class ReportFacade implements I_ReportFacade {
   private final OvertimeReportService overtimeService;
   private final EmployeeOvertimeReportGenerator employeeOvertimeGenerator;
   private final TeamOvertimeReportGenerator teamOvertimeGenerator;
+  private final TeamAnomalyReportService anomalyService;
+  private final AnomalyReportGenerator anomalyGenerator;
 
   @Override
   public byte[] getEmployeeTimesheet(Integer employeeId, LocalDate startDate, LocalDate endDate, ReportFormat format) {
@@ -59,5 +63,11 @@ public class ReportFacade implements I_ReportFacade {
   public byte[] getTeamOvertime(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format) {
     TeamOvertimeReport reportData = overtimeService.generateTeamReport(managerId, startDate, endDate);
     return teamOvertimeGenerator.generate(reportData, format);
+  }
+
+  @Override
+  public byte[] getTeamAnomalyReport(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format) {
+    TeamAnomalyReport reportData = anomalyService.generateReport(managerId, startDate, endDate);
+    return anomalyGenerator.generate(reportData, format);
   }
 }
