@@ -44,7 +44,8 @@ public class ScheduleService {
 
   int flagUnclosedWorkLogs(LocalDateTime now) {
     int flaggedCount = 0;
-    List<WorkLog> activeWorkLogs = timeData.findActiveWorkLogsBefore(now);
+    LocalDateTime startOfToday = now.toLocalDate().atStartOfDay();
+    List<WorkLog> activeWorkLogs = timeData.findActiveWorkLogsBefore(startOfToday);
 
     for (WorkLog workLog : activeWorkLogs) {
       LocalDate workDate = workLog.getStartTime() != null
