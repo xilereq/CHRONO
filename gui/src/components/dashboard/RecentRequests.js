@@ -46,7 +46,7 @@ const RecentRequests = () => {
     }, []);
 
     return (
-        <Card title={t('dashboard.recentRequestsTitle', 'OSTATNIE WNIOSKI')} className="table-container">
+        <Card title={t('dashboard.recentRequests', 'OSTATNIE WNIOSKI')} className="table-container">
             <table className="requests-table">
                 <thead>
                 <tr>

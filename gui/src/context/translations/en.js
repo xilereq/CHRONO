@@ -127,7 +127,7 @@ export const en = {
     timeTracker: {
         startWork: 'START WORK',
         endWork: 'END WORK',
-        hoStart: 'WFH Start',
+        hoStart: 'HO Start',
         onBreak: 'ON BREAK',
         break: 'BREAK',
         endBreak: 'END BREAK',
