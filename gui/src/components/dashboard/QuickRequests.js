@@ -23,7 +23,7 @@ export default function QuickRequests() {
     };
 
     return (
-        <Card title={t('dashboard.quickRequestsTitle', 'SZYBKIE AKCJE')}>
+        <Card title={t('dashboard.quickRequests', 'SZYBKIE AKCJE')}>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
 
