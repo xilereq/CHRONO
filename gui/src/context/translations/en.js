@@ -311,6 +311,7 @@ export const en = {
         loading: 'Loading data…',
         loadingShort: 'Loading…',
         noAbsences: 'No absences this period.',
+        unexcused: 'Absence without request',
         selectEmployee: '-- Select employee --',
         daysUnit: 'days',
         percentPlan: '% of plan',

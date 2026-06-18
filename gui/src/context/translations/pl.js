@@ -311,6 +311,7 @@ export const pl = {
         loading: 'Ładowanie danych…',
         loadingShort: 'Ładowanie…',
         noAbsences: 'Brak nieobecności w tym okresie.',
+        unexcused: 'Nieobecność bez wniosku',
         selectEmployee: '-- Wybierz pracownika --',
         daysUnit: 'dni',
         percentPlan: '% planu',
