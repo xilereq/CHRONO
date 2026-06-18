@@ -376,3 +376,39 @@
     .dl-footer { flex-direction: column; align-items: stretch; }
     .report-dl-btn { justify-content: center; }
 }
+
+.anomaly-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    user-select: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    transition: all 0.15s;
+    width: fit-content;
+}
+
+.anomaly-toggle:hover {
+    color: var(--text-main);
+    border-color: #fca5a5;
+}
+
+.anomaly-toggle input[type="checkbox"] {
+    accent-color: #ef4444;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.anomaly-toggle--active {
+    color: #ef4444;
+    border-color: #fca5a5;
+    background: #fef2f2;
+}

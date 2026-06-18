@@ -322,6 +322,10 @@ export const pl = {
         errorDateOrder: 'Data "Od" musi być wcześniejsza niż "Do".',
         errorNoEmployee: 'Wybierz pracownika.',
         errorDownloading: 'Błąd podczas pobierania raportu.',
+        unexcused: 'Nieobecność bez wniosku',
+        anomalyDetection: 'Wykrywanie anomalii',
+        anomalyHint: 'Raport pracowników z odchyleniem bilansu >10% od planu',
+        anomalyActive: 'Tryb anomalii — ignoruje wybrany typ raportu',
     },
 
     // ============= USER MANAGEMENT =============

@@ -217,6 +217,21 @@ public class WorkLogService {
     return (int) (totalSecondsWorked / 3600);
   }
 
+  int calculateExcusedHours(User user, LocalDate today) {
+    LocalDate firstDay = today.withDayOfMonth(1);
+    LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
+    int totalExcusedSeconds = 0;
+    LocalDate cur = firstDay;
+
+    while (!cur.isAfter(lastDay)) {
+      Policy policyForDay = user.getPolicyForDate(cur);
+      totalExcusedSeconds += workTimeCalculationService.getExcusedSecondsForDate(user.getUserId(), cur, policyForDay);
+      cur = cur.plusDays(1);
+    }
+
+    return totalExcusedSeconds / 3600;
+  }
+
   @Transactional(readOnly = true)
   public WorkStats getMonthlyStats(Integer userId) {
     User user = userRepository.findById(userId)
@@ -226,11 +241,13 @@ public class WorkLogService {
 
     MonthlyHours monthlyHours = calculateMonthlyHours(user, today);
     int totalHoursWorked = calculateTotalHoursWorked(userId, today);
+    int excusedHours = calculateExcusedHours(user, today);
+    int combinedHours = totalHoursWorked + excusedHours;
     int overtimeSeconds = overtimeService.getOvertimeBalance(userId);
     int finalOvertime = Math.max(overtimeSeconds, 0);
 
     return new WorkStats(
-        totalHoursWorked, monthlyHours.remaining(), monthlyHours.total(),
+        combinedHours, monthlyHours.remaining(), monthlyHours.total(),
         finalOvertime
     );
   }

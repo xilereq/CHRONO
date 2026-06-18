@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clock, CalendarOff, TrendingUp, Timer, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, CalendarOff, TrendingUp, Timer, Download, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Card } from '../../components';
 import { userService, reportService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
@@ -23,10 +23,8 @@ const toH = (sec) => +(Math.abs(sec) / 3600).toFixed(1);
 const ABSENCE_COLORS = {
     HOLIDAY_LEAVE: '#FFDE42',
     SICK_LEAVE:    '#ef4444',
-    HOME_OFFICE:   '#3b82f6',
-    EARLY_EXIT:    '#f97316',
-    OVERTIME_EARN: '#16a34a',
     OVERTIME_TAKE: '#6b7280',
+    UNEXCUSED:     '#9ca3af',
 };
 
 // ── Bar chart ────────────────────────────────────────────────────────────────
@@ -135,6 +133,7 @@ const Reports = () => {
     const [dlStartDate,  setDlStartDate]  = useState(`${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`);
     const [dlEndDate,    setDlEndDate]    = useState(`${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`);
     const [dlEmployeeId, setDlEmployeeId] = useState('');
+    const [dlAnomalies,  setDlAnomalies]  = useState(false);
     const [downloading,  setDownloading]  = useState(false);
 
     useEffect(() => {
@@ -200,14 +199,22 @@ const Reports = () => {
         const absenceTypeLabels = {
             HOLIDAY_LEAVE: t('requests.types.holiday', 'Urlop wypoczynkowy'),
             SICK_LEAVE:    t('requests.types.sick', 'Zwolnienie lekarskie'),
-            HOME_OFFICE:   t('reports.homeOffice', 'Praca zdalna (HO)'),
-            EARLY_EXIT:    t('requests.types.earlyExit', 'Wcześniejsze wyjście'),
-            OVERTIME_EARN: t('requests.types.overtimeEarn', 'Nadgodziny zapl.'),
             OVERTIME_TAKE: t('requests.types.overtimeTake', 'Odbiór nadgodzin'),
+            UNEXCUSED:     t('reports.unexcused', 'Nieobecność bez wniosku'),
         };
+        const todayStr = new Date().toISOString().slice(0, 10);
         const counts = {};
         timesheetData.dailyEntries.forEach(e => {
-            if (e.applicationType) counts[e.applicationType] = (counts[e.applicationType] || 0) + 1;
+            if (e.date > todayStr) return;
+            if (e.requiredSeconds === 0) return;
+            const fullDayOff = e.workSeconds === 0 && e.requiredSeconds > 0;
+            if (e.applicationType === 'HOLIDAY_LEAVE' || e.applicationType === 'SICK_LEAVE') {
+                counts[e.applicationType] = (counts[e.applicationType] || 0) + 1;
+            } else if (e.applicationType === 'OVERTIME_TAKE' && e.workSeconds === 0 && e.requiredSeconds > 0) {
+                counts['OVERTIME_TAKE'] = (counts['OVERTIME_TAKE'] || 0) + 1;
+            } else if (fullDayOff) {
+                counts['UNEXCUSED'] = (counts['UNEXCUSED'] || 0) + 1;
+            }
         });
         return Object.entries(counts).map(([type, days]) => ({
             label: absenceTypeLabels[type] || type,
@@ -266,9 +273,15 @@ const Reports = () => {
                 if (!dlEmployeeId) { alert(t('reports.errorNoEmployee', 'Wybierz pracownika.')); return; }
                 await reportService.downloadEmployeeTimesheet(dlEmployeeId, dlStartDate, dlEndDate, dlFormat);
             } else if (dlTab === 'team') {
-                if (dlType === 'workload')  await reportService.downloadTeamWorkload(dlStartDate, dlEndDate, dlFormat);
-                else if (dlType === 'absences') await reportService.downloadTeamAbsences(dlStartDate, dlEndDate, dlFormat);
-                else                        await reportService.downloadTeamOvertime(dlStartDate, dlEndDate, dlFormat);
+                if (dlAnomalies) {
+                    await reportService.downloadTeamAnomalies(dlStartDate, dlEndDate, dlFormat);
+                } else if (dlType === 'workload') {
+                    await reportService.downloadTeamWorkload(dlStartDate, dlEndDate, dlFormat);
+                } else if (dlType === 'absences') {
+                    await reportService.downloadTeamAbsences(dlStartDate, dlEndDate, dlFormat);
+                } else {
+                    await reportService.downloadTeamOvertime(dlStartDate, dlEndDate, dlFormat);
+                }
             }
         } catch (e) {
             alert(e.message || t('reports.errorDownloading', 'Błąd podczas pobierania raportu.'));
@@ -416,12 +429,12 @@ const Reports = () => {
                     {/* Zakładki: Moje / Pracownika / Zespołu */}
                     <div className="dl-tabs">
                         <button className={`period-tab ${dlTab === 'own' ? 'active' : ''}`}
-                            onClick={() => { setDlTab('own'); setDlType('timesheet'); }}>
+                            onClick={() => { setDlTab('own'); setDlType('timesheet'); setDlAnomalies(false); }}>
                             {t('reports.myReports', 'Moje raporty')}
                         </button>
                         {canViewEmployee && (
                             <button className={`period-tab ${dlTab === 'employee' ? 'active' : ''}`}
-                                onClick={() => { setDlTab('employee'); setDlType('timesheet'); }}>
+                                onClick={() => { setDlTab('employee'); setDlType('timesheet'); setDlAnomalies(false); }}>
                                 {t('reports.employeeReport', 'Raport pracownika')}
                             </button>
                         )}
@@ -446,12 +459,28 @@ const Reports = () => {
                         )}
                         {dlTab === 'team' && (
                             <>
-                                <button className={`period-tab ${dlType === 'workload'  ? 'active' : ''}`} onClick={() => setDlType('workload')}>{t('reports.workload', 'Obciążenie')}</button>
-                                <button className={`period-tab ${dlType === 'absences'  ? 'active' : ''}`} onClick={() => setDlType('absences')}>{t('reports.absencesType', 'Absencje')}</button>
-                                <button className={`period-tab ${dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}>{t('reports.overtime', 'Nadgodziny')}</button>
+                                <button className={`period-tab ${!dlAnomalies && dlType === 'workload'  ? 'active' : ''}`} onClick={() => setDlType('workload')}  disabled={dlAnomalies} style={{ opacity: dlAnomalies ? 0.4 : 1 }}>{t('reports.workload', 'Obciążenie')}</button>
+                                <button className={`period-tab ${!dlAnomalies && dlType === 'absences'  ? 'active' : ''}`} onClick={() => setDlType('absences')} disabled={dlAnomalies} style={{ opacity: dlAnomalies ? 0.4 : 1 }}>{t('reports.absencesType', 'Absencje')}</button>
+                                <button className={`period-tab ${!dlAnomalies && dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}  disabled={dlAnomalies} style={{ opacity: dlAnomalies ? 0.4 : 1 }}>{t('reports.overtime', 'Nadgodziny')}</button>
                             </>
                         )}
                     </div>
+
+                    {/* Wykrywanie anomalii — tylko MANAGER, tylko zakładka team */}
+                    {dlTab === 'team' && isManager && (
+                        <label className={`anomaly-toggle${dlAnomalies ? ' anomaly-toggle--active' : ''}`}>
+                            <input
+                                type="checkbox"
+                                checked={dlAnomalies}
+                                onChange={e => setDlAnomalies(e.target.checked)}
+                            />
+                            <AlertTriangle size={14} />
+                            {t('reports.anomalyDetection', 'Wykrywanie anomalii')}
+                            <span style={{ fontWeight: 400, fontSize: '0.78rem', marginLeft: '0.25rem' }}>
+                                — {t('reports.anomalyHint', 'Raport pracowników z odchyleniem bilansu >10% od planu')}
+                            </span>
+                        </label>
+                    )}
 
                     {/* Wybór pracownika */}
                     {dlTab === 'employee' && (
