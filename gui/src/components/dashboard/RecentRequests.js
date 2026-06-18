@@ -34,8 +34,7 @@ const RecentRequests = () => {
         const fetchRequests = async () => {
             try {
                 const data = await applicationService.getUserApplications();
-                const sorted = [...data].sort((a, b) => new Date(b.creationDateTime) - new Date(a.creationDateTime));
-                setRequests(sorted.slice(0, 5));
+                setRequests(data.slice(0, 4));
             } catch (error) {
                 console.error(error);
             } finally {
