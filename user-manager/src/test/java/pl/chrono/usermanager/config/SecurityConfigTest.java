@@ -15,6 +15,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import pl.chrono.usermanager.security.CustomUserDetailsService;
 import pl.chrono.usermanager.security.JwtAuthenticationFilter;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,10 +35,9 @@ class SecurityConfigTest {
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-      return mock(UserDetailsService.class);
+    public CustomUserDetailsService customUserDetailsService() {
+      return mock(CustomUserDetailsService.class);
     }
-
   }
 
   @Autowired private SecurityFilterChain securityFilterChain;

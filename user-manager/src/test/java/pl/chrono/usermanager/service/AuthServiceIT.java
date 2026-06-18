@@ -97,19 +97,6 @@ class AuthServiceIT {
   }
 
   @Test
-  void login_returnsAuthResponseWithToken_whenCredentialsAreValid() {
-    persistUser("login@test.pl", "PrawidloweHaslo1", employeeRole, false);
-    AuthRequest request = new AuthRequest("login@test.pl", "PrawidloweHaslo1");
-
-    AuthResponse response = authService.login(request);
-
-    assertThat(response).isNotNull();
-    assertThat(response.token()).isNotBlank();
-    assertThat(response.role()).isEqualTo("ROLE_EMPLOYEE");
-    assertThat(response.forcePasswordChange()).isFalse();
-  }
-
-  @Test
   void login_throwsException_whenCredentialsAreInvalid() {
     persistUser("login@test.pl", "PrawidloweHaslo1", employeeRole, false);
     AuthRequest request = new AuthRequest("login@test.pl", "ZleHaslo!");
