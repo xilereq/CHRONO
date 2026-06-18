@@ -242,4 +242,58 @@ class WorkTimeCalculationServiceTest {
 
     assertThat(service.getRoundingSeconds(policy)).isEqualTo(900);
   }
+
+  @Test
+  void getExcusedSecondsForDateNoApplicationsTest() {
+    LocalDate date = LocalDate.of(2026, 6, 10);
+    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(List.of());
+
+    assertThat(service.getExcusedSecondsForDate(1, date, null)).isZero();
+  }
+
+  @Test
+  void getExcusedSecondsForDateNoFullDayLeaveTest() {
+    LocalDate date = LocalDate.of(2026, 6, 10);
+    Application appHomeOffice = new Application();
+    appHomeOffice.setType(ApplicationType.HOME_OFFICE);
+    Application appEarlyExit = new Application();
+    appEarlyExit.setType(ApplicationType.EARLY_EXIT);
+
+    when(applicationRepository.findApprovedByEmployeeAndDate(1, date))
+        .thenReturn(List.of(appHomeOffice, appEarlyExit));
+
+    assertThat(service.getExcusedSecondsForDate(1, date, null)).isZero();
+  }
+
+  @Test
+  void getExcusedSecondsForDateWithHolidayLeaveTest() {
+    LocalDate date = LocalDate.of(2026, 6, 10);
+    Policy policy = mock(Policy.class);
+    when(policy.getRequiredSecondsForDate(date)).thenReturn(8 * 3600);
+
+    Application appHoliday = new Application();
+    appHoliday.setType(ApplicationType.HOLIDAY_LEAVE);
+
+    when(applicationRepository.findApprovedByEmployeeAndDate(1, date))
+        .thenReturn(List.of(appHoliday));
+
+    assertThat(service.getExcusedSecondsForDate(1, date, policy)).isEqualTo(8 * 3600);
+  }
+
+  @Test
+  void getExcusedSecondsForDateWithSickLeaveTest() {
+    LocalDate date = LocalDate.of(2026, 6, 10);
+    Policy policy = mock(Policy.class);
+    when(policy.getRequiredSecondsForDate(date)).thenReturn(8 * 3600);
+
+    Application appSick = new Application();
+    appSick.setType(ApplicationType.SICK_LEAVE);
+    Application appHomeOffice = new Application();
+    appHomeOffice.setType(ApplicationType.HOME_OFFICE);
+
+    when(applicationRepository.findApprovedByEmployeeAndDate(1, date))
+        .thenReturn(List.of(appHomeOffice, appSick));
+
+    assertThat(service.getExcusedSecondsForDate(1, date, policy)).isEqualTo(8 * 3600);
+  }
 }

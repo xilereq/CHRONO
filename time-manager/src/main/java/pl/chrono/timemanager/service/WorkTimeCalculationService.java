@@ -101,4 +101,18 @@ public class WorkTimeCalculationService {
     }
     return 0;
   }
+
+  public int getExcusedSecondsForDate(Integer userId, LocalDate date, Policy policy) {
+    List<Application> applications = applicationRepository.findApprovedByEmployeeAndDate(userId, date);
+
+    boolean hasFullDayLeave = applications.stream()
+        .anyMatch(app -> app.getType() == ApplicationType.HOLIDAY_LEAVE ||
+            app.getType() == ApplicationType.SICK_LEAVE);
+
+    if (hasFullDayLeave) {
+      return getBaseRequiredSeconds(date, policy);
+    }
+
+    return 0;
+  }
 }
