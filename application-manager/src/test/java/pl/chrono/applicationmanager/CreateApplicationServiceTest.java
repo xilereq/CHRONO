@@ -28,6 +28,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.service.ApplicationValidationService;
+import pl.chrono.timemanager.service.OvertimeService;
 
 @ExtendWith(MockitoExtension.class)
 class CreateApplicationServiceTest {
@@ -43,6 +44,9 @@ class CreateApplicationServiceTest {
 
   @Mock
   private ApplicationValidationService applicationValidationService;
+
+  @Mock
+  private OvertimeService overtimeService;
 
   @InjectMocks
   private ApplicationService applicationService;
@@ -141,5 +145,31 @@ class CreateApplicationServiceTest {
 
     assertNotNull(result);
     verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
+  }
+
+  @Test
+  void createApplication_ShouldReserveOvertime_WhenTypeIsOvertimeTake() {
+    Integer employeeId = 1;
+    User mockUser = new User();
+    mockUser.setUserId(employeeId);
+
+    CreateApplicationRequest requestDto = new CreateApplicationRequest(
+        "OVERTIME_TAKE", LocalDate.now(), LocalDate.now(), "Odpoczynek", 7200
+    );
+
+    Application savedApplication = new Application();
+    savedApplication.setId(10L);
+    savedApplication.setEmployee(mockUser);
+    savedApplication.setType(ApplicationType.OVERTIME_TAKE);
+    savedApplication.setStatus(ApplicationStatus.PENDING);
+    savedApplication.setDurationSeconds(7200);
+    savedApplication.setCreationDateTime(java.time.LocalDateTime.now());
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockUser));
+    when(applicationRepository.save(any(Application.class))).thenReturn(savedApplication);
+
+    applicationService.createApplication(requestDto, employeeId);
+
+    verify(overtimeService, times(1)).reserveOvertimeForApplication(savedApplication);
   }
 }

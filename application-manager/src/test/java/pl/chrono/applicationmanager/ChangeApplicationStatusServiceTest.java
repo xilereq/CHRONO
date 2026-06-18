@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.service.ApplicationValidationService;
+import pl.chrono.timemanager.service.OvertimeService;
 
 @ExtendWith(MockitoExtension.class)
 class ChangeApplicationStatusServiceTest {
@@ -43,6 +45,9 @@ class ChangeApplicationStatusServiceTest {
 
   @Mock
   private ApplicationValidationService applicationValidationService;
+
+  @Mock
+  private OvertimeService overtimeService;
 
   @InjectMocks
   private ApplicationService applicationService;
@@ -205,5 +210,74 @@ class ChangeApplicationStatusServiceTest {
 
     verify(applicationRepository, times(1)).save(mockApplication);
     verify(eventPublisher, times(1)).publishEvent(any(ApplicationNotificationEvent.class));
+  }
+
+  @Test
+  void changeStatus_ShouldRefundOvertime_WhenTypeIsOvertimeTakeAndStatusRejected() {
+    Long applicationId = 1L;
+    Integer reviewerId = 2;
+    String newStatus = "REJECTED";
+
+    User mockReviewer = new User();
+    mockReviewer.setUserId(reviewerId);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setManager(mockReviewer);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.OVERTIME_TAKE);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
+    when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
+
+    ApplicationResponse result = applicationService.changeStatus(applicationId, newStatus, reviewerId, "Brak zgody", false);
+
+    assertNotNull(result);
+    assertEquals("REJECTED", result.status());
+    verify(overtimeService, times(1)).refundOvertimeForApplication(mockApplication);
+  }
+
+  @Test
+  void changeStatus_ShouldThrowNotFound_WhenApplicationDoesNotExist() {
+    Long applicationId = 999L;
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.empty());
+
+    assertThrows(ApplicationException.NotFound.class, () ->
+        applicationService.changeStatus(applicationId, "APPROVED", 2, "Reason", false)
+    );
+  }
+
+  @Test
+  void changeStatus_ShouldNotRefundOvertime_WhenTypeIsOvertimeTakeAndStatusApproved() {
+    Long applicationId = 1L;
+    Integer reviewerId = 2;
+    String newStatus = "APPROVED";
+
+    User mockReviewer = new User();
+    mockReviewer.setUserId(reviewerId);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(1);
+    mockEmployee.setManager(mockReviewer);
+
+    Application mockApplication = new Application();
+    mockApplication.setId(applicationId);
+    mockApplication.setStatus(ApplicationStatus.PENDING);
+    mockApplication.setEmployee(mockEmployee);
+    mockApplication.setType(ApplicationType.OVERTIME_TAKE);
+
+    when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(mockApplication));
+    when(userRepository.findById(reviewerId)).thenReturn(Optional.of(mockReviewer));
+    when(applicationRepository.save(any(Application.class))).thenReturn(mockApplication);
+
+    ApplicationResponse result = applicationService.changeStatus(applicationId, newStatus, reviewerId, "Zgoda", false);
+
+    assertNotNull(result);
+    verify(overtimeService, never()).refundOvertimeForApplication(any(Application.class));
   }
 }

@@ -2,11 +2,11 @@ package pl.chrono.reportmanager.exception;
 
 import org.springframework.http.HttpStatus;
 
-public abstract class ReportException extends RuntimeException {
+public class ReportException extends RuntimeException {
   private final String errorCode;
   private final HttpStatus status;
 
-  protected ReportException(String errorCode, String message, HttpStatus status) {
+  public ReportException(String errorCode, String message, HttpStatus status) {
     super(message);
     this.errorCode = errorCode;
     this.status = status;

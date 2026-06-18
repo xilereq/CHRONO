@@ -260,4 +260,31 @@ class GetApplicationServiceTest {
 
     verify(applicationRepository, times(1)).findAll();
   }
+
+  @Test
+  void getUserApplications_ShouldThrowException_WhenRequesterHasOtherRoleAndIsNotManager() {
+    Integer employeeId = 1;
+    Integer requesterId = 2;
+
+    User otherManager = new User();
+    otherManager.setUserId(3);
+
+    User mockEmployee = new User();
+    mockEmployee.setUserId(employeeId);
+    mockEmployee.setManager(otherManager);
+
+    Role regularRole = new Role();
+    regularRole.setName("ROLE_USER");
+
+    User mockRequester = new User();
+    mockRequester.setUserId(requesterId);
+    mockRequester.setRoles(Set.of(regularRole));
+
+    when(userRepository.findById(employeeId)).thenReturn(Optional.of(mockEmployee));
+    when(userRepository.findById(requesterId)).thenReturn(Optional.of(mockRequester));
+
+    assertThrows(ApplicationSecurityException.UnauthorizedAccess.class, () ->
+        applicationService.getUserApplications(employeeId, requesterId)
+    );
+  }
 }

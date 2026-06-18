@@ -188,7 +188,8 @@ class UserControllerIT {
   @Test
   @WithMockUser(roles = "MANAGER")
   void getEmployeesForbiddenForManagerTest() throws Exception {
-    mockMvc.perform(get("/api/users/employees"))
+    mockMvc.perform(get("/api/users/employees")
+        .header("Authorization", BEARER_TOKEN))
         .andExpect(status().isForbidden());
   }
 

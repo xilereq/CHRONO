@@ -97,7 +97,7 @@ public class ApplicationService implements I_UserApplication {
 
     Application savedApplication = applicationRepository.save(application);
 
-    if (savedApplication.getType() == ApplicationType.OVERTIME_TAKE && initialStatus == ApplicationStatus.PENDING) {
+    if (savedApplication.getType() == ApplicationType.OVERTIME_TAKE) {
       overtimeService.reserveOvertimeForApplication(savedApplication);
     }
 
