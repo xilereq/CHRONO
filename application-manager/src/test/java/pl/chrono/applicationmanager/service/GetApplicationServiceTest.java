@@ -1,4 +1,4 @@
-package pl.chrono.applicationmanager;
+package pl.chrono.applicationmanager.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
 import pl.chrono.applicationmanager.exception.ApplicationSecurityException;
 import pl.chrono.applicationmanager.exception.ApplicationUserException;
-import pl.chrono.applicationmanager.service.ApplicationService;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
