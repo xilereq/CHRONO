@@ -16,6 +16,7 @@ public class UserService implements I_UserService {
 
   private final I_UserData userData;
 
+
   @Override
   @Transactional(readOnly = true)
   public List<UserDto> getSubordinatesForManager(Integer managerID) {
@@ -81,4 +82,6 @@ public class UserService implements I_UserService {
 
     userData.save(user);
   }
+
+
 }

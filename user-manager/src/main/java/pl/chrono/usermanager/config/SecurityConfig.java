@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,6 +20,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+// Dodany import Twojej konkretnej klasy!
+import pl.chrono.usermanager.security.CustomUserDetailsService;
 import pl.chrono.usermanager.security.JwtAuthenticationFilter;
 
 @Configuration
@@ -29,12 +31,13 @@ import pl.chrono.usermanager.security.JwtAuthenticationFilter;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthFilter;
-  private final UserDetailsService userDetailsService;
+
+  private final CustomUserDetailsService customUserDetailsService;
 
   public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
-                        UserDetailsService userDetailsService) {
+                        CustomUserDetailsService customUserDetailsService) {
     this.jwtAuthFilter = jwtAuthFilter;
-    this.userDetailsService = userDetailsService;
+    this.customUserDetailsService = customUserDetailsService;
   }
 
   @Bean
@@ -55,7 +58,7 @@ public class SecurityConfig {
 
   @Bean
   public AuthenticationProvider authenticationProvider() {
-    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(customUserDetailsService);
     authProvider.setPasswordEncoder(passwordEncoder());
     return authProvider;
   }
