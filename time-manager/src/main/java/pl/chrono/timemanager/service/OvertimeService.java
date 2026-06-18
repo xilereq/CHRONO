@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.OvertimeArchive;
+import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
@@ -191,6 +192,22 @@ public class OvertimeService {
     archive.setValidUntil(calculateEndOfQuarter());
     archive.setNote("Automatic penalty for incomplete workday without an application on: "
         + workLog.getStartTime().toLocalDate());
+    overtimeData.saveOvertimeRecord(archive);
+  }
+
+  @Transactional
+  public void registerPenaltyDebt(User user, LocalDate date, int missingSeconds) {
+    if (missingSeconds <= 0) {
+      return;
+    }
+    OvertimeArchive archive = new OvertimeArchive();
+    archive.setUser(user);
+    archive.setType(OvertimeType.DEBT);
+    archive.setDurationSeconds(missingSeconds);
+    archive.setApplication(null);
+    archive.setWorkLog(null);
+    archive.setValidUntil(calculateEndOfQuarter());
+    archive.setNote("Automatic penalty for abandoned work log on: " + date);
     overtimeData.saveOvertimeRecord(archive);
   }
 }

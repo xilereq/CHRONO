@@ -23,7 +23,7 @@ public class TimeDataAdapter implements I_TimeData {
 
   @Override
   public boolean isUserWorking(Integer userId) {
-    return workLogRepository.existsByUser_UserIdAndEndTimeIsNull(userId);
+    return workLogRepository.existsByUser_UserIdAndEndTimeIsNullAndPendingCorrectionFalse(userId);
   }
 
   @Override
@@ -33,17 +33,17 @@ public class TimeDataAdapter implements I_TimeData {
 
   @Override
   public Optional<WorkLog> findActiveWorkLog(Integer userId) {
-    return workLogRepository.findByUser_UserIdAndEndTimeIsNull(userId);
+    return workLogRepository.findByUser_UserIdAndEndTimeIsNullAndPendingCorrectionFalse(userId);
   }
 
   @Override
   public List<WorkLog> findActiveWorkLogsBefore(LocalDateTime threshold) {
-    return workLogRepository.findByEndTimeIsNullAndStartTimeBefore(threshold);
+    return workLogRepository.findByEndTimeIsNullAndPendingCorrectionFalseAndStartTimeBefore(threshold);
   }
 
   @Override
   public List<WorkLog> findUserWorkLogsAfter(Integer userId, LocalDateTime threshold) {
-    return workLogRepository.findByUser_UserIdAndStartTimeAfter(userId, threshold);
+    return workLogRepository.findByUser_UserIdAndStartTimeAfterAndPendingCorrectionFalse(userId, threshold);
   }
 
   @Override
@@ -63,7 +63,12 @@ public class TimeDataAdapter implements I_TimeData {
 
   @Override
   public List<WorkLog> findUnsettledWorkLogs() {
-    return workLogRepository.findByEndTimeIsNotNullAndSettledFalse();
+    return workLogRepository.findByEndTimeIsNotNullAndSettledFalseAndPendingCorrectionFalse();
+  }
+
+  @Override
+  public List<WorkLog> findPendingCorrectionBefore(LocalDateTime threshold) {
+    return workLogRepository.findByPendingCorrectionTrueAndStartTimeBefore(threshold);
   }
 
   @Override
@@ -95,7 +100,7 @@ public class TimeDataAdapter implements I_TimeData {
   @Override
   public List<WorkLog> findWorkLogsByUserAndDate(Integer userId, LocalDateTime startOfDay,
                                                  LocalDateTime endOfDay) {
-    return workLogRepository.findByUser_UserIdAndStartTimeBetweenOrderByStartTimeAsc(
+    return workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
         userId, startOfDay, endOfDay);
   }
 

@@ -384,7 +384,7 @@ class WorkLogServiceTest {
 
     workLogService.endWork(USER_ID);
 
-    verify(spyLog).forceClose(any(), eq(8 * 3600));
+    verify(spyLog).setEndTime(any(LocalDateTime.class));
 
     ArgumentCaptor<LawViolationEvent> eventCaptor = ArgumentCaptor.forClass(
         LawViolationEvent.class);
@@ -572,7 +572,7 @@ class WorkLogServiceTest {
     assertThatThrownBy(() -> workLogService.endWork(USER_ID)).isInstanceOf(
         WorkException.InsufficientWorkTime.class);
 
-    verify(spyUser).getPolicyForDate(LocalDate.now());
+    verify(spyUser).getPolicyForDate(any(LocalDate.class));
   }
 
   @Test
@@ -743,6 +743,4 @@ class WorkLogServiceTest {
 
     verify(eventPublisher, never()).publishEvent(any(LawViolationEvent.class));
   }
-
-
 }

@@ -280,4 +280,30 @@ class OvertimeServiceIT {
         validUntilOverride != null ? validUntilOverride : LocalDateTime.now().plusMonths(3));
     return overtimeArchiveRepository.save(archive);
   }
+
+  @Test
+  void registerPenaltyDebtForUser_doesNothing_whenMissingSecondsIsZero() {
+    LocalDate date = LocalDate.now();
+
+    overtimeService.registerPenaltyDebt(user, date, 0);
+
+    assertThat(overtimeArchiveRepository.findByUser_UserId(user.getUserId())).isEmpty();
+  }
+
+  @Test
+  void registerPenaltyDebtForUser_createsDebtArchive_whenMissingSecondsPositive() {
+    LocalDate date = LocalDate.now();
+
+    overtimeService.registerPenaltyDebt(user, date, 900);
+
+    Integer balance = overtimeService.getOvertimeBalance(user.getUserId());
+    assertThat(balance).isEqualTo(-900);
+
+    List<OvertimeArchive> archives = overtimeArchiveRepository.findByUser_UserId(user.getUserId());
+    assertThat(archives).hasSize(1);
+    assertThat(archives.get(0).getType()).isEqualTo(OvertimeType.DEBT);
+    assertThat(archives.get(0).getDurationSeconds()).isEqualTo(900);
+    assertThat(archives.get(0).getWorkLog()).isNull();
+    assertThat(archives.get(0).getNote()).contains("Automatic penalty for abandoned work log");
+  }
 }

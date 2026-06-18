@@ -1,6 +1,7 @@
 package pl.chrono.timemanager.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.User;
@@ -267,6 +269,11 @@ class WorkLogRequestServiceTest {
 
     WorkLog primaryLog = new WorkLog();
     primaryLog.setSettled(false);
+
+    List<LeaveLog> mockLeaves = new ArrayList<>();
+    mockLeaves.add(new LeaveLog());
+    primaryLog.setLeaveLogs(mockLeaves);
+
     WorkLog extraLog1 = new WorkLog();
     WorkLog extraLog2 = new WorkLog();
 
@@ -279,6 +286,8 @@ class WorkLogRequestServiceTest {
     verify(timeData).deleteWorkLog(extraLog1);
     verify(timeData).deleteWorkLog(extraLog2);
     verify(overtimeService, never()).revertSettlementForWorkLog(any());
+
+    assertThat(primaryLog.getLeaveLogs()).isEmpty();
   }
 
   @Test
@@ -302,6 +311,7 @@ class WorkLogRequestServiceTest {
     WorkLog primaryLog = new WorkLog();
     primaryLog.setWorkLogId(99);
     primaryLog.setSettled(true);
+    primaryLog.setLeaveLogs(null);
 
     when(timeData.findWorkLogsByUserAndDate(eq(EMPLOYEE_ID), any(), any())).thenReturn(
         List.of(primaryLog));

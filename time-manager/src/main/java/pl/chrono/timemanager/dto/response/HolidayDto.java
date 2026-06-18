@@ -7,4 +7,5 @@ public record HolidayDto(
     String name,
     boolean occursYearly,
     LocalDate date
-) {}
+) {
+}

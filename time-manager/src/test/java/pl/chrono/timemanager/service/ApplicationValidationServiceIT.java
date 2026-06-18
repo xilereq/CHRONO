@@ -31,32 +31,24 @@ import pl.chrono.timemanager.exception.UserException;
 @Transactional
 class ApplicationValidationServiceIT {
 
+  private static final LocalDate MONDAY = LocalDate.of(2026, 6, 22);
   @Autowired
   private ApplicationValidationService applicationValidationService;
-
   @Autowired
   private UserRepository userRepository;
-
   @Autowired
   private PolicyRepository policyRepository;
-
   @Autowired
   private UsersPolicyRepository usersPolicyRepository;
-
   @Autowired
   private ApplicationRepository applicationRepository;
-
   @Autowired
   private RoleRepository roleRepository;
-
   @Autowired
   private EntityManager entityManager;
-
   private User userWithPolicy;
   private User userWithoutPolicy;
   private Policy standardPolicy;
-
-  private static final LocalDate MONDAY = LocalDate.of(2026, 6, 22);
 
   @BeforeEach
   void setUp() {

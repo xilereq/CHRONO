@@ -51,9 +51,9 @@ public class LeaveBalanceService {
 
     List<Application> approvedLeaves =
         applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
-        employeeId, ApplicationType.HOLIDAY_LEAVE, ApplicationStatus.APPROVED, startOfYear,
-        endOfYear
-    );
+            employeeId, ApplicationType.HOLIDAY_LEAVE, ApplicationStatus.APPROVED, startOfYear,
+            endOfYear
+        );
 
     return approvedLeaves.stream().mapToInt(
         app -> workingDaysCalculationService.calculateWorkingDays(

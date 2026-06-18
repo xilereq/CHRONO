@@ -1,18 +1,13 @@
 package pl.chrono.dbmanager.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import pl.chrono.dbmanager.model.Role;
 
-/**
- * Integration test for {@link RoleRepository}.
- * Uses a real H2 in-memory database (via @DataJpaTest) to verify query behaviour.
- */
 @DataJpaTest
 class RoleRepositoryIT {
 

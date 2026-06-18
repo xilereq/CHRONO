@@ -8,6 +8,14 @@ public class OvertimeException extends TimeManagerException {
     super(errorCode, message, status);
   }
 
+  private static String buildMessage(int currentBalance) {
+    int currentBalanceHours = currentBalance / 3600;
+    int currentBalanceMins = currentBalance % 3600 / 60;
+    String formattedTime = String.format("%02dh:%02dm", currentBalanceHours, currentBalanceMins);
+    return "Not enough overtime balance to reserve (you have currently have "
+        + formattedTime + " to use.";
+  }
+
   public static class InsufficientBalance extends OvertimeException {
     public InsufficientBalance(int currentBalance) {
       super(
@@ -16,13 +24,5 @@ public class OvertimeException extends TimeManagerException {
           HttpStatus.BAD_REQUEST
       );
     }
-  }
-
-  private static String buildMessage(int currentBalance) {
-    int currentBalanceHours = currentBalance / 3600;
-    int currentBalanceMins = currentBalance % 3600 / 60;
-    String formattedTime = String.format("%02dh:%02dm", currentBalanceHours, currentBalanceMins);
-    return "Not enough overtime balance to reserve (you have currently have "
-        + formattedTime + " to use.";
   }
 }

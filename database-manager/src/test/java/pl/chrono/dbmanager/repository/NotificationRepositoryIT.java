@@ -1,19 +1,14 @@
 package pl.chrono.dbmanager.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import pl.chrono.dbmanager.model.Notification;
 
-/**
- * Integration test for {@link NotificationRepository}.
- * Uses a real H2 in-memory database (via @DataJpaTest) to verify query behaviour.
- */
 @DataJpaTest
 class NotificationRepositoryIT {
 
@@ -67,7 +62,7 @@ class NotificationRepositoryIT {
   }
 
   private Notification persistNotification(Integer userId, boolean isRead,
-      LocalDateTime createdAt) {
+                                           LocalDateTime createdAt) {
     Notification notification = new Notification();
     notification.setUserId(userId);
     notification.setMessage("Test notification");

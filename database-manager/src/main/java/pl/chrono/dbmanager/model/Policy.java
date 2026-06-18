@@ -75,7 +75,7 @@ public class Policy {
           });
       if (isHoliday) {
         return 0;
-        }
+      }
     }
     return (dailyHours != null ? dailyHours : 8) * 3600;
   }

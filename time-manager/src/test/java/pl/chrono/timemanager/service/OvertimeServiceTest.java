@@ -1,5 +1,6 @@
 package pl.chrono.timemanager.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -438,6 +439,36 @@ class OvertimeServiceTest {
     assertNull(saved.getApplication());
     assertEquals(workLog, saved.getWorkLog());
     assertTrue(saved.getNote().contains("Automatic penalty for incomplete workday"));
+  }
+
+  @Test
+  void registerPenaltyDebtForUser_ZeroOrNegativeSeconds_ReturnsEarly() {
+    User user = new User();
+    LocalDate date = LocalDate.now();
+
+    overtimeService.registerPenaltyDebt(user, date, 0);
+    overtimeService.registerPenaltyDebt(user, date, -3600);
+
+    verify(overtimeData, never()).saveOvertimeRecord(any());
+  }
+
+  @Test
+  void registerPenaltyDebtForUser_PositiveSeconds_SavesDebt() {
+    User user = new User();
+    LocalDate date = LocalDate.of(2026, 6, 18);
+
+    overtimeService.registerPenaltyDebt(user, date, 3600);
+
+    ArgumentCaptor<OvertimeArchive> captor = ArgumentCaptor.forClass(OvertimeArchive.class);
+    verify(overtimeData).saveOvertimeRecord(captor.capture());
+
+    OvertimeArchive saved = captor.getValue();
+    assertEquals(user, saved.getUser());
+    assertEquals(OvertimeType.DEBT, saved.getType());
+    assertEquals(3600, saved.getDurationSeconds());
+    assertNull(saved.getApplication());
+    assertNull(saved.getWorkLog());
+    assertTrue(saved.getNote().contains("Automatic penalty for abandoned work log on: 2026-06-18"));
   }
 
 }

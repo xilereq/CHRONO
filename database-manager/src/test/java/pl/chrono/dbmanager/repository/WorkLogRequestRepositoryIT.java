@@ -1,9 +1,8 @@
 package pl.chrono.dbmanager.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +12,6 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLogRequest;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
 
-/**
- * Integration test for {@link WorkLogRequestRepository}.
- * Uses a real H2 in-memory database (via @DataJpaTest) to verify query behaviour.
- */
 @DataJpaTest
 class WorkLogRequestRepositoryIT {
 
@@ -139,7 +134,7 @@ class WorkLogRequestRepositoryIT {
   }
 
   private WorkLogRequest persistRequest(User employee, User manager,
-      WorkLogRequestStatus status, LocalDateTime createdAt) {
+                                        WorkLogRequestStatus status, LocalDateTime createdAt) {
     WorkLogRequest request = new WorkLogRequest();
     request.setEmployee(employee);
     request.setManager(manager);

@@ -8,4 +8,5 @@ public record OvertimeRecordDto(
     Integer durationSeconds,
     LocalDateTime createdAt,
     String note
-) {}
+) {
+}

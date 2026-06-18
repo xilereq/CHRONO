@@ -26,6 +26,8 @@ public interface I_TimeData {
 
   List<WorkLog> findUnsettledWorkLogs();
 
+  List<WorkLog> findPendingCorrectionBefore(LocalDateTime threshold);
+
   Optional<WorkLog> findLastClosedWorkLog(Integer userId);
 
   WorkLogRequest saveWorkLogRequest(WorkLogRequest request);
