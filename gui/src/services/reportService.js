@@ -114,6 +114,12 @@ const reportService = {
             `${API_URL}/overtime/team?startDate=${startDate}&endDate=${endDate}&format=${format}`,
             `nadgodziny_zespolu_${startDate}_${endDate}.${EXT[format]}`
         ),
+
+    downloadTeamAnomalies: (startDate, endDate, format) =>
+        fetchAndDownload(
+            `${API_URL}/anomalies/team?startDate=${startDate}&endDate=${endDate}&format=${format}`,
+            `anomalie_zespolu_${startDate}_${endDate}.${EXT[format]}`
+        ),
 };
 
 export default reportService;

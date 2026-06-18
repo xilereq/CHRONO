@@ -322,6 +322,10 @@ export const en = {
         errorDateOrder: '"From" date must be earlier than "To".',
         errorNoEmployee: 'Select an employee.',
         errorDownloading: 'Error downloading report.',
+        unexcused: 'Absence without request',
+        anomalyDetection: 'Anomaly detection',
+        anomalyHint: 'Report of employees with balance deviation >10% from plan',
+        anomalyActive: 'Anomaly mode — overrides selected report type',
     },
 
     // ============= USER MANAGEMENT =============
