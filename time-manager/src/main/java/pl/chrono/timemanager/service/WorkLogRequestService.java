@@ -99,6 +99,11 @@ public class WorkLogRequestService {
       primaryLog.setEndTime(request.getProposedEndTime());
       primaryLog.setLocationType(location);
 
+      if (primaryLog.getLeaveLogs() != null) {
+        primaryLog.getLeaveLogs().clear();
+      }
+
+      primaryLog.setPendingCorrection(false);
       if (primaryLog.isSettled()) {
         overtimeService.revertSettlementForWorkLog(primaryLog.getWorkLogId());
         primaryLog.setSettled(false);

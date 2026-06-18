@@ -1,10 +1,7 @@
 package pl.chrono.dbmanager.model;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,49 +86,6 @@ class WorkLogTest {
   }
 
   @Test
-  void nullStartTimeForceCloseTest() {
-    workLog.setStartTime(null);
-
-    int targetSeconds = 8 * 3600;
-    workLog.forceClose(boundaryTime, targetSeconds);
-
-    assertThat(workLog.getEndTime()).isNull();
-  }
-
-  @Test
-  void emptyListForForceCloseTest() {
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-    workLog.setLeaveLogs(null);
-
-    int targetSeconds = 8 * 3600;
-    workLog.forceClose(boundaryTime, targetSeconds);
-
-    assertThat(workLog.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 9, 16, 0));
-  }
-
-  @Test
-  void forceCloseWithClosedAndOpenBreakLogsTest() {
-    LocalDateTime customBoundary = LocalDateTime.of(2026, 6, 9, 14, 30);
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-
-    LeaveLog closedLeave = new LeaveLog();
-    closedLeave.setStartTime(LocalDateTime.of(2026, 6, 9, 12, 0));
-    closedLeave.setEndTime(LocalDateTime.of(2026, 6, 9, 12, 30));
-
-    LeaveLog openLeave = new LeaveLog();
-    openLeave.setStartTime(LocalDateTime.of(2026, 6, 9, 14, 0));
-    openLeave.setEndTime(null);
-
-    workLog.setLeaveLogs(List.of(closedLeave, openLeave));
-    int targetSeconds = 8 * 3600;
-    workLog.forceClose(customBoundary, targetSeconds);
-
-    assertThat(closedLeave.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 9, 12, 30));
-    assertThat(openLeave.getEndTime()).isEqualTo(customBoundary);
-    assertThat(workLog.getEndTime()).isEqualTo(customBoundary);
-  }
-
-  @Test
   void roundingAppliedTest() {
     workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
     workLog.setEndTime(LocalDateTime.of(2026, 6, 9, 15, 50));
@@ -171,29 +125,4 @@ class WorkLogTest {
     assertThat(effectiveTime).isEqualTo(8 * 3600 + 60);
   }
 
-  @Test
-  void onlyOpenBreaksForInForceCloseTest() {
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-    LeaveLog openLeave = new LeaveLog();
-    openLeave.setStartTime(LocalDateTime.of(2026, 6, 9, 12, 0));
-    openLeave.setEndTime(null);
-
-    workLog.setLeaveLogs(List.of(openLeave));
-
-    workLog.forceClose(boundaryTime, 8 * 3600);
-
-    assertThat(workLog.getEndTime()).isEqualTo(boundaryTime);
-  }
-
-  @Test
-  void forceCloseWithEmptyLeaveLogsListTest() {
-    workLog.setStartTime(LocalDateTime.of(2026, 6, 9, 8, 0));
-
-    workLog.setLeaveLogs(List.of());
-
-    int targetSeconds = 8 * 3600;
-    workLog.forceClose(boundaryTime, targetSeconds);
-
-    assertThat(workLog.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 9, 16, 0));
-  }
 }

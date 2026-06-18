@@ -6,4 +6,5 @@ public record LawViolationEvent(
     Long referenceId,
     String referenceType,
     String message
-) {}
+) {
+}

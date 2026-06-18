@@ -12,4 +12,5 @@ public record CreateHolidayRequest(
 
     @NotNull
     LocalDate date
-) {}
+) {
+}

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.Role;
@@ -142,29 +143,37 @@ class WorkLogRequestServiceIT {
     assertThat(updated.getManager().getUserId()).isEqualTo(manager.getUserId());
 
     List<WorkLog> logsForDay =
-        workLogRepository.findByUser_UserIdAndStartTimeBetweenOrderByStartTimeAsc(
-        employee.getUserId(), request.getProposedStartTime().toLocalDate().atStartOfDay(),
-        request.getProposedStartTime().toLocalDate().plusDays(1).atStartOfDay()
-    );
+        workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
+            employee.getUserId(), request.getProposedStartTime().toLocalDate().atStartOfDay(),
+            request.getProposedStartTime().toLocalDate().plusDays(1).atStartOfDay()
+        );
     assertThat(logsForDay).hasSize(1);
   }
 
   @Test
-  void approveRequest_updatesExistingWorkLog_whenOneAlreadyExistsForThatDay() {
+  void approveRequest_updatesExistingWorkLog_andClearsLeaveLogs() {
     workLogRequestService.submitRequest(employee.getUserId(), createRequest(9, "Correction"));
     WorkLogRequest request = findSinglePendingRequest(employee.getUserId());
     LocalDate targetDate = request.getProposedStartTime().toLocalDate();
 
     WorkLog existing = persistWorkLog(targetDate.atTime(7, 0), targetDate.atTime(15, 0));
 
+    persistLeaveLog(existing, targetDate.atTime(10, 0), null);
+
     workLogRequestService.approveRequest(request.getId(), manager.getUserId(), null);
+
+    entityManager.flush();
+    entityManager.clear();
 
     WorkLog reloaded = workLogRepository.findById(existing.getWorkLogId()).orElseThrow();
     assertThat(reloaded.getStartTime()).isEqualTo(request.getProposedStartTime());
     assertThat(reloaded.getEndTime()).isEqualTo(request.getProposedEndTime());
+
+    assertThat(reloaded.getLeaveLogs()).isEmpty();
+
     List<WorkLog> logsForDay =
-        workLogRepository.findByUser_UserIdAndStartTimeBetweenOrderByStartTimeAsc(
-        employee.getUserId(), targetDate.atStartOfDay(), targetDate.plusDays(1).atStartOfDay());
+        workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
+            employee.getUserId(), targetDate.atStartOfDay(), targetDate.plusDays(1).atStartOfDay());
     assertThat(logsForDay).hasSize(1);
   }
 
@@ -180,6 +189,9 @@ class WorkLogRequestServiceIT {
     persistEarnedArchive(existing, 3600);
 
     workLogRequestService.approveRequest(request.getId(), manager.getUserId(), null);
+
+    entityManager.flush();
+    entityManager.clear();
 
     WorkLog reloaded = workLogRepository.findById(existing.getWorkLogId()).orElseThrow();
     assertThat(reloaded.isSettled()).isFalse();
@@ -370,6 +382,16 @@ class WorkLogRequestServiceIT {
     workLog.setStartTime(startTime);
     workLog.setEndTime(endTime);
     return workLogRepository.save(workLog);
+  }
+
+  private void persistLeaveLog(WorkLog workLog, LocalDateTime start, LocalDateTime end) {
+    LeaveLog leaveLog = new LeaveLog();
+    leaveLog.setWorkLog(workLog);
+    leaveLog.setStartTime(start);
+    leaveLog.setEndTime(end);
+    leaveLog.setUser(workLog.getUser());
+    workLog.getLeaveLogs().add(leaveLog);
+    workLogRepository.save(workLog);
   }
 
   private void persistEarnedArchive(WorkLog workLog, int durationSeconds) {

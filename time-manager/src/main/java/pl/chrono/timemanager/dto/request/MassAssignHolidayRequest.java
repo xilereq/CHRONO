@@ -6,4 +6,5 @@ import java.util.List;
 public record MassAssignHolidayRequest(
     @NotEmpty(message = "Holiday list cannot be empty")
     List<Integer> holidayIds
-) {}
+) {
+}

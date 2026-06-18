@@ -105,7 +105,7 @@ class WorkLogServiceIT {
     workLogService.cancelWork(user.getUserId());
 
     assertThat(workLogService.isUserWorking(user.getUserId())).isFalse();
-    assertThat(workLogRepository.findByUser_UserIdAndEndTimeIsNull(user.getUserId())).isEmpty();
+    assertThat(workLogRepository.findByUser_UserIdAndEndTimeIsNullAndPendingCorrectionFalse(user.getUserId())).isEmpty();
   }
 
   @Test
@@ -221,7 +221,7 @@ class WorkLogServiceIT {
   }
 
   private void backdateActiveLogStart(User user, LocalDateTime newStartTime) {
-    WorkLog active = workLogRepository.findByUser_UserIdAndEndTimeIsNull(user.getUserId())
+    WorkLog active = workLogRepository.findByUser_UserIdAndEndTimeIsNullAndPendingCorrectionFalse(user.getUserId())
         .orElseThrow();
     active.setStartTime(newStartTime);
     workLogRepository.save(active);

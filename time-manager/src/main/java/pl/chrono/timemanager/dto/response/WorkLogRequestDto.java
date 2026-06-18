@@ -16,4 +16,5 @@ public record WorkLogRequestDto(
     String managerComment,
     LocalDateTime createdAt,
     LocalDateTime resolvedAt
-) {}
+) {
+}

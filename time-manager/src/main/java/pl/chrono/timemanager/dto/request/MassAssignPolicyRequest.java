@@ -14,4 +14,5 @@ public record MassAssignPolicyRequest(
 
     @NotNull(message = "Start date is required")
     LocalDate startDate
-) {}
+) {
+}

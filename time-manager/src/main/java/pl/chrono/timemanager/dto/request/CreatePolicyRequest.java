@@ -23,4 +23,5 @@ public record CreatePolicyRequest(
     Integer roundingMinutes,
 
     List<String> workingDays
-) {}
+) {
+}

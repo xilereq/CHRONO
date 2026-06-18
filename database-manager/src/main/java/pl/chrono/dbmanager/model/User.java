@@ -103,6 +103,7 @@ public class User implements UserDetails {
         .map(role -> new SimpleGrantedAuthority(role.getName()))
         .toList();
   }
+
   @Override
   public String getPassword() {
     return this.passwordHash;

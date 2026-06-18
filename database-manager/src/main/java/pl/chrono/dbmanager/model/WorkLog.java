@@ -46,6 +46,9 @@ public class WorkLog {
   @Column(name = "is_settled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
   private boolean settled;
 
+  @Column(name = "pending_correction", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+  private boolean pendingCorrection = false;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "location_type", nullable = false)
   private WorkLocationType locationType = WorkLocationType.OFFICE;
@@ -70,34 +73,6 @@ public class WorkLog {
       return leaveStart.isAfter(leaveEnd) ? 0L : Duration.between(leaveStart, leaveEnd)
           .getSeconds();
     }).sum();
-  }
-
-  private long calculateClosedBreakTime() {
-    if (this.getLeaveLogs() == null || this.getLeaveLogs().isEmpty()) {
-      return 0L;
-    }
-    return this.getLeaveLogs().stream().filter(leave -> leave.getEndTime() != null)
-        .mapToLong(leave -> Duration.between(leave.getStartTime(), leave.getEndTime()).getSeconds())
-        .sum();
-  }
-
-
-  public void forceClose(LocalDateTime boundaryTime, int targetSeconds) {
-    if (this.getStartTime() == null) {
-      return;
-    }
-    LocalDateTime baseEndTime = this.startTime.plusSeconds(targetSeconds);
-    LocalDateTime autoCloseTime = baseEndTime.plusSeconds(calculateClosedBreakTime());
-    if (autoCloseTime.isAfter(boundaryTime)) {
-      autoCloseTime = boundaryTime;
-    }
-    if (this.leaveLogs != null) {
-      LocalDateTime finalAutoCloseTime = autoCloseTime;
-      this.leaveLogs.stream().filter(
-          leave -> leave.getEndTime() == null)
-          .forEach(leave -> leave.setEndTime(finalAutoCloseTime));
-    }
-    this.endTime = autoCloseTime;
   }
 
   public long getEffectiveWorkTime(LocalDateTime boundaryTime, int requiredSeconds,

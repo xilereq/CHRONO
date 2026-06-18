@@ -1,14 +1,14 @@
 package pl.chrono.dbmanager.adapter;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
 import pl.chrono.dbmanager.repository.OvertimeArchiveRepository;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ public class OvertimeDataAdapter implements I_OvertimeData {
   }
 
   @Override
-  public List<OvertimeArchive> findByWorkLogId(Integer workLogId){
+  public List<OvertimeArchive> findByWorkLogId(Integer workLogId) {
     return repository.findByWorkLog_WorkLogId(workLogId);
   }
 

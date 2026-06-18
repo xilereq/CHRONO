@@ -8,5 +8,6 @@ public record WorkLogCreateRequest(
     LocalDateTime proposedStartTime,
     LocalDateTime proposedEndTime,
     String reason
-) {}
+) {
+}
 

@@ -1,6 +1,10 @@
 package pl.chrono.dbmanager.service;
 
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,10 +13,6 @@ import org.springframework.stereotype.Component;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.repository.OperationLogRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 
 @Component
@@ -47,12 +47,12 @@ public class DataRetentionScheduler {
 
     List<User> usersToAnonymize = userRepository.findByIsActiveFalseAndEmploymentEndDateBefore(cutoffDate);
 
-    if(usersToAnonymize.isEmpty()){
+    if (usersToAnonymize.isEmpty()) {
       log.info("Brak użytkowników do anonimizacji w tym miesiącu.");
       return;
     }
 
-    for(User user : usersToAnonymize){
+    for (User user : usersToAnonymize) {
       anonymizeUserData(user);
     }
 
@@ -62,7 +62,7 @@ public class DataRetentionScheduler {
         usersToAnonymize.size(), cutoffDate);
   }
 
-  private void anonymizeUserData(User user){
+  private void anonymizeUserData(User user) {
     user.setName("Zanonimizowano");
     user.setSurname("Zanonimizowano");
 

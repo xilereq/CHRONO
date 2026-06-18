@@ -9,4 +9,5 @@ public record AssignPolicyRequest(
 
     @NotNull(message = "Start date is required")
     LocalDate startDate
-) {}
+) {
+}

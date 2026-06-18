@@ -11,4 +11,5 @@ public record PolicyDto(
     Integer maxWeeklyHours,
     Integer roundingMinutes,
     Set<DayOfWeek> workingDays
-) {}
+) {
+}

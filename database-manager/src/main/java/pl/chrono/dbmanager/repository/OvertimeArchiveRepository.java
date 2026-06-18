@@ -1,13 +1,13 @@
 package pl.chrono.dbmanager.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.chrono.dbmanager.model.OvertimeArchive;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 public interface OvertimeArchiveRepository extends JpaRepository<OvertimeArchive, Long> {
 

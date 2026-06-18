@@ -132,11 +132,11 @@ public class WorkLogService {
     int maxAllowedSeconds = workTimeCalculationService.getMaxAllowedSeconds(policyForDay);
 
     if (workTime > maxAllowedSeconds) {
-      workLog.forceClose(now, requiredSeconds);
+      workLog.setEndTime(now);
       eventPublisher.publishEvent(new LawViolationEvent(
           userId, "VIOLATION_MAX_WORK", workLog.getWorkLogId().longValue(), "WORK_LOG",
           "Your work time has exceeded maximum work time for your policy ("
-              + workTimeCalculationService.formatSecondsToTime( maxAllowedSeconds) + "). " +
+              + workTimeCalculationService.formatSecondsToTime(maxAllowedSeconds) + "). " +
               "Log has been automatically closed."
       ));
     } else if (workTime < (requiredSeconds - roundingSeconds)) {
@@ -176,10 +176,6 @@ public class WorkLogService {
       long workTime = workLog.calculateWorkTime(LocalDateTime.now());
       return workTimeCalculationService.formatSecondsToTime(workTime);
     }).orElse("00:00:00");
-  }
-
-
-  private record MonthlyHours(int total, int remaining) {
   }
 
   private MonthlyHours calculateMonthlyHours(User user, LocalDate today) {
@@ -231,10 +227,11 @@ public class WorkLogService {
     MonthlyHours monthlyHours = calculateMonthlyHours(user, today);
     int totalHoursWorked = calculateTotalHoursWorked(userId, today);
     int overtimeSeconds = overtimeService.getOvertimeBalance(userId);
+    int finalOvertime = Math.max(overtimeSeconds, 0);
 
     return new WorkStats(
         totalHoursWorked, monthlyHours.remaining(), monthlyHours.total(),
-        overtimeSeconds
+        finalOvertime
     );
   }
 
@@ -282,6 +279,9 @@ public class WorkLogService {
           "WARNING: You have exceeded maximum weekly limit (" + maxWeeklyHours + " hours)."
       ));
     }
+  }
+
+  private record MonthlyHours(int total, int remaining) {
   }
 }
 
