@@ -21,6 +21,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.Role;
@@ -34,6 +35,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
 import pl.chrono.timemanager.dto.response.WorkLogRequestDto;
+import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkLogRequestException;
 import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
@@ -54,6 +56,8 @@ class WorkLogRequestServiceTest {
   private WorkLogRequestMapper mapper;
   @Mock
   private WorkTimeCalculationService workTimeCalculationService;
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
   @InjectMocks
   private WorkLogRequestService requestService;
 
@@ -478,5 +482,60 @@ class WorkLogRequestServiceTest {
     ArgumentCaptor<WorkLogRequest> requestCaptor = ArgumentCaptor.forClass(WorkLogRequest.class);
     verify(timeData).saveWorkLogRequest(requestCaptor.capture());
     assertThat(requestCaptor.getValue().getStatus()).isEqualTo(WorkLogRequestStatus.PENDING);
+  }
+
+  @Test
+  void publishNotificationEvent_FullDataTest() {
+    WorkLogRequest request = new WorkLogRequest();
+    request.setId(999L);
+    request.setStatus(WorkLogRequestStatus.PENDING);
+
+    User manager = new User();
+    manager.setUserId(10);
+
+    User employee = new User();
+    employee.setUserId(5);
+    employee.setManager(manager);
+    request.setEmployee(employee);
+
+    User reviewer = new User();
+    reviewer.setName("Jan");
+    reviewer.setSurname("Kowalski");
+
+    requestService.publishNotificationEvent(request, "CREATED", reviewer);
+
+    ArgumentCaptor<WorkLogRequestNotificationEvent> captor = ArgumentCaptor.forClass(WorkLogRequestNotificationEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
+
+    WorkLogRequestNotificationEvent event = captor.getValue();
+    assertThat(event.requestId()).isEqualTo(999L);
+    assertThat(event.employeeId()).isEqualTo(5);
+    assertThat(event.managerId()).isEqualTo(10);
+    assertThat(event.action()).isEqualTo("CREATED");
+    assertThat(event.status()).isEqualTo("PENDING");
+    assertThat(event.reviewerName()).isEqualTo("Jan Kowalski");
+  }
+
+  @Test
+  void publishNotificationEvent_NullReviewerAndManagerTest() {
+    WorkLogRequest request = new WorkLogRequest();
+    request.setId(888L);
+    request.setStatus(WorkLogRequestStatus.APPROVED);
+
+    User employee = new User();
+    employee.setUserId(5);
+    employee.setManager(null);
+    request.setEmployee(employee);
+
+    requestService.publishNotificationEvent(request, "STATUS_CHANGED", null);
+
+    ArgumentCaptor<WorkLogRequestNotificationEvent> captor = ArgumentCaptor.forClass(WorkLogRequestNotificationEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
+
+    WorkLogRequestNotificationEvent event = captor.getValue();
+    assertThat(event.managerId()).isNull();
+    assertThat(event.reviewerName()).isNull();
+    assertThat(event.action()).isEqualTo("STATUS_CHANGED");
+    assertThat(event.status()).isEqualTo("APPROVED");
   }
 }

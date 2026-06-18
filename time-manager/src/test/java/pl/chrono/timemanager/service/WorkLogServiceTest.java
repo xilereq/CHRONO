@@ -702,7 +702,7 @@ class WorkLogServiceTest {
 
     ArgumentCaptor<LawViolationEvent> captor = ArgumentCaptor.forClass(LawViolationEvent.class);
     verify(eventPublisher).publishEvent(captor.capture());
-    assertThat(captor.getValue().message()).contains("48 hours");
+    assertThat(captor.getValue().message()).contains("48 godzin");
   }
 
   @Test
