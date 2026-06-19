@@ -20,12 +20,9 @@ export const options = {
 
 const BASE_URL = 'https://localhost:8443/api';
 
-// 3. Główny scenariusz - kod, który wykonuje każdy wirtualny użytkownik
 export default function () {
-    // Losowe wybranie użytkownika z naszej listy
     const randomUser = users[Math.floor(Math.random() * users.length)];
 
-    // --- KROK A: LOGOWANIE ---
     const loginPayload = JSON.stringify({
         email: randomUser.email,
         password: randomUser.password,
@@ -37,13 +34,11 @@ export default function () {
 
     const loginRes = http.post(`${BASE_URL}/auth/login`, loginPayload, params);
 
-    // Sprawdzamy czy logowanie się udało
     check(loginRes, {
         'Login: status is 200': (r) => r.status === 200,
         'Login: has token': (r) => r.json('token') !== undefined,
     });
 
-    // Zatrzymujemy flow tego użytkownika, jeśli logowanie padło
     if (loginRes.status !== 200) {
         sleep(1);
         return;
@@ -51,10 +46,8 @@ export default function () {
 
     const token = loginRes.json('token');
 
-    // Przerwa na "myślenie" użytkownika po zalogowaniu
-    sleep(Math.random() * 2 + 1); // Czeka od 1 do 3 sekund
+    sleep(Math.random() * 2 + 1);
 
-    // --- KROK B: POBRANIE LOGÓW PRACY ---
     const authHeaders = {
         headers: {
             'Content-Type': 'application/json',
@@ -68,6 +61,5 @@ export default function () {
         'Stats fetched successfully (status 200)': (r) => r.status === 200,
     });
 
-    // Kolejna przerwa
     sleep(Math.random() * 2 + 1);
 }
