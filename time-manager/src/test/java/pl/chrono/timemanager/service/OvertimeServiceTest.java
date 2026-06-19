@@ -300,7 +300,7 @@ class OvertimeServiceTest {
     assertEquals("VIOLATION_YEARLY_OVERTIME", firedEvent.violationType());
     assertEquals(10L, firedEvent.referenceId());
     assertEquals("APPLICATION", firedEvent.referenceType());
-    assertTrue(firedEvent.message().contains("150 overtime hours"));
+    assertTrue(firedEvent.message().contains("150 nadgodzin"));
   }
 
   @Test

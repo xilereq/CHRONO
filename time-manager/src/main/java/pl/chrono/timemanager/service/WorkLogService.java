@@ -135,9 +135,9 @@ public class WorkLogService {
       workLog.setEndTime(now);
       eventPublisher.publishEvent(new LawViolationEvent(
           userId, "VIOLATION_MAX_WORK", workLog.getWorkLogId().longValue(), "WORK_LOG",
-          "Your work time has exceeded maximum work time for your policy ("
+          "Twój czas pracy przekroczył maksymalny czas pracy twojej polityki ("
               + workTimeCalculationService.formatSecondsToTime(maxAllowedSeconds) + "). " +
-              "Log has been automatically closed."
+              "Log został przycięty."
       ));
     } else if (workTime < (requiredSeconds - roundingSeconds)) {
       long missingSeconds = requiredSeconds - workTime;
@@ -155,7 +155,7 @@ public class WorkLogService {
         if (hoursPassed < 11) {
           eventPublisher.publishEvent(new LawViolationEvent(
               userId, "VIOLATION_REST", saved.getWorkLogId().longValue(), "WORK_LOG",
-              "WARNING: You have worked less than 11 hours since your last shift (hours passed: " + hoursPassed + ")."
+              "UWAGA: Twoja zmiana rozpoczęła się niecałe 11 godzin przed zakończeniem poprzedniej (minęło: " + hoursPassed + " godzin)."
           ));
         }
       }
@@ -293,7 +293,7 @@ public class WorkLogService {
       eventPublisher.publishEvent(new LawViolationEvent(
           currentLog.getUser().getUserId(), "VIOLATION_MAX_WEEKLY_WORK",
           currentLog.getWorkLogId().longValue(), "WORK_LOG",
-          "WARNING: You have exceeded maximum weekly limit (" + maxWeeklyHours + " hours)."
+          "UWAGA: Przekroczyłeś/aś maksymalny limit (" + maxWeeklyHours + " godzin)."
       ));
     }
   }

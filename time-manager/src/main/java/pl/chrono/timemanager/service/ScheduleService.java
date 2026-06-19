@@ -61,8 +61,8 @@ public class ScheduleService {
       eventPublisher.publishEvent(new LawViolationEvent(
           workLog.getUser().getUserId(), "UNCLOSED_WORK_LOG",
           workLog.getWorkLogId().longValue(), "WORK_LOG",
-          "You have an unclosed work log from " + workDate +
-              ". Please submit a work log correction request."
+          "UWAGA: Posiadasz niezamknięty log pracy w dniu " + workDate +
+              ". Proszę przesłać wniosek o korekcję czasu pracy w przeciągu 2 tygodni."
       ));
     }
 
@@ -85,8 +85,8 @@ public class ScheduleService {
         eventPublisher.publishEvent(new LawViolationEvent(
             workLog.getUser().getUserId(), "ABANDONED_WORK_LOG",
             workLog.getWorkLogId().longValue(), "WORK_LOG",
-            "Your work log from " + workDate + " was removed due to no correction request " +
-                "within 2 weeks. A penalty debt has been registered."
+            "Twój log z dnia " + workDate + " został usunięty przez brak przesłania korekty " +
+                "w ciągu 2 tygodni. Została naliczona kara za dzień."
         ));
       }
 

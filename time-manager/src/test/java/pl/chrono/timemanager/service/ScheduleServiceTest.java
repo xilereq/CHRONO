@@ -321,23 +321,17 @@ class ScheduleServiceTest {
     assertThat(logCaptor.getValue().getDetails()).contains("3 users");
   }
 
-  // ==========================================
-  // JACOCO BRANCH COVERAGE TESTS
-  // ==========================================
-
   @Test
   void removeAbandonedWorkLogs_NullStartTime_TakesCurrentDateAndDeletes() {
-    // Celuje w: workLog.getStartTime() != null ? ... : now.toLocalDate();
     WorkLog spyLog = spy(new WorkLog());
     spyLog.setWorkLogId(999);
-    spyLog.setStartTime(null); // Brakujący branch
+    spyLog.setStartTime(null);
     spyLog.setUser(spyUser);
 
     when(timeData.findActiveWorkLogsBefore(any())).thenReturn(Collections.emptyList());
     when(timeData.findPendingCorrectionBefore(any())).thenReturn(List.of(spyLog));
     when(timeData.findUnsettledWorkLogs()).thenReturn(Collections.emptyList());
 
-    // Zwracamy 0, żeby nie komplikować testu karą, chcemy tylko sprawdzić null-check
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(0);
 
     scheduleService.processWorkLogs();

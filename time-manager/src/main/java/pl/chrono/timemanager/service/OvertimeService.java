@@ -82,7 +82,7 @@ public class OvertimeService {
       eventPublisher.publishEvent(new LawViolationEvent(
           application.getEmployee().getUserId(), "VIOLATION_YEARLY_OVERTIME", application.getId(),
           "APPLICATION",
-          "WARNING: You have excedeed yearly limit of 150 overtime hours in year " + currentYear
+          "UWAGA: Przekraczasz roczny limit 150 nadgodzin w roku " + currentYear + "."
       ));
     }
 

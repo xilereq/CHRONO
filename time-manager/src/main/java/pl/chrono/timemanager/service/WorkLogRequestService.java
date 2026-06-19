@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Policy;
@@ -21,6 +22,7 @@ import pl.chrono.timemanager.dto.response.WorkLogRequestDto;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkLogRequestException;
 import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
+import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public class WorkLogRequestService {
   private final OvertimeService overtimeService;
   private final WorkLogRequestMapper mapper;
   private final WorkTimeCalculationService workTimeCalculationService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public void submitRequest(Integer employeeId, WorkLogCreateRequest requestDto) {
@@ -67,6 +70,7 @@ public class WorkLogRequestService {
     request.setStatus(WorkLogRequestStatus.PENDING);
 
     timeData.saveWorkLogRequest(request);
+    publishNotificationEvent(request, "CREATED", null);
   }
 
   @Transactional
@@ -121,6 +125,7 @@ public class WorkLogRequestService {
     request.setResolvedAt(LocalDateTime.now());
 
     timeData.saveWorkLogRequest(request);
+    publishNotificationEvent(request, "STATUS_CHANGED", reviewer);
   }
 
   @Transactional
@@ -134,6 +139,7 @@ public class WorkLogRequestService {
     request.setResolvedAt(LocalDateTime.now());
 
     timeData.saveWorkLogRequest(request);
+    publishNotificationEvent(request, "STATUS_CHANGED", reviewer);
   }
 
   @Transactional(readOnly = true)
@@ -181,5 +187,22 @@ public class WorkLogRequestService {
       }
     }
     return reviewer;
+  }
+
+  void publishNotificationEvent(WorkLogRequest request, String action, User reviewer) {
+    Integer managerId = request.getEmployee().getManager() != null ?
+        request.getEmployee().getManager().getUserId() : null;
+
+    String reviewerFullName = reviewer != null ?
+        reviewer.getName() + " " + reviewer.getSurname() : null;
+
+    eventPublisher.publishEvent(new WorkLogRequestNotificationEvent(
+        request.getId(),
+        request.getEmployee().getUserId(),
+        managerId,
+        action,
+        request.getStatus().name(),
+        reviewerFullName
+    ));
   }
 }
