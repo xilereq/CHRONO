@@ -1,5 +1,6 @@
 package pl.chrono.usermanager.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import jakarta.transaction.Transactional;
@@ -85,6 +86,12 @@ public class AuthService {
           .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
 
       newUser.setManager(manager);
+    }
+
+    if(request.date() != null){
+      newUser.setEmploymentStartDate(request.date());
+    } else {
+      newUser.setEmploymentStartDate(LocalDate.now());
     }
 
     userData.save(newUser);

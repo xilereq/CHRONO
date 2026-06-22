@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.usermanager.api.I_UserService;
+import pl.chrono.usermanager.dto.request.SetEmploymentEndDate;
+import pl.chrono.usermanager.dto.request.SetEmploymentStartDate;
 import pl.chrono.usermanager.dto.request.SetManagerRequest;
 import pl.chrono.usermanager.dto.response.UserDto;
 import pl.chrono.usermanager.service.AuthService;
@@ -101,6 +103,20 @@ public class UserController extends BaseController{
   @PreAuthorize("hasAnyRole('ADMIN','HR')")
   public ResponseEntity<Void> getUser(@RequestBody SetManagerRequest request){
     userService.setManager(request.email(), request.managerEmail());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/set-start-date")
+  @PreAuthorize("hasAnyRole('ADMIN')")
+  public ResponseEntity<Void> setStartDate(@RequestBody SetEmploymentStartDate request){
+    userService.setEmploymentStartDate(request.email(), request.date());
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/set-end-date")
+  @PreAuthorize("hasAnyRole('ADMIN')")
+  public ResponseEntity<Void> setEndDate(@RequestBody SetEmploymentEndDate request){
+    userService.setEmploymentEndDate(request.email(), request.date());
     return ResponseEntity.ok().build();
   }
 

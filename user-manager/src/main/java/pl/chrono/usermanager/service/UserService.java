@@ -7,6 +7,7 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.usermanager.api.I_UserService;
 import pl.chrono.usermanager.dto.response.UserDto;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,5 +84,26 @@ public class UserService implements I_UserService {
     userData.save(user);
   }
 
+  @Override
+  @Transactional
+  public void setEmploymentStartDate(String email, LocalDate date){
+    User user = userData.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+    user.setEmploymentStartDate(date);
 
+    userData.save(user);
+  }
+
+  @Override
+  @Transactional
+  public void setEmploymentEndDate(String email, LocalDate date){
+    User user = userData.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+    if(!date.isAfter(user.getEmploymentStartDate())){
+      throw new IllegalArgumentException("Data zakończenia zatrudnienia musi być późniejsza niż data rozpoczęcia.");
+    }
+
+    user.setEmploymentEndDate(date);
+    userData.save(user);
+  }
 }
