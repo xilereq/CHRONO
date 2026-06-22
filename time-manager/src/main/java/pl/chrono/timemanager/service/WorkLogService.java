@@ -242,13 +242,12 @@ public class WorkLogService {
     MonthlyHours monthlyHours = calculateMonthlyHours(user, today);
     int totalHoursWorked = calculateTotalHoursWorked(userId, today);
     int excusedHours = calculateExcusedHours(user, today);
-    int combinedHours = totalHoursWorked + excusedHours;
     int overtimeSeconds = overtimeService.getOvertimeBalance(userId);
     int finalOvertime = Math.max(overtimeSeconds, 0);
 
     return new WorkStats(
-        combinedHours, monthlyHours.remaining(), monthlyHours.total(),
-        finalOvertime
+        totalHoursWorked, monthlyHours.remaining(), monthlyHours.total(),
+        finalOvertime, excusedHours
     );
   }
 

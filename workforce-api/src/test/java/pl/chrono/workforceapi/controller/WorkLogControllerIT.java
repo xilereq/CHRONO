@@ -229,14 +229,15 @@ class WorkLogControllerIT {
 
   @Test
   void getMonthlyStatsTest() throws Exception {
-    WorkStats stats = new WorkStats(120, 40, 160, 7200);
+    WorkStats stats = new WorkStats(120, 40, 160, 7200, 8);
     when(workLogService.getMonthlyStats(USER_ID)).thenReturn(stats);
 
     mockMvc.perform(get("/api/work-log/monthly-stats").header("Authorization", BEARER_TOKEN))
         .andExpect(status().isOk()).andExpect(jsonPath("$.totalWorkTime").value(120))
         .andExpect(jsonPath("$.remainingWorkTime").value(40))
         .andExpect(jsonPath("$.totalMonthlyHours").value(160))
-        .andExpect(jsonPath("$.overtimeSeconds").value(7200));
+        .andExpect(jsonPath("$.overtimeSeconds").value(7200))
+        .andExpect(jsonPath("$.excusedHours").value(8));
   }
 
   @Test
