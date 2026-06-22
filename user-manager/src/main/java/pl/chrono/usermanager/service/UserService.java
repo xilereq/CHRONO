@@ -106,4 +106,14 @@ public class UserService implements I_UserService {
     user.setEmploymentEndDate(date);
     userData.save(user);
   }
+
+  @Override
+  @Transactional
+  public void setIsActive(String email, boolean active){
+    User user = userData.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+
+    user.setActive(active);
+    userData.save(user);
+  }
 }
