@@ -23,4 +23,6 @@ public interface I_UserService {
   void setEmploymentStartDate(String email, LocalDate date);
 
   void setEmploymentEndDate(String email, LocalDate date);
+
+  void setIsActive(String email, boolean active);
 }

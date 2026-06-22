@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.usermanager.api.I_UserService;
+import pl.chrono.usermanager.dto.request.SetActive;
 import pl.chrono.usermanager.dto.request.SetEmploymentEndDate;
 import pl.chrono.usermanager.dto.request.SetEmploymentStartDate;
 import pl.chrono.usermanager.dto.request.SetManagerRequest;
@@ -120,4 +121,10 @@ public class UserController extends BaseController{
     return ResponseEntity.ok().build();
   }
 
+  @PostMapping("/set-active")
+  @PreAuthorize("hasAnyRole('ADMIN')")
+  public ResponseEntity<Void> setActive(@RequestBody SetActive request){
+    userService.setIsActive(request.email(), request.active());
+    return ResponseEntity.ok().build();
+  }
 }
