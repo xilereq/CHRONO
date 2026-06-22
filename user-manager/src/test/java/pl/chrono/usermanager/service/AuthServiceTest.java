@@ -92,7 +92,7 @@ class AuthServiceTest {
 
   @Test
   void registerNewUser_ShouldThrowException_WhenUserAlreadyExists() {
-    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "exist@test.pl", "ROLE_EMPLOYEE", null);
+    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "exist@test.pl", "ROLE_EMPLOYEE", null, null);
     when(userData.findByEmail(request.email())).thenReturn(Optional.of(new User()));
 
     IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.registerNewUser(request));
@@ -101,7 +101,7 @@ class AuthServiceTest {
 
   @Test
   void registerNewUser_ShouldThrowException_WhenRoleNotFound() {
-    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "BAD_ROLE", null);
+    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "BAD_ROLE", null, null);
     when(userData.findByEmail(request.email())).thenReturn(Optional.empty());
     when(userData.findRoleByName(request.roleName())).thenReturn(Optional.empty());
 
@@ -111,7 +111,7 @@ class AuthServiceTest {
 
   @Test
   void registerNewUser_ShouldRegisterSuccessfully_WithoutManager() {
-    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "ROLE_EMPLOYEE", null);
+    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "ROLE_EMPLOYEE", null, null);
     Role role = new Role();
     role.setName("ROLE_EMPLOYEE");
 
@@ -128,7 +128,7 @@ class AuthServiceTest {
 
   @Test
   void registerNewUser_ShouldRegisterSuccessfully_WithManager() {
-    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "ROLE_EMPLOYEE", "manager@test.pl");
+    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "ROLE_EMPLOYEE", "manager@test.pl", null);
     Role role = new Role(); role.setName("ROLE_EMPLOYEE");
     User manager = new User(); manager.setEmail("manager@test.pl");
 
@@ -146,7 +146,7 @@ class AuthServiceTest {
 
   @Test
   void registerNewUser_ShouldThrowException_WhenManagerNotFound() {
-    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "ROLE_EMPLOYEE", "badmanager@test.pl");
+    RegisterRequest request = new RegisterRequest("Jan", "Kowalski", "new@test.pl", "ROLE_EMPLOYEE", "badmanager@test.pl", null);
     Role role = new Role(); role.setName("ROLE_EMPLOYEE");
 
     when(userData.findByEmail("new@test.pl")).thenReturn(Optional.empty());

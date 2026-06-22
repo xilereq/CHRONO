@@ -69,7 +69,7 @@ class AuthServiceIT {
   @Test
   void registerNewUser_savesUserAndReturnsTempPassword() {
     RegisterRequest request = new RegisterRequest(
-        "Jan", "Kowalski", "nowy@test.pl", "ROLE_EMPLOYEE", null
+        "Jan", "Kowalski", "nowy@test.pl", "ROLE_EMPLOYEE", null, null
     );
 
     RegisterResponse response = authService.registerNewUser(request);
@@ -88,7 +88,7 @@ class AuthServiceIT {
   void registerNewUser_throwsException_whenEmailAlreadyExists() {
     persistUser("istnieje@test.pl", "haslo123", employeeRole, false);
     RegisterRequest request = new RegisterRequest(
-        "Adam", "Nowak", "istnieje@test.pl", "ROLE_EMPLOYEE", null
+        "Adam", "Nowak", "istnieje@test.pl", "ROLE_EMPLOYEE", null, null
     );
 
     assertThatThrownBy(() -> authService.registerNewUser(request))

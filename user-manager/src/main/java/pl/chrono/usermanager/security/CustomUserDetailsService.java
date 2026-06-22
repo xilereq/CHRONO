@@ -1,12 +1,9 @@
 package pl.chrono.usermanager.security;
 
-import java.util.stream.Collectors;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.ports.I_UserData;
 
 @Service
