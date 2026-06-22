@@ -61,6 +61,59 @@ const userService = {
 
         return true;
     },
+    setStartDate: async (email, date) => {
+        const response = await fetch(`${API_URL}/set-start-date`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                email: email,
+                date: date
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Nie udało się ustawić daty rozpoczęcia pracy.');
+        }
+
+        return true;
+    },
+
+    setEndDate: async (email, date) => {
+        const response = await fetch(`${API_URL}/set-end-date`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                email: email,
+                date: date
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Nie udało się ustawić daty zakończenia pracy.');
+        }
+
+        return true;
+    },
+
+    setActive: async (email, active) => {
+        const response = await fetch(`${API_URL}/set-active`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({
+                email: email,
+                active: active
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Nie udało się zmienić statusu aktywności użytkownika.');
+        }
+
+        return true;
+    }
 
 };
 

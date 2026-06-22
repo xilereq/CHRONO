@@ -6,11 +6,10 @@ import '../Policies/policies.css';
 
 const UserManagementPage = () => {
     const { t } = useLanguage();
+
     const [userFormData, setUserFormData] = useState({
-        name: '', surname: '', email: '', roleName: "ROLE_EMPLOYEE", managerEmail: ''
+        name: '', surname: '', email: '', roleName: "ROLE_EMPLOYEE", managerEmail: '', date: ''
     });
-    const [managers, setManagers] = useState([]);
-    const [users, setUsers] = useState([]);
     const [userLoading, setUserLoading] = useState(false);
     const [userMessage, setUserMessage] = useState('');
     const [userError, setUserError] = useState('');
@@ -19,6 +18,14 @@ const UserManagementPage = () => {
     const [managerLoading, setManagerLoading] = useState(false);
     const [managerMessage, setManagerMessage] = useState('');
     const [managerError, setManagerError] = useState('');
+
+    const [employmentFormData, setEmploymentFormData] = useState({ email: '', startDate: '', endDate: '', active: '' });
+    const [employmentLoading, setEmploymentLoading] = useState(false);
+    const [employmentMessage, setEmploymentMessage] = useState('');
+    const [employmentError, setEmploymentError] = useState('');
+
+    const [managers, setManagers] = useState([]);
+    const [users, setUsers] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -46,7 +53,11 @@ const UserManagementPage = () => {
     const handleUserFormSubmit = async (e) => {
         e.preventDefault();
         setUserError(''); setUserMessage(''); setUserLoading(true);
-        const payload = { ...userFormData, managerEmail: userFormData.managerEmail || null };
+
+        const payload = {
+            ...userFormData,
+            managerEmail: userFormData.managerEmail || null
+        };
 
         try {
             const response = await authService.register(payload);
@@ -59,7 +70,8 @@ const UserManagementPage = () => {
 
             setUsers(updatedUsers || []);
             setManagers(updatedManagers || []);
-            setUserFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE', managerEmail: '' });
+
+            setUserFormData({ name: '', surname: '', email: '', roleName: 'ROLE_EMPLOYEE', managerEmail: '', date: '' });
         } catch (err) {
             setUserError(err.message || t('userManagement.addUserError', 'Wystąpił błąd podczas dodawania użytkownika.'));
         } finally {
@@ -94,6 +106,47 @@ const UserManagementPage = () => {
         }
     };
 
+    const handleEmploymentFormSubmit = async (e) => {
+        e.preventDefault();
+        setEmploymentError(''); setEmploymentMessage('');
+
+        if (!employmentFormData.email) {
+            setEmploymentError(t('userManagement.selectEmployeeError', "Wybierz pracownika."));
+            return;
+        }
+
+        setEmploymentLoading(true);
+        try {
+            let updated = false;
+
+            if (employmentFormData.startDate) {
+                await userService.setStartDate(employmentFormData.email, employmentFormData.startDate);
+                updated = true;
+            }
+            if (employmentFormData.endDate) {
+                await userService.setEndDate(employmentFormData.email, employmentFormData.endDate);
+                updated = true;
+            }
+            if (employmentFormData.active !== '') {
+                const isActive = employmentFormData.active === 'true';
+                await userService.setActive(employmentFormData.email, isActive);
+                updated = true;
+            }
+
+            if (updated) {
+                setEmploymentMessage(t('userManagement.employmentUpdatedSuccess', "Dane zatrudnienia i status konta zostały zaktualizowane."));
+                setEmploymentFormData({ email: '', startDate: '', endDate: '', active: '' });
+            } else {
+                setEmploymentError(t('userManagement.noDataProvided', "Wypełnij przynajmniej jedno pole, aby zapisać zmiany."));
+            }
+
+        } catch (err) {
+            setEmploymentError(err.message || t('userManagement.employmentUpdateError', "Wystąpił błąd podczas aktualizacji danych."));
+        } finally {
+            setEmploymentLoading(false);
+        }
+    };
+
     return (
         <div className="page-container">
             <h2 className="page-title-no-margin">{t('userManagement.pageTitle', 'Zarządzanie Użytkownikami (HR)')}</h2>
@@ -109,6 +162,8 @@ const UserManagementPage = () => {
                         <div className="form-group"><span className="form-label">{t('userManagement.firstName', 'Imię')}</span><input className="form-input" type="text" name="name" value={userFormData.name} onChange={handleUserFormChange} required /></div>
                         <div className="form-group"><span className="form-label">{t('userManagement.lastName', 'Nazwisko')}</span><input className="form-input" type="text" name="surname" value={userFormData.surname} onChange={handleUserFormChange} required /></div>
                         <div className="form-group"><span className="form-label">{t('userManagement.emailLabel', 'Adres e-mail')}</span><input className="form-input" type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required /></div>
+                        <div className="form-group"><span className="form-label">{t('userManagement.startDateLabel', 'Data rozpoczęcia pracy')}</span><input className="form-input" type="date" name="date" value={userFormData.date} onChange={handleUserFormChange} required /></div>
+
                         <div className="form-group"><span className="form-label">{t('userManagement.systemRole', 'Rola systemowa')}</span>
                             <select className="form-input" name="roleName" value={userFormData.roleName} onChange={handleUserFormChange}>
                                 <option value="ROLE_EMPLOYEE">{t('userManagement.roles.employee', 'Pracownik')}</option>
@@ -123,7 +178,6 @@ const UserManagementPage = () => {
                                 <select className="form-input" name="managerEmail" value={userFormData.managerEmail} onChange={handleUserFormChange}>
                                     <option value="">{t('userManagement.selectManagerPlaceholder', '-- Wybierz managera --')}</option>
                                     {managers
-                                        // ZMIANA: Wykluczamy adres email wpisany w formularzu (zabezpieczenie przed przypisaniem do samego siebie)
                                         .filter(m => m.email !== userFormData.email)
                                         .map(m => <option key={m.email} value={m.email}>{m.name} {m.surname} ({m.email})</option>)
                                     }
@@ -171,6 +225,51 @@ const UserManagementPage = () => {
                     </div>
                 </form>
             </div>
+
+            <div className="policy-section" style={{ marginTop: '2rem' }}>
+                <h2 className="section-title">{t('userManagement.section3Title', 'Sekcja 3: Zarządzaj zatrudnieniem i statusem konta')}</h2>
+                <p className="section-subtitle mb-3">{t('userManagement.section3Subtitle', 'Zaktualizuj wybrane daty lub dezaktywuj konto pracownika. Pozostaw puste, by nie zmieniać.')}</p>
+                {employmentError && <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{employmentError}</div>}
+                {employmentMessage && <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}><strong>{employmentMessage}</strong></div>}
+
+                <form onSubmit={handleEmploymentFormSubmit} style={{ marginTop: '15px' }}>
+                    <div className="grid-2-col">
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                            <span className="form-label">{t('userManagement.employeeLabel', 'Pracownik')} <span style={{ color: 'red' }}>*</span></span>
+                            <select className="form-input" value={employmentFormData.email} onChange={(e) => setEmploymentFormData({...employmentFormData, email: e.target.value})} required>
+                                <option value="">{t('userManagement.selectEmployeePlaceholder', '-- Wybierz pracownika --')}</option>
+                                {users.map(u => <option key={u.email} value={u.email}>{u.name} {u.surname} ({u.email})</option>)}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <span className="form-label">{t('userManagement.updateStartDateLabel', 'Zmień datę rozpoczęcia')}</span>
+                            <input className="form-input" type="date" value={employmentFormData.startDate} onChange={(e) => setEmploymentFormData({...employmentFormData, startDate: e.target.value})} />
+                        </div>
+
+                        <div className="form-group">
+                            <span className="form-label">{t('userManagement.updateEndDateLabel', 'Ustaw datę zakończenia')}</span>
+                            <input className="form-input" type="date" value={employmentFormData.endDate} onChange={(e) => setEmploymentFormData({...employmentFormData, endDate: e.target.value})} />
+                        </div>
+
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                            <span className="form-label">{t('userManagement.updateStatusLabel', 'Status konta w systemie')}</span>
+                            <select className="form-input" value={employmentFormData.active} onChange={(e) => setEmploymentFormData({...employmentFormData, active: e.target.value})}>
+                                <option value="">{t('userManagement.statusUnchanged', '-- Nie zmieniaj statusu --')}</option>
+                                <option value="true">{t('userManagement.statusActive', 'Konto Aktywne')}</option>
+                                <option value="false">{t('userManagement.statusInactive', 'Konto Nieaktywne')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginTop: '1rem' }}>
+                        <button type="submit" className="btn-yellow" disabled={employmentLoading} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                            {employmentLoading ? t('common.processing', 'Przetwarzanie...') : t('userManagement.saveEmploymentBtn', 'Zapisz zmiany w zatrudnieniu')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     );
 };
