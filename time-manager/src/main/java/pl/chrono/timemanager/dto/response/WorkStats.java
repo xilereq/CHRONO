@@ -5,6 +5,7 @@ public record WorkStats(
     int totalWorkTime,
     int remainingWorkTime,
     int totalMonthlyHours,
-    int overtimeSeconds
+    int overtimeSeconds,
+    int excusedHours
 ) {
 }
