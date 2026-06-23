@@ -145,7 +145,8 @@ export const en = {
         workTimeTitle: 'WORK TIME (CURRENT MONTH)',
         balance: 'Balance:',
         worked: 'Worked:',
-        plan: 'Plan:'
+        plan: 'Plan:',
+        excused: 'Excused:',
     },
 
 
@@ -362,6 +363,7 @@ export const en = {
         section1Title: 'Section 1: Add new user',
         section1Subtitle: 'Register a new employee account in the system.',
         emailLabel: 'Email address',
+        startDateLabel: 'Start Date',
         systemRole: 'System Role',
         roles: {
             employee: 'Employee',
@@ -378,7 +380,20 @@ export const en = {
         selectEmployeePlaceholder: '-- Select employee --',
         managerLabel: 'Manager',
         assigningBtn: 'Assigning...',
-        saveManagerAssignBtn: 'Save manager assignment'
+        saveManagerAssignBtn: 'Save manager assignment',
+        section3Title: 'Section 3: Manage employment and account status',
+        section3Subtitle: 'Update selected dates or deactivate an employee account. Leave empty to keep unchanged.',
+        selectEmployeeError: 'Please select an employee.',
+        updateStartDateLabel: 'Change start date',
+        updateEndDateLabel: 'Set end date',
+        updateStatusLabel: 'Account status in system',
+        statusUnchanged: '-- Do not change status --',
+        statusActive: 'Account Active',
+        statusInactive: 'Account Inactive',
+        saveEmploymentBtn: 'Save employment changes',
+        employmentUpdatedSuccess: 'Employment data and account status have been updated.',
+        noDataProvided: 'Fill in at least one field to save changes.',
+        employmentUpdateError: 'An error occurred while updating data.'
     },
 
     // ============= POLICIES PAGE =============
