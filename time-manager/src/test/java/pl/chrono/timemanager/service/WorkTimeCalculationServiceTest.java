@@ -1,8 +1,11 @@
 package pl.chrono.timemanager.service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,14 +15,13 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
+import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
+import pl.chrono.timemanager.exception.WorkException;
 
 @ExtendWith(MockitoExtension.class)
 class WorkTimeCalculationServiceTest {
-
-  @Mock
-  private HolidayService holidayService;
 
   @Mock
   private ApplicationRepository applicationRepository;
@@ -77,19 +79,80 @@ class WorkTimeCalculationServiceTest {
   }
 
   @Test
-  void getBaseRequiredSecondsHolidayTest() {
-    LocalDate date = LocalDate.of(2026, 6, 4);
-    when(holidayService.isHoliday(date)).thenReturn(true);
-
-    assertThat(service.getBaseRequiredSeconds(date, null)).isZero();
+  void getBaseRequiredSecondsNullPolicyWeekdayUsesDefaultTest() {
+    LocalDate thursday = LocalDate.of(2026, 6, 4);
+    assertThat(service.getBaseRequiredSeconds(thursday, null)).isEqualTo(8 * 3600);
   }
 
   @Test
-  void getBaseRequiredSecondsNormalWeekdayTest() {
-    LocalDate thursday = LocalDate.of(2026, 6, 4);
-    when(holidayService.isHoliday(thursday)).thenReturn(false);
+  void resolvePolicyReturnsProvidedPolicyWhenNotNullTest() {
+    Policy policy = new Policy();
+    policy.setDailyHours(6);
 
-    assertThat(service.getBaseRequiredSeconds(thursday, null)).isEqualTo(8 * 3600);
+    assertThat(service.resolvePolicy(policy)).isSameAs(policy);
+  }
+
+  @Test
+  void resolvePolicyReturnsDefaultPolicyWhenNullTest() {
+    Policy resolved = service.resolvePolicy(null);
+
+    assertThat(resolved).isNotNull();
+    assertThat(resolved.getDailyHours()).isEqualTo(8);
+    assertThat(resolved.getMaxDailyHours()).isEqualTo(12);
+    assertThat(resolved.getMaxWeeklyHours()).isEqualTo(48);
+    assertThat(resolved.getRoundingMinutes()).isNull();
+  }
+
+  @Test
+  void resolvePolicyDefaultContainsMondayToFridayTest() {
+    Policy resolved = service.resolvePolicy(null);
+
+    assertThat(resolved.getWorkingDays()).containsExactlyInAnyOrder(
+        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
+    );
+    assertThat(resolved.getWorkingDays()).doesNotContain(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+  }
+
+  @Test
+  void resolvePolicyDefaultBlocksSaturdayTest() {
+    Policy resolved = service.resolvePolicy(null);
+    LocalDate saturday = LocalDate.of(2026, 6, 6);
+
+    assertThat(resolved.getRequiredSecondsForDate(saturday)).isZero();
+  }
+
+  @Test
+  void resolvePolicyDefaultBlocksSundayTest() {
+    Policy resolved = service.resolvePolicy(null);
+    LocalDate sunday = LocalDate.of(2026, 6, 7);
+
+    assertThat(resolved.getRequiredSecondsForDate(sunday)).isZero();
+  }
+
+  @Test
+  void resolvePolicyDefaultHolidayListIsEmptyTest() {
+    Policy resolved = service.resolvePolicy(null);
+
+    assertThat(resolved.getHolidayPolicies()).isNotNull().isEmpty();
+  }
+
+  @Test
+  void resolvePolicyEachCallReturnsFreshInstanceTest() {
+    Policy first = service.resolvePolicy(null);
+    Policy second = service.resolvePolicy(null);
+
+    assertThat(first).isNotSameAs(second);
+  }
+
+  @Test
+  void getMaxAllowedSecondsNullPolicyUsesDefaultTest() {
+    assertThat(service.getMaxAllowedSeconds(null)).isEqualTo(12 * 3600);
+  }
+
+  @Test
+  void getRoundingSecondsNullPolicyUsesDefaultTest() {
+    assertThat(service.getRoundingSeconds(null)).isZero();
   }
 
   @Test
@@ -295,5 +358,87 @@ class WorkTimeCalculationServiceTest {
         .thenReturn(List.of(appHomeOffice, appSick));
 
     assertThat(service.getExcusedSecondsForDate(1, date, policy)).isEqualTo(8 * 3600);
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_NullDate_ReturnsFalseTest() {
+    User user = new User();
+    assertThat(service.isWithinEmploymentPeriod(user, null)).isFalse();
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_NoDates_ReturnsTrueTest() {
+    User user = new User();
+    assertThat(service.isWithinEmploymentPeriod(user, LocalDate.of(2026, 6, 1))).isTrue();
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_WithinRange_ReturnsTrueTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.of(2020, 1, 1));
+    user.setEmploymentEndDate(LocalDate.of(2030, 12, 31));
+    assertThat(service.isWithinEmploymentPeriod(user, LocalDate.of(2026, 6, 1))).isTrue();
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_BeforeStartDate_ReturnsFalseTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.of(2027, 1, 1));
+    assertThat(service.isWithinEmploymentPeriod(user, LocalDate.of(2026, 6, 1))).isFalse();
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_AfterEndDate_ReturnsFalseTest() {
+    User user = new User();
+    user.setEmploymentEndDate(LocalDate.of(2025, 12, 31));
+    assertThat(service.isWithinEmploymentPeriod(user, LocalDate.of(2026, 6, 1))).isFalse();
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_OnStartDate_ReturnsTrueTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.of(2026, 6, 1));
+    assertThat(service.isWithinEmploymentPeriod(user, LocalDate.of(2026, 6, 1))).isTrue();
+  }
+
+  @Test
+  void isWithinEmploymentPeriod_OnEndDate_ReturnsTrueTest() {
+    User user = new User();
+    user.setEmploymentEndDate(LocalDate.of(2026, 6, 1));
+    assertThat(service.isWithinEmploymentPeriod(user, LocalDate.of(2026, 6, 1))).isTrue();
+  }
+
+  @Test
+  void validateEmploymentPeriod_WithinRange_DoesNotThrowTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.of(2020, 1, 1));
+    assertThatCode(() -> service.validateEmploymentPeriod(user, LocalDate.of(2026, 6, 1)))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void validateEmploymentPeriod_OutsideRange_ThrowsExceptionTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.of(2027, 1, 1));
+    assertThatThrownBy(() -> service.validateEmploymentPeriod(user, LocalDate.of(2026, 6, 1)))
+        .isInstanceOf(WorkException.OutsideEmploymentPeriod.class);
+  }
+
+  @Test
+  void validateEmploymentPeriod_DateRange_BothValid_DoesNotThrowTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.of(2020, 1, 1));
+    assertThatCode(() -> service.validateEmploymentPeriod(
+        user, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 5)))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void validateEmploymentPeriod_DateRange_EndDateOutside_ThrowsExceptionTest() {
+    User user = new User();
+    user.setEmploymentEndDate(LocalDate.of(2026, 6, 3));
+    assertThatThrownBy(() -> service.validateEmploymentPeriod(
+        user, LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 5)))
+        .isInstanceOf(WorkException.OutsideEmploymentPeriod.class);
   }
 }

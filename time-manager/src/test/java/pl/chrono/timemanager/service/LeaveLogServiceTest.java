@@ -37,6 +37,9 @@ class LeaveLogServiceTest {
   @Mock
   private LeaveLogMapper leaveLogMapper;
 
+  @Mock
+  private WorkTimeCalculationService workTimeCalculationService;
+
   @InjectMocks
   private LeaveLogService leaveLogService;
 

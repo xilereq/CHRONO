@@ -83,4 +83,14 @@ public class WorkException extends TimeManagerException {
       );
     }
   }
+
+  public static class OutsideEmploymentPeriod extends WorkException {
+    public OutsideEmploymentPeriod() {
+      super(
+          ErrorCodes.OUTSIDE_EMPLOYMENT_PERIOD,
+          "The requested date is outside of your employment period.",
+          HttpStatus.FORBIDDEN
+      );
+    }
+  }
 }

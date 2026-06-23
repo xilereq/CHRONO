@@ -145,7 +145,8 @@ export const en = {
         workTimeTitle: 'WORK TIME (CURRENT MONTH)',
         balance: 'Balance:',
         worked: 'Worked:',
-        plan: 'Plan:'
+        plan: 'Plan:',
+        excused: 'Excused:',
     },
 
 

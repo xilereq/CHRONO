@@ -108,21 +108,21 @@ public class UserController extends BaseController{
   }
 
   @PostMapping("/set-start-date")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
   public ResponseEntity<Void> setStartDate(@RequestBody SetEmploymentStartDate request){
     userService.setEmploymentStartDate(request.email(), request.date());
     return ResponseEntity.ok().build();
   }
 
   @PostMapping("/set-end-date")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
   public ResponseEntity<Void> setEndDate(@RequestBody SetEmploymentEndDate request){
     userService.setEmploymentEndDate(request.email(), request.date());
     return ResponseEntity.ok().build();
   }
 
   @PostMapping("/set-active")
-  @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
   public ResponseEntity<Void> setActive(@RequestBody SetActive request){
     userService.setIsActive(request.email(), request.active());
     return ResponseEntity.ok().build();

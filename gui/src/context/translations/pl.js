@@ -146,7 +146,8 @@ export const pl = {
         workTimeTitle: 'CZAS PRACY (BIEŻĄCY MIESIĄC)',
         balance: 'Saldo:',
         worked: 'Przepracowano:',
-        plan: 'Plan:'
+        plan: 'Plan:',
+        excused: 'Usprawiedliwione:',
     },
 
 

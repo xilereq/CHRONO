@@ -81,6 +81,8 @@ public class WorkLogService {
       throw new WorkException.AlreadyWorkedToday();
     }
 
+    LocalDate today = LocalDate.now();
+    workTimeCalculationService.validateEmploymentPeriod(user, today);
     WorkLog workLog = new WorkLog();
     workLog.setUser(user);
     workLog.setStartTime(LocalDateTime.now());
@@ -187,14 +189,15 @@ public class WorkLogService {
     LocalDate cur = firstDay;
 
     while (!cur.isAfter(lastDay)) {
-      Policy policyForDay = user.getPolicyForDate(cur);
-      int dailySeconds = workTimeCalculationService.getBaseRequiredSeconds(cur, policyForDay);
+      if (workTimeCalculationService.isWithinEmploymentPeriod(user, cur)) {
+        Policy policyForDay = user.getPolicyForDate(cur);
+        int dailySeconds = workTimeCalculationService.getBaseRequiredSeconds(cur, policyForDay);
+        int dailyHours = dailySeconds / 3600;
+        totalMonthlyHours += dailyHours;
 
-      int dailyHours = dailySeconds / 3600;
-      totalMonthlyHours += dailyHours;
-
-      if (!cur.isBefore(today)) {
-        remainingHours += dailyHours;
+        if (!cur.isBefore(today)) {
+          remainingHours += dailyHours;
+        }
       }
       cur = cur.plusDays(1);
     }
@@ -224,8 +227,11 @@ public class WorkLogService {
     LocalDate cur = firstDay;
 
     while (!cur.isAfter(lastDay)) {
-      Policy policyForDay = user.getPolicyForDate(cur);
-      totalExcusedSeconds += workTimeCalculationService.getExcusedSecondsForDate(user.getUserId(), cur, policyForDay);
+      if (workTimeCalculationService.isWithinEmploymentPeriod(user, cur)) {
+        Policy policyForDay = user.getPolicyForDate(cur);
+        totalExcusedSeconds += workTimeCalculationService.getExcusedSecondsForDate(
+            user.getUserId(), cur, policyForDay);
+      }
       cur = cur.plusDays(1);
     }
 
