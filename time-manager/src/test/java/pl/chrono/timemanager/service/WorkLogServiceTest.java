@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -200,6 +201,86 @@ class WorkLogServiceTest {
     assertThatThrownBy(
         () -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE)).isInstanceOf(
         UserException.NotFound.class);
+  }
+
+  @Test
+  void startWorkAfterEmploymentEndThrowsExceptionTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.now().minusYears(1));
+    user.setEmploymentEndDate(LocalDate.now().minusDays(1));
+
+    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+
+    doThrow(new WorkException.OutsideEmploymentPeriod())
+        .when(workTimeCalculationService).validateEmploymentPeriod(any(User.class), any(LocalDate.class));
+
+    assertThatThrownBy(() -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE))
+        .isInstanceOf(WorkException.OutsideEmploymentPeriod.class);
+  }
+  @Test
+  void startWorkBeforeEmploymentStartThrowsExceptionTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.now().plusDays(1));
+
+    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+
+    doThrow(new WorkException.OutsideEmploymentPeriod())
+        .when(workTimeCalculationService).validateEmploymentPeriod(any(User.class), any(LocalDate.class));
+
+    assertThatThrownBy(() -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE))
+        .isInstanceOf(WorkException.OutsideEmploymentPeriod.class);
+  }
+
+  @Test
+  void startWorkOnLastDayOfEmploymentSucceedsTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.now().minusYears(1));
+    user.setEmploymentEndDate(LocalDate.now());
+
+    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
+
+    assertThatCode(() -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void startWorkWithNullEmploymentDatesSucceedsTest() {
+    User user = new User();
+    user.setEmploymentStartDate(null);
+    user.setEmploymentEndDate(null);
+
+    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
+
+    assertThatCode(() -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void startWorkWithNoEndDateSucceedsTest() {
+    User user = new User();
+    user.setEmploymentStartDate(LocalDate.now().minusMonths(6));
+    user.setEmploymentEndDate(null);
+
+    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(timeData.isUserWorking(USER_ID)).thenReturn(false);
+    when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
+    when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
+    when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
+
+    assertThatCode(() -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE))
+        .doesNotThrowAnyException();
   }
 
   @Test
@@ -621,6 +702,8 @@ class WorkLogServiceTest {
     user.setUserId(USER_ID);
     when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 
+    when(workTimeCalculationService.isWithinEmploymentPeriod(any(User.class), any(LocalDate.class)))
+        .thenReturn(true);
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
     when(overtimeService.getOvertimeBalance(USER_ID)).thenReturn(3600);
 
@@ -646,6 +729,8 @@ class WorkLogServiceTest {
     User user = new User();
     user.setUserId(USER_ID);
     when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(workTimeCalculationService.isWithinEmploymentPeriod(any(User.class), any(LocalDate.class)))
+        .thenReturn(true);
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
 
     WorkLog openLog = new WorkLog();
@@ -742,5 +827,23 @@ class WorkLogServiceTest {
     workLogService.endWork(USER_ID);
 
     verify(eventPublisher, never()).publishEvent(any(LawViolationEvent.class));
+  }
+
+  @Test
+  void getMonthlyStatsExcludesDaysOutsideEmploymentPeriodTest() {
+    User user = new User();
+    user.setUserId(USER_ID);
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+    when(workTimeCalculationService.isWithinEmploymentPeriod(any(User.class), any(LocalDate.class)))
+        .thenReturn(false);
+    when(overtimeService.getOvertimeBalance(USER_ID)).thenReturn(0);
+    when(timeData.findUserWorkLogsAfter(eq(USER_ID), any())).thenReturn(List.of());
+
+    WorkStats stats = workLogService.getMonthlyStats(USER_ID);
+
+    assertThat(stats.totalMonthlyHours()).isZero();
+    verify(workTimeCalculationService, never()).getBaseRequiredSeconds(any(), any());
+    verify(workTimeCalculationService, never()).getExcusedSecondsForDate(any(), any(), any());
   }
 }

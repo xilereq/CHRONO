@@ -15,6 +15,7 @@ public final class ErrorCodes {
   public static final String CANCELLATION_EXPIRED = "CANCELLATION_EXPIRED";
   public static final String NO_HO_APPLICATION = "NO_HO_APPLICATION";
   public static final String ALREADY_WORKED_TODAY = "ALREADY_WORKED_TODAY";
+  public static final String OUTSIDE_EMPLOYMENT_PERIOD = "OUTSIDE_EMPLOYMENT_PERIOD";
 
   public static final String HOLIDAY_NOT_FOUND = "HOLIDAY_NOT_FOUND";
   public static final String HOLIDAY_NONE_FOUND = "HOLIDAY_NONE_FOUND";

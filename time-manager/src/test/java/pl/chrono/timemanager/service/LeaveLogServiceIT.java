@@ -17,12 +17,6 @@ import pl.chrono.timemanager.TestConfig;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.exception.WorkException;
 
-/**
- * Integration test for {@link LeaveLogService}.
- * Runs against a real Spring context wired to a real H2 database (no mocks for
- * I_TimeData/UserRepository) to verify the full
- * service -&gt; adapter -&gt; repository -&gt; database chain.
- */
 @SpringBootTest(classes = TestConfig.class)
 @Transactional
 class LeaveLogServiceIT {

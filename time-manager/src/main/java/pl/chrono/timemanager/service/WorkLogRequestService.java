@@ -48,6 +48,7 @@ public class WorkLogRequestService {
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
     LocalDate targetDate = proposedStart.toLocalDate();
+    workTimeCalculationService.validateEmploymentPeriod(employee, targetDate);
     Policy policy = employee.getPolicyForDate(targetDate);
     long requestedSeconds = Duration.between(proposedStart, proposedEnd).getSeconds();
 
@@ -79,6 +80,7 @@ public class WorkLogRequestService {
     User reviewer = getUserAndValidateAccess(reviewerId, request);
 
     LocalDate targetDate = request.getProposedStartTime().toLocalDate();
+    workTimeCalculationService.validateEmploymentPeriod(request.getEmployee(), targetDate);
     LocalDateTime startOfDay = targetDate.atStartOfDay();
     LocalDateTime endOfDay = targetDate.plusDays(1).atStartOfDay().minusNanos(1);
 

@@ -1,10 +1,12 @@
 package pl.chrono.timemanager.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.LeaveLog;
+import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.ports.I_TimeData;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
@@ -18,6 +20,7 @@ public class LeaveLogService {
   private final I_TimeData timeData;
   private final UserRepository userRepository;
   private final LeaveLogMapper leaveLogMapper;
+  private final WorkTimeCalculationService workTimeCalculationService;
 
   @Transactional
   public LeaveLogDto startLeave(Integer userId) {
@@ -28,9 +31,12 @@ public class LeaveLogService {
       throw new WorkException.LeaveStarted(userId);
     }
 
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UserException.NotFound(userId));
+    workTimeCalculationService.validateEmploymentPeriod(user, LocalDate.now());
+
     LeaveLog leaveLog = new LeaveLog();
-    leaveLog.setUser(userRepository.findById(userId).orElseThrow(
-        () -> new UserException.NotFound(userId)));
+    leaveLog.setUser(user);
     leaveLog.setStartTime(LocalDateTime.now());
     leaveLog.setWorkLog(activeWorkLog);
     LeaveLog saved = timeData.saveLeaveLog(leaveLog);

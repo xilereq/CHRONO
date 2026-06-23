@@ -25,6 +25,8 @@ public class ApplicationValidationService {
     User user = userRepository.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
+    workingDaysCalculationService.validateEmploymentPeriod(user, startDate, endDate);
+
     Policy policy = user.getActivePolicy();
 
     int baseRequiredSeconds = policy != null ? policy.getRequiredSecondsForDate(startDate) : 8 * 3600;

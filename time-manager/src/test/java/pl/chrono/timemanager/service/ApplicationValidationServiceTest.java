@@ -44,6 +44,7 @@ class ApplicationValidationServiceTest {
   void setUp() {
     user = new User();
     user.setUserId(1);
+    user.setEmploymentStartDate(LocalDate.of(2020, 1, 1));
     policy = new Policy();
     policy.setDailyHours(8);
     policy.setMaxDailyHours(12);
