@@ -1,0 +1,12 @@
+.git
+.github
+README.md
+
+**/target
+**/node_modules
+**/build
+.idea
+*.iml
+.vscode
+.DS_Store
+Thumbs.db
