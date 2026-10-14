@@ -29,7 +29,7 @@ export const LanguageProvider = ({ children }) => {
     };
 
     const changeLanguage = (lang) => {
-        if (['pl', 'en'].includes(lang)) {
+        if (['pl', 'en', 'de'].includes(lang)) {
             setLanguage(lang);
         }
     };
