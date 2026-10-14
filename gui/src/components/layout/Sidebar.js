@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, LayoutGrid, FileText, BarChart2, Settings, Shield, Terminal, Users } from 'lucide-react';
+import { Clock, LayoutGrid, FileText, BarChart2, Settings, Shield, Terminal, Users, Calendar  } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { userService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
@@ -52,6 +52,10 @@ const Sidebar = () => {
                 <NavLink to="/raporty" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                     <BarChart2 size={24} />
                     <span>{t('sidebar.reports', 'Raporty')}</span>
+                </NavLink>
+                <NavLink to="/grafik" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                    <Calendar  size={24} />
+                    <span>{t('sidebar.schedule', 'Grafik')}</span>
                 </NavLink>
 
                 {(isHr || isAdmin) && (
