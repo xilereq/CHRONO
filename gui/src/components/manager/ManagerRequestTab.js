@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, User } from 'lucide-react';
 import { applicationService, userService } from '../../services';
 import { Button } from '../../components';
 import { useLanguage } from '../../context/LanguageContext';
+import UserHoverCard from '../layout/UserHoverCard';
 import '../requests/requests.css';
 import './manager.css';
 
@@ -121,6 +122,17 @@ const ManagerRequestTab = () => {
             userId.includes(searchLower);
     });
 
+    const selectedEmployee = subordinates.find(
+        sub => String(sub.userID || sub.ID) === String(formData.targetEmployeeId)
+    );
+
+    const selectedEmployeeData = selectedEmployee ? {
+        name: `${selectedEmployee.name || ''} ${selectedEmployee.surname || ''}`.trim(),
+        position: selectedEmployee.position || selectedEmployee.roleName || t('userHoverCard.noPosition', 'Pracownik'),
+        email: selectedEmployee.email || '',
+        department: selectedEmployee.department || t('manager.teamScheduleTab', 'Zespół')
+    } : null;
+
     return (
         <div className="policy-section">
             <h2 className="section-title">{t('manager.submitRequestTitle', 'Złóż wniosek za pracownika')}</h2>
@@ -144,7 +156,32 @@ const ManagerRequestTab = () => {
                     </label>
 
                     <label className="field field-full-width" style={{ marginTop: '-0.5rem' }}>
-                        <span className="field-label" style={{ color: 'var(--primary-color)' }}>{t('manager.selectTeamMember', 'Wybierz pracownika z zespołu *')}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span className="field-label" style={{ color: 'var(--primary-color)', margin: 0 }}>
+                                {t('manager.selectTeamMember', 'Wybierz pracownika z zespołu *')}
+                            </span>
+
+                            {selectedEmployeeData && (
+                                <UserHoverCard user={selectedEmployeeData} placement="top">
+                                    <div style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        background: '#fff8e1',
+                                        border: '1px solid #fde68a',
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        fontSize: '0.75rem',
+                                        color: '#b48300',
+                                        cursor: 'pointer'
+                                    }}>
+                                        <User size={12} />
+                                        <span>{t('userHoverCard.preview', 'Wizytówka pracownika')}</span>
+                                    </div>
+                                </UserHoverCard>
+                            )}
+                        </div>
+
                         <select
                             className="field-input"
                             name="targetEmployeeId"
@@ -154,11 +191,14 @@ const ManagerRequestTab = () => {
                             style={{ border: '1px solid var(--primary-color)' }}
                         >
                             <option value="">{t('manager.selectEmployeePlaceholder', '-- Wybierz pracownika --')}</option>
-                            {filteredSubordinates.map(sub => (
-                                <option key={sub.userID} value={sub.userID}>
-                                    [{sub.userID}] {sub.name} {sub.surname} ({sub.email})
-                                </option>
-                            ))}
+                            {filteredSubordinates.map(sub => {
+                                const id = sub.userID || sub.ID;
+                                return (
+                                    <option key={id} value={id}>
+                                        [{id}] {sub.name} {sub.surname} ({sub.email})
+                                    </option>
+                                );
+                            })}
                         </select>
                         {filteredSubordinates.length === 0 && (
                             <span style={{ fontSize: '0.8rem', color: 'red', marginTop: '4px', display: 'block' }}>

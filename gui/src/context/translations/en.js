@@ -653,4 +653,8 @@ export const en = {
         placeholderMin8: 'Minimum 8 characters',
         placeholderRepeat: 'Repeat new password',
     },
+    'userHoverCard': {
+        noData: 'No data',
+        noPosition: 'Position unspecified'
+    }
 };

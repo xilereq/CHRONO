@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { User } from 'lucide-react';
 import { applicationService, userService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
+import {UserHoverCard} from '../../components';
 import '../../components/requests/requests.css';
 import './ApprovalList.css';
 
@@ -211,25 +213,64 @@ const ApprovalList = () => {
                     <div className="requests-table-container">
                         <table className="requests-table">
                             <thead>
-                                <tr>
-                                    <th>{t('approvals.typeColumn', 'Typ wniosku')}</th>
-                                    <th>{t('requests.periodColumn', 'Okres / Data')}</th>
-                                    <th className="col-hide-mobile">{t('approvals.durationColumn', 'Czas trwania')}</th>
-                                    <th className="col-hide-mobile">{t('approvals.reasonColumn', 'Powód')}</th>
-                                    <th>{t('approvals.employeeColumn', 'Pracownik')}</th>
-                                    {userRole === 'ADMIN' && <th>{t('approvals.statusColumn', 'Status')}</th>}
-                                    <th>{t('approvals.actionsColumn', 'Akcje')}</th>
-                                </tr>
+                            <tr>
+                                <th>{t('approvals.typeColumn', 'Typ wniosku')}</th>
+                                <th>{t('requests.periodColumn', 'Okres / Data')}</th>
+                                <th className="col-hide-mobile">{t('approvals.durationColumn', 'Czas trwania')}</th>
+                                <th className="col-hide-mobile">{t('approvals.reasonColumn', 'Powód')}</th>
+                                <th>{t('approvals.employeeColumn', 'Pracownik')}</th>
+                                {userRole === 'ADMIN' && <th>{t('approvals.statusColumn', 'Status')}</th>}
+                                <th>{t('approvals.actionsColumn', 'Akcje')}</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                {pageItems.map(r => (
+                            {pageItems.map((r, index) => {
+                                const employeeData = {
+                                    name: r.employeeName || (r.employeeEmail ? r.employeeEmail.split('@')[0] : t('approvals.employeeColumn', 'Pracownik')),
+                                    position: r.employeePosition || t('userHoverCard.noPosition', 'Pracownik'),
+                                    email: r.employeeEmail || '',
+                                    department: r.department || t('manager.teamScheduleTab', 'Zespół')
+                                };
+
+                                return (
                                     <React.Fragment key={r.id}>
                                         <tr>
                                             <td className="request-card-title-cell">{typeLabels[r.type] || r.type || '-'}</td>
                                             <td>{r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ''}</td>
                                             <td className="col-hide-mobile">{getDuration(r)}</td>
                                             <td className="col-hide-mobile">{r.reason || '-'}</td>
-                                            <td>{r.employeeEmail || '-'}</td>
+
+                                            {/* Kolumna pracownika z ikonką ludka i wizytówką */}
+                                            <td>
+                                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                                    <UserHoverCard user={employeeData} placement={index === 0 ? 'bottom' : 'top'}>
+                                                        <div
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                width: '26px',
+                                                                height: '26px',
+                                                                borderRadius: '50%',
+                                                                background: '#fff8e1',
+                                                                border: '1px solid #fde68a',
+                                                                color: '#b48300',
+                                                                cursor: 'pointer',
+                                                                flexShrink: 0
+                                                            }}
+                                                            title={employeeData.name}
+                                                        >
+                                                            <User size={14} />
+                                                        </div>
+                                                    </UserHoverCard>
+
+                                                    <UserHoverCard user={employeeData} placement={index === 0 ? 'bottom' : 'top'}>
+                                                            <span style={{ cursor: 'pointer', fontWeight: 500 }}>
+                                                                {r.employeeEmail || r.employeeName || '-'}
+                                                            </span>
+                                                    </UserHoverCard>
+                                                </div>
+                                            </td>
 
                                             {userRole === 'ADMIN' && (
                                                 <td>
@@ -264,11 +305,11 @@ const ApprovalList = () => {
                                             <tr>
                                                 <td colSpan={colSpan} className={`action-panel-td ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
                                                     <div className="action-panel-container">
-                                                        <span className={`action-panel-label ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
-                                                            {activeAction.type === 'APPROVED'
-                                                                ? t('approvals.approveNotesLabel', 'Uwagi do akceptacji (opcjonalne):')
-                                                                : t('approvals.rejectNotesLabel', 'Powód odrzucenia (opcjonalne):')}
-                                                        </span>
+                                                            <span className={`action-panel-label ${activeAction.type === 'APPROVED' ? 'approved' : 'rejected'}`}>
+                                                                {activeAction.type === 'APPROVED'
+                                                                    ? t('approvals.approveNotesLabel', 'Uwagi do akceptacji (opcjonalne):')
+                                                                    : t('approvals.rejectNotesLabel', 'Powód odrzucenia (opcjonalne):')}
+                                                            </span>
                                                         <input
                                                             type="text"
                                                             className="field-input action-panel-input"
@@ -296,7 +337,8 @@ const ApprovalList = () => {
                                             </tr>
                                         )}
                                     </React.Fragment>
-                                ))}
+                                );
+                            })}
                             </tbody>
                         </table>
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { workLogRequestService } from '../../services';
-import { Check, X, Clock } from 'lucide-react';
+import { Check, X, Clock, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import UserHoverCard from '../layout/UserHoverCard';
 import './manager.css';
 
 const ScheduleChangeTab = () => {
@@ -90,26 +91,61 @@ const ScheduleChangeTab = () => {
                         const start = formatDateTime(req.proposedStartTime);
                         const end = formatDateTime(req.proposedEndTime);
 
+                        const employeeData = {
+                            name: req.employeeName || t('manager.unknownEmployee', 'Nieznany pracownik'),
+                            position: req.employeePosition || t('userHoverCard.noPosition', 'Pracownik'),
+                            email: req.employeeEmail || '',
+                            department: req.department || t('manager.teamScheduleTab', 'Zespół')
+                        };
+
                         return (
                             <div key={req.id} className="manager-request-card">
                                 <div>
-                                    <h3 className="manager-request-title">
-                                        {req.employeeName || t('manager.unknownEmployee', 'Nieznany pracownik')}
-                                        {req.type && (
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '10px' }}>
-                                                [{req.type}]
-                                            </span>
-                                        )}
-                                    </h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {/* Ikonka ludka z wizytówką po lewej stronie */}
+                                        <UserHoverCard user={employeeData} placement="top">
+                                            <div
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    borderRadius: '50%',
+                                                    background: '#fff8e1',
+                                                    border: '1px solid #fde68a',
+                                                    color: '#b48300',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title={employeeData.name}
+                                            >
+                                                <User size={15} />
+                                            </div>
+                                        </UserHoverCard>
 
-                                    <div className="manager-request-details">
+                                        <h3 className="manager-request-title" style={{ margin: 0, display: 'inline-flex', alignItems: 'center' }}>
+                                            <UserHoverCard user={employeeData} placement="top">
+                                                <span style={{ cursor: 'pointer' }}>
+                                                    {employeeData.name}
+                                                </span>
+                                            </UserHoverCard>
+
+                                            {req.type && (
+                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '10px' }}>
+                                                    [{req.type}]
+                                                </span>
+                                            )}
+                                        </h3>
+                                    </div>
+
+                                    <div className="manager-request-details" style={{ marginTop: '6px' }}>
                                         <span>
                                             <strong>{t('manager.dateField', 'Data:')}</strong> {start.date}
                                         </span>
-                                            <span>
-                                                <strong>{t('manager.hoursField', 'Godziny: ')}</strong>
-                                                {start.time} - {end.time}
-                                            </span>
+                                        <span>
+                                            <strong>{t('manager.hoursField', 'Godziny: ')}</strong>
+                                            {start.time} - {end.time}
+                                        </span>
                                     </div>
 
                                     {req.reason && (

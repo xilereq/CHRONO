@@ -1,5 +1,6 @@
 export { default as Sidebar } from './layout/Sidebar';
 export { default as Topbar } from './layout/Topbar';
+export { default as UserHoverCard } from './layout/UserHoverCard';
 
 export { default as Badge } from './ui/Badge';
 export { default as Button } from './ui/Button';
@@ -19,3 +20,4 @@ export { default as PoliciesSidebar } from './policies/PoliciesSidebar';
 export { default as PolicyFormTab } from './policies/PolicyFormTab';
 export { default as PolicyListTab } from './policies/PolicyListTab';
 export { default as AssignPolicyTab } from './policies/AssignPolicyTab';
+
