@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.chrono.timemanager.dto.request.BatchCreateHolidaysRequest;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
 import pl.chrono.timemanager.dto.response.ExternalHolidayDto;
 import pl.chrono.timemanager.dto.response.HolidayDto;
@@ -47,8 +48,8 @@ public class HolidayController extends BaseController {
   @PostMapping("/batch")
   @PreAuthorize("hasAnyRole('HR', 'ADMIN')")
   public ResponseEntity<List<HolidayDto>> createHolidaysBatch(
-      @Valid @RequestBody List<@Valid CreateHolidayRequest> requests) {
-    return ResponseEntity.ok(holidayService.createHolidaysBatch(requests));
+      @Valid @RequestBody BatchCreateHolidaysRequest request) {
+    return ResponseEntity.ok(holidayService.createHolidaysBatch(request));
   }
 
   @GetMapping

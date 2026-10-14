@@ -1,6 +1,7 @@
 package pl.chrono.timemanager.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -8,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Holiday;
 import pl.chrono.dbmanager.ports.I_HolidayData;
 import pl.chrono.logmanager.audit.LogActivity;
+import pl.chrono.timemanager.dto.request.BatchCreateHolidaysRequest;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
+import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
 import pl.chrono.timemanager.dto.response.ExternalHolidayDto;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.exception.HolidayException;
@@ -21,6 +24,7 @@ public class HolidayService {
   private final I_HolidayData holidayData;
   private final HolidayMapper holidayMapper;
   private final I_ExternalHolidayProvider externalHolidayProvider;
+  private final PolicyConfigurationService policyConfigurationService;
 
   @Transactional
   @LogActivity(action = "CREATE_HOLIDAY", details = "Created holiday")
@@ -43,14 +47,34 @@ public class HolidayService {
   }
 
   @Transactional
-  @LogActivity(action = "IMPORT_HOLIDAYS", details = "Batch imported holidays")
-  public List<HolidayDto> createHolidaysBatch(List<CreateHolidayRequest> requests) {
-    List<Holiday> toSave = requests.stream()
-        .filter(req -> !holidayData.existsByDateOrYearly(req.date()))
-        .map(holidayMapper::toEntity)
+  @LogActivity(action = "IMPORT_HOLIDAYS", details = "Batch imported holidays and assigned to policies")
+  public List<HolidayDto> createHolidaysBatch(BatchCreateHolidaysRequest batchRequest) {
+    List<Holiday> targetHolidays = new ArrayList<>();
+
+    for (CreateHolidayRequest req : batchRequest.holidays()) {
+      List<Holiday> existing = holidayData.findMatchingByDateOrYearly(req.date());
+      if (existing.isEmpty()) {
+        Holiday saved = holidayData.saveHoliday(holidayMapper.toEntity(req));
+        targetHolidays.add(saved);
+      } else {
+        targetHolidays.addAll(existing);
+      }
+    }
+
+    List<Integer> holidayIds = targetHolidays.stream()
+        .map(Holiday::getHolidayId)
+        .distinct()
         .toList();
 
-    return holidayData.saveAllHolidays(toSave).stream()
+    if (batchRequest.policyIds() != null && !batchRequest.policyIds().isEmpty()
+        && !holidayIds.isEmpty()) {
+      MassAssignHolidayRequest assignRequest = new MassAssignHolidayRequest(holidayIds);
+      for (Integer policyId : batchRequest.policyIds()) {
+        policyConfigurationService.assignHolidaysToPolicyBulk(policyId, assignRequest);
+      }
+    }
+
+    return targetHolidays.stream()
         .map(holidayMapper::toDto)
         .toList();
   }

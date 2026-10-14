@@ -37,6 +37,12 @@ public class HolidayDataAdapter implements I_HolidayData {
   }
 
   @Override
+  public List<Holiday> findMatchingByDateOrYearly(LocalDate date) {
+    return holidayRepository.findMatchingByDateOrYearly(
+        date, date.getMonthValue(), date.getDayOfMonth());
+  }
+
+  @Override
   public void deleteHolidayById(Integer holidayId) {
     holidayPolicyRepository.deleteByHolidayId(holidayId);
     holidayRepository.deleteByIdDirectly(holidayId);

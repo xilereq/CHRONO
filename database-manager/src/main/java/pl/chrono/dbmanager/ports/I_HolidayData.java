@@ -14,6 +14,8 @@ public interface I_HolidayData {
 
   Optional<Holiday> findHolidayById(Integer holidayId);
 
+  List<Holiday> findMatchingByDateOrYearly(LocalDate date);
+
   void deleteHolidayById(Integer holidayId);
 
   boolean existsByDateOrYearly(LocalDate date);
