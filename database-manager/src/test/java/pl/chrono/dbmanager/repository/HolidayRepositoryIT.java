@@ -33,15 +33,13 @@ class HolidayRepositoryIT {
   }
 
   @Test
-  void findAllByDateTest() {
+  void findByNameIgnoreCaseAndDateTest() {
     persistHoliday(LocalDate.of(2026, 12, 25));
     em.flush();
 
-    List<Holiday> found = repository.findAllByDate(LocalDate.of(2026, 12, 25));
-    List<Holiday> notFound = repository.findAllByDate(LocalDate.of(2026, 12, 24));
-
-    assertThat(found).hasSize(1);
-    assertThat(notFound).isEmpty();
+    assertThat(repository.findByNameIgnoreCaseAndDate("test holiday", LocalDate.of(2026, 12, 25))).isPresent();
+    assertThat(repository.existsByNameIgnoreCaseAndDate("TEST HOLIDAY", LocalDate.of(2026, 12, 25))).isTrue();
+    assertThat(repository.findByNameIgnoreCaseAndDate("Inne", LocalDate.of(2026, 12, 25))).isEmpty();
   }
 
   @Test

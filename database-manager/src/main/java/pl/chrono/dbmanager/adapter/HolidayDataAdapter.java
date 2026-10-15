@@ -32,8 +32,13 @@ public class HolidayDataAdapter implements I_HolidayData {
   }
 
   @Override
-  public List<Holiday> findAllByDate(LocalDate date) {
-    return holidayRepository.findAllByDate(date);
+  public Optional<Holiday> findByNameAndDate(String name, LocalDate date) {
+    return holidayRepository.findByNameIgnoreCaseAndDate(name, date);
+  }
+
+  @Override
+  public boolean existsByNameAndDate(String name, LocalDate date) {
+    return holidayRepository.existsByNameIgnoreCaseAndDate(name, date);
   }
 
   @Override

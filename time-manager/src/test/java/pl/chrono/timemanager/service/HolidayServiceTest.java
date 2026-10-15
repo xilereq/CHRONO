@@ -83,8 +83,8 @@ class HolidayServiceTest {
     );
 
     when(externalHolidayProvider.fetchHolidays(2026, "PL")).thenReturn(externalList);
-    when(holidayData.existsByDate(date1)).thenReturn(true);
-    when(holidayData.existsByDate(date2)).thenReturn(false);
+    when(holidayData.existsByNameAndDate("Nowy Rok", date1)).thenReturn(true);
+    when(holidayData.existsByNameAndDate("Trzech Króli", date2)).thenReturn(false);
 
     List<ExternalHolidayDto> result = holidayService.previewExternalHolidays(2026, "PL");
 
@@ -114,8 +114,9 @@ class HolidayServiceTest {
     newHoliday.setName("Święto Pracy");
     newHoliday.setDate(date2);
 
-    when(holidayData.findAllByDate(date1)).thenReturn(List.of(existingHoliday));
-    when(holidayData.findAllByDate(date2)).thenReturn(List.of());
+    when(holidayData.findByNameAndDate("Nowy Rok", date1)).thenReturn(Optional.of(existingHoliday));
+    when(holidayData.findByNameAndDate("Święto Pracy", date2)).thenReturn(Optional.empty());
+    when(policyConfigurationService.getHolidaysForPolicy(1)).thenReturn(List.of());
     when(holidayMapper.toEntity(req2)).thenReturn(newHoliday);
     when(holidayData.saveHoliday(newHoliday)).thenReturn(newHoliday);
 

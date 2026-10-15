@@ -1,7 +1,7 @@
 package pl.chrono.dbmanager.repository;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,7 +14,9 @@ import pl.chrono.dbmanager.model.Holiday;
 public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
   boolean existsByDate(LocalDate date);
 
-  List<Holiday> findAllByDate(LocalDate date);
+  boolean existsByNameIgnoreCaseAndDate(String name, LocalDate date);
+
+  Optional<Holiday> findByNameIgnoreCaseAndDate(String name, LocalDate date);
 
   @Query("SELECT h.date FROM Holiday h WHERE h.date BETWEEN :start AND :end")
   Set<LocalDate> findHolidayDatesBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
@@ -22,4 +24,6 @@ public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
   @Modifying
   @Query("DELETE FROM Holiday h WHERE h.holidayId = :holidayId")
   void deleteByIdDirectly(@Param("holidayId") Integer holidayId);
+
+
 }

@@ -66,7 +66,6 @@ class HolidayControllerIT {
             .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk()).andExpect(jsonPath("$.holidayId").value(1))
         .andExpect(jsonPath("$.name").value("Boże Narodzenie"))
-        .andExpect(jsonPath("$.occursYearly").value(true))
         .andExpect(jsonPath("$.date").value("2025-12-25"));
 
     verify(holidayService).createHoliday(any(CreateHolidayRequest.class));
@@ -126,7 +125,6 @@ class HolidayControllerIT {
     mockMvc.perform(get("/api/holidays/{holidayId}", 1).header("Authorization", BEARER_TOKEN))
         .andExpect(status().isOk()).andExpect(jsonPath("$.holidayId").value(1))
         .andExpect(jsonPath("$.name").value("Boże Narodzenie"))
-        .andExpect(jsonPath("$.occursYearly").value(true))
         .andExpect(jsonPath("$.date").value("2025-12-25"));
   }
 

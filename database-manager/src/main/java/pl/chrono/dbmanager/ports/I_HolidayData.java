@@ -12,9 +12,11 @@ public interface I_HolidayData {
 
   Optional<Holiday> findHolidayById(Integer holidayId);
 
-  List<Holiday> findAllByDate(LocalDate date);
+  Optional<Holiday> findByNameAndDate(String name, LocalDate date);
 
   void deleteHolidayById(Integer holidayId);
 
   boolean existsByDate(LocalDate date);
+
+  boolean existsByNameAndDate(String name, LocalDate date);
 }
