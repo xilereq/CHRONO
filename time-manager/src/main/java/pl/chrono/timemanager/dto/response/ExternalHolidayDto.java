@@ -6,7 +6,6 @@ public record ExternalHolidayDto(
     String name,
     String originalName,
     LocalDate date,
-    boolean occursYearly,
     boolean alreadyExists
 ) {
 }

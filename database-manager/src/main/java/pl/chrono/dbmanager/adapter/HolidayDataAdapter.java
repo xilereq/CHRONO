@@ -22,11 +22,6 @@ public class HolidayDataAdapter implements I_HolidayData {
   }
 
   @Override
-  public List<Holiday> saveAllHolidays(List<Holiday> holidays) {
-    return holidayRepository.saveAll(holidays);
-  }
-
-  @Override
   public List<Holiday> findAllHolidays() {
     return holidayRepository.findAll();
   }
@@ -37,9 +32,8 @@ public class HolidayDataAdapter implements I_HolidayData {
   }
 
   @Override
-  public List<Holiday> findMatchingByDateOrYearly(LocalDate date) {
-    return holidayRepository.findMatchingByDateOrYearly(
-        date, date.getMonthValue(), date.getDayOfMonth());
+  public List<Holiday> findAllByDate(LocalDate date) {
+    return holidayRepository.findAllByDate(date);
   }
 
   @Override
@@ -49,7 +43,7 @@ public class HolidayDataAdapter implements I_HolidayData {
   }
 
   @Override
-  public boolean existsByDateOrYearly(LocalDate date) {
-    return holidayRepository.existsByDateOrYearly(date, date.getMonthValue(), date.getDayOfMonth());
+  public boolean existsByDate(LocalDate date) {
+    return holidayRepository.existsByDate(date);
   }
 }

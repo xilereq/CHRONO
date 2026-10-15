@@ -40,8 +40,7 @@ public class HolidayService {
             ext.name(),
             ext.originalName(),
             ext.date(),
-            ext.occursYearly(),
-            holidayData.existsByDateOrYearly(ext.date())
+            holidayData.existsByDate(ext.date())
         ))
         .toList();
   }
@@ -52,7 +51,7 @@ public class HolidayService {
     List<Holiday> targetHolidays = new ArrayList<>();
 
     for (CreateHolidayRequest req : batchRequest.holidays()) {
-      List<Holiday> existing = holidayData.findMatchingByDateOrYearly(req.date());
+      List<Holiday> existing = holidayData.findAllByDate(req.date());
       if (existing.isEmpty()) {
         Holiday saved = holidayData.saveHoliday(holidayMapper.toEntity(req));
         targetHolidays.add(saved);
@@ -98,6 +97,6 @@ public class HolidayService {
 
   @Transactional(readOnly = true)
   public boolean isHoliday(LocalDate date) {
-    return holidayData.existsByDateOrYearly(date);
+    return holidayData.existsByDate(date);
   }
 }

@@ -76,7 +76,7 @@ class PolicyControllerIT {
   }
 
   private HolidayDto sampleHolidayDto() {
-    return new HolidayDto(HOLIDAY_ID, "Nowy Rok", true, LocalDate.of(2025, 1, 1));
+    return new HolidayDto(HOLIDAY_ID, "Nowy Rok", LocalDate.of(2025, 1, 1));
   }
 
   @BeforeEach

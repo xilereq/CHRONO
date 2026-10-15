@@ -13,8 +13,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "holiday", indexes = {
-    @Index(name = "idx_holiday_date", columnList = "date"),
-    @Index(name = "idx_holiday_yearly", columnList = "occurs_yearly")
+    @Index(name = "idx_holiday_date", columnList = "date")
 })
 @Getter
 @Setter
@@ -26,8 +25,6 @@ public class Holiday {
 
   @Column(length = 100)
   private String name;
-
-  private boolean occursYearly;
 
   private LocalDate date;
 }

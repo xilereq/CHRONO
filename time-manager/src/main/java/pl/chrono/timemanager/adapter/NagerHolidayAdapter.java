@@ -53,7 +53,6 @@ public class NagerHolidayAdapter implements I_ExternalHolidayProvider {
               item.localName(),
               item.name(),
               item.date(),
-              item.fixed(),
               false
           ))
           .toList();
@@ -69,8 +68,7 @@ public class NagerHolidayAdapter implements I_ExternalHolidayProvider {
   public record NagerHolidayItem(
       LocalDate date,
       String localName,
-      String name,
-      boolean fixed
+      String name
   ) {
   }
 }

@@ -8,15 +8,13 @@ import pl.chrono.dbmanager.model.Holiday;
 public interface I_HolidayData {
   Holiday saveHoliday(Holiday holiday);
 
-  List<Holiday> saveAllHolidays(List<Holiday> holidays);
-
   List<Holiday> findAllHolidays();
 
   Optional<Holiday> findHolidayById(Integer holidayId);
 
-  List<Holiday> findMatchingByDateOrYearly(LocalDate date);
+  List<Holiday> findAllByDate(LocalDate date);
 
   void deleteHolidayById(Integer holidayId);
 
-  boolean existsByDateOrYearly(LocalDate date);
+  boolean existsByDate(LocalDate date);
 }

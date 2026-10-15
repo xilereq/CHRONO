@@ -105,7 +105,7 @@ class WorkTimeCalculationServiceIT {
 
   @Test
   void calculateWorkingDays_withHolidayInRange_excludesHoliday() {
-    Holiday holiday = persistHoliday("Boze Narodzenie", true, LocalDate.of(2026, 12, 25));
+    Holiday holiday = persistHoliday("Boze Narodzenie", LocalDate.of(2026, 12, 25));
     persistHolidayPolicyLink(holiday, standardPolicy);
     entityManager.flush();
     entityManager.clear();
@@ -315,10 +315,9 @@ class WorkTimeCalculationServiceIT {
     assertThat(workTimeCalculationService.getRoundingSeconds(null)).isEqualTo(0);
   }
 
-  private Holiday persistHoliday(String name, boolean occursYearly, LocalDate date) {
+  private Holiday persistHoliday(String name, LocalDate date) {
     Holiday h = new Holiday();
     h.setName(name);
-    h.setOccursYearly(occursYearly);
     h.setDate(date);
     return holidayRepository.save(h);
   }

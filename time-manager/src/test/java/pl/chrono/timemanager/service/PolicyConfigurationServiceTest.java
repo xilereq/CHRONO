@@ -132,7 +132,7 @@ public class PolicyConfigurationServiceTest {
     HolidayPolicy holidayPolicy = new HolidayPolicy();
     holidayPolicy.setHoliday(holiday);
 
-    HolidayDto holidayDto = new HolidayDto(1, "Majówka", false, LocalDate.of(2026, 5, 1));
+    HolidayDto holidayDto = new HolidayDto(1, "Majówka", LocalDate.of(2026, 5, 1));
 
     when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
     when(holidayPolicyRepository.findByPolicy(policy)).thenReturn(List.of(holidayPolicy));

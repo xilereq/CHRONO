@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-drop-occurs-yearly-from-holiday
+      author: JDlubak
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: holiday
+            columnName: occurs_yearly
+      changes:
+        - dropIndex:
+            tableName: holiday
+            indexName: idx_holiday_yearly
+        - dropColumn:
+            tableName: holiday
+            columnName: occurs_yearly

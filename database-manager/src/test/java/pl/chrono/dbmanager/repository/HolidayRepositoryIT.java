@@ -1,8 +1,10 @@
 package pl.chrono.dbmanager.repository;
 
-import java.time.LocalDate;
-import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -19,37 +21,34 @@ class HolidayRepositoryIT {
   private HolidayRepository repository;
 
   @Test
-  void existsByDateOrYearlyExactMatchTest() {
-    persistHoliday(LocalDate.of(2026, 5, 1), false);
+  void existsByDateExactMatchTest() {
+    persistHoliday(LocalDate.of(2026, 5, 1));
     em.flush();
 
-    boolean exists = repository.existsByDateOrYearly(LocalDate.of(2026, 5, 1), 5, 1);
-    boolean notExists = repository.existsByDateOrYearly(LocalDate.of(2026, 5, 2), 5, 2);
+    boolean exists = repository.existsByDate(LocalDate.of(2026, 5, 1));
+    boolean notExists = repository.existsByDate(LocalDate.of(2026, 5, 2));
 
     assertThat(exists).isTrue();
     assertThat(notExists).isFalse();
   }
 
   @Test
-  void existsByDateOrYearlyYearlyMatchTest() {
-    persistHoliday(LocalDate.of(2025, 12, 25), true);
+  void findAllByDateTest() {
+    persistHoliday(LocalDate.of(2026, 12, 25));
     em.flush();
 
-    boolean exists2026 = repository.existsByDateOrYearly(LocalDate.of(2026, 12, 25), 12, 25);
-    boolean exists2027 = repository.existsByDateOrYearly(LocalDate.of(2027, 12, 25), 12, 25);
-    boolean notExists = repository.existsByDateOrYearly(LocalDate.of(2026, 12, 24), 12, 24);
+    List<Holiday> found = repository.findAllByDate(LocalDate.of(2026, 12, 25));
+    List<Holiday> notFound = repository.findAllByDate(LocalDate.of(2026, 12, 24));
 
-    assertThat(exists2026).isTrue();
-    assertThat(exists2027).isTrue();
-    assertThat(notExists).isFalse();
+    assertThat(found).hasSize(1);
+    assertThat(notFound).isEmpty();
   }
 
   @Test
   void findHolidayDatesBetweenTest() {
-    persistHoliday(LocalDate.of(2026, 6, 1), false);
-    persistHoliday(LocalDate.of(2026, 6, 15), false);
-    persistHoliday(LocalDate.of(2026, 7, 1), false);
-    persistHoliday(LocalDate.of(2025, 6, 10), true);
+    persistHoliday(LocalDate.of(2026, 6, 1));
+    persistHoliday(LocalDate.of(2026, 6, 15));
+    persistHoliday(LocalDate.of(2026, 7, 1));
     em.flush();
 
     Set<LocalDate> dates = repository.findHolidayDatesBetween(
@@ -57,17 +56,16 @@ class HolidayRepositoryIT {
         LocalDate.of(2026, 6, 30)
     );
 
-    assertThat(dates).hasSize(3)
+    assertThat(dates).hasSize(2)
         .containsExactlyInAnyOrder(
             LocalDate.of(2026, 6, 1),
-            LocalDate.of(2026, 6, 15),
-            LocalDate.of(2025, 6, 10)
+            LocalDate.of(2026, 6, 15)
         );
   }
 
   @Test
   void deleteByIdDirectlyTest() {
-    Holiday holiday = persistHoliday(LocalDate.of(2026, 1, 1), true);
+    Holiday holiday = persistHoliday(LocalDate.of(2026, 1, 1));
     em.flush();
 
     repository.deleteByIdDirectly(holiday.getHolidayId());
@@ -77,11 +75,10 @@ class HolidayRepositoryIT {
     assertThat(found).isNull();
   }
 
-  private Holiday persistHoliday(LocalDate date, boolean yearly) {
+  private Holiday persistHoliday(LocalDate date) {
     Holiday holiday = new Holiday();
     holiday.setName("Test Holiday");
     holiday.setDate(date);
-    holiday.setOccursYearly(yearly);
     return em.persist(holiday);
   }
 }

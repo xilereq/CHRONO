@@ -12,13 +12,11 @@ import pl.chrono.dbmanager.model.Holiday;
 
 @Repository
 public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
-  @Query("SELECT COUNT(h) > 0 FROM Holiday h WHERE h.date = :date OR (h.occursYearly = true AND MONTH(h.date) = :month AND DAY(h.date) = :day)")
-  boolean existsByDateOrYearly(@Param("date") LocalDate date, @Param("month") int month, @Param("day") int day);
+  boolean existsByDate(LocalDate date);
 
-  @Query("SELECT h FROM Holiday h WHERE h.date = :date OR (h.occursYearly = true AND MONTH(h.date) = :month AND DAY(h.date) = :day)")
-  List<Holiday> findMatchingByDateOrYearly(@Param("date") LocalDate date, @Param("month") int month, @Param("day") int day);
+  List<Holiday> findAllByDate(LocalDate date);
 
-  @Query("SELECT h.date FROM Holiday h WHERE h.date BETWEEN :start AND :end OR h.occursYearly = true")
+  @Query("SELECT h.date FROM Holiday h WHERE h.date BETWEEN :start AND :end")
   Set<LocalDate> findHolidayDatesBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
   @Modifying

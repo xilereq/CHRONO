@@ -56,7 +56,6 @@ class HolidayPolicyRepositoryIT {
     Holiday anotherHoliday = new Holiday();
     anotherHoliday.setName("Another Holiday");
     anotherHoliday.setDate(LocalDate.now().plusDays(1));
-    anotherHoliday.setOccursYearly(false);
     em.persist(anotherHoliday);
     em.flush();
 

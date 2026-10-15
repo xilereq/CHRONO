@@ -84,7 +84,6 @@ class PolicyTest {
 
     Holiday holiday = new Holiday();
     holiday.setDate(holidayDate);
-    holiday.setOccursYearly(false);
 
     HolidayPolicy holidayPolicy = new HolidayPolicy();
     holidayPolicy.setHoliday(holiday);
@@ -92,26 +91,6 @@ class PolicyTest {
     policy.setHolidayPolicies(List.of(holidayPolicy));
 
     int result = policy.getRequiredSecondsForDate(holidayDate);
-
-    assertThat(result).isZero();
-  }
-
-  @Test
-  void occursYearlyHolidayTest() {
-    policy.setDailyHours(8);
-
-    Holiday holiday = new Holiday();
-    holiday.setDate(LocalDate.of(2020, 11, 11));
-    holiday.setOccursYearly(true);
-
-    HolidayPolicy holidayPolicy = new HolidayPolicy();
-    holidayPolicy.setHoliday(holiday);
-
-    policy.setHolidayPolicies(List.of(holidayPolicy));
-
-    LocalDate dateToCheck = LocalDate.of(2026, 11, 11);
-
-    int result = policy.getRequiredSecondsForDate(dateToCheck);
 
     assertThat(result).isZero();
   }
@@ -149,34 +128,11 @@ class PolicyTest {
   }
 
   @Test
-  void nonYearlyHolidayTest() {
-    policy.setDailyHours(5);
-
-    Holiday holiday = new Holiday();
-    holiday.setOccursYearly(false);
-    holiday.setDate(LocalDate.of(2026, 12, 24));
-
-    HolidayPolicy holidayPolicy = new HolidayPolicy();
-    holidayPolicy.setHoliday(holiday);
-    policy.setHolidayPolicies(List.of(holidayPolicy));
-
-    LocalDate dateToCheck = LocalDate.of(2026, 12, 24);
-    LocalDate nextYearChristmasEve = LocalDate.of(2027, 12, 24);
-
-    int result2026 = policy.getRequiredSecondsForDate(dateToCheck);
-    int result2027 = policy.getRequiredSecondsForDate(nextYearChristmasEve);
-
-    assertThat(result2026).isZero();
-    assertThat(result2027).isEqualTo(5 * 3600);
-  }
-
-  @Test
   void differentMonthTest() {
     policy.setDailyHours(3);
 
     Holiday holiday = new Holiday();
     holiday.setDate(LocalDate.of(2026, 6, 15));
-    holiday.setOccursYearly(true);
 
     HolidayPolicy holidayPolicy = new HolidayPolicy();
     holidayPolicy.setHoliday(holiday);
@@ -198,7 +154,6 @@ class PolicyTest {
 
     Holiday holiday = new Holiday();
     holiday.setDate(LocalDate.of(2026, 6, 15));
-    holiday.setOccursYearly(true);
 
     HolidayPolicy holidayPolicy = new HolidayPolicy();
     holidayPolicy.setHoliday(holiday);

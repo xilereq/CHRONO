@@ -50,14 +50,14 @@ class HolidayControllerIT {
   private UserDetailsService userDetailsService;
 
   private HolidayDto sampleHolidayDto() {
-    return new HolidayDto(1, "Boże Narodzenie", true, LocalDate.of(2025, 12, 25));
+    return new HolidayDto(1, "Boże Narodzenie", LocalDate.of(2025, 12, 25));
   }
 
   @Test
   @WithMockUser(roles = "ADMIN")
   void createHolidayValidTest() throws Exception {
     CreateHolidayRequest request = new CreateHolidayRequest(
-        "Boże Narodzenie", true, LocalDate.of(2025, 12, 25));
+        "Boże Narodzenie", LocalDate.of(2025, 12, 25));
 
     when(holidayService.createHoliday(any(CreateHolidayRequest.class))).thenReturn(
         sampleHolidayDto());
@@ -76,7 +76,7 @@ class HolidayControllerIT {
   @WithMockUser(roles = "ADMIN")
   void createHolidayBlankNameTest() throws Exception {
     CreateHolidayRequest invalidRequest = new CreateHolidayRequest(
-        "", false, LocalDate.of(2025, 5, 1));
+        "", LocalDate.of(2025, 5, 1));
 
     mockMvc.perform(post("/api/holidays").header("Authorization", BEARER_TOKEN)
             .contentType(MediaType.APPLICATION_JSON)
@@ -97,7 +97,7 @@ class HolidayControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void getAllHolidaysHolidayListTest() throws Exception {
-    HolidayDto second = new HolidayDto(2, "Nowy Rok", true, LocalDate.of(2025, 1, 1));
+    HolidayDto second = new HolidayDto(2, "Nowy Rok", LocalDate.of(2025, 1, 1));
 
     when(holidayService.getAllHolidays()).thenReturn(List.of(sampleHolidayDto(), second));
 
@@ -133,7 +133,7 @@ class HolidayControllerIT {
   @Test
   @WithMockUser(roles = "MANAGER")
   void getHolidayByIdManagerTest() throws Exception {
-    HolidayDto dto = new HolidayDto(7, "Wniebowzięcie NMP", true, LocalDate.of(2025, 8, 15));
+    HolidayDto dto = new HolidayDto(7, "Wniebowzięcie NMP", LocalDate.of(2025, 8, 15));
     when(holidayService.getHolidayById(7)).thenReturn(dto);
 
     mockMvc.perform(get("/api/holidays/{holidayId}", 7).header("Authorization", BEARER_TOKEN))

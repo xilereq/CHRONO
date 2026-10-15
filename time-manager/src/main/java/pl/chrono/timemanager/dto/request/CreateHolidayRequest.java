@@ -8,8 +8,6 @@ public record CreateHolidayRequest(
     @NotBlank
     String name,
 
-    boolean occursYearly,
-
     @NotNull
     LocalDate date
 ) {
