@@ -21,6 +21,10 @@ public final class ErrorCodes {
   public static final String HOLIDAY_NONE_FOUND = "HOLIDAY_NONE_FOUND";
   public static final String HOLIDAY_ALREADY_ASSIGNED = "HOLIDAY_ALREADY_ASSIGNED";
   public static final String HOLIDAY_NOT_ASSIGNED = "HOLIDAY_NOT_ASSIGNED";
+  public static final String HOLIDAY_INVALID_YEAR = "HOLIDAY_INVALID_YEAR";
+  public static final String HOLIDAY_INVALID_COUNTRY_CODE = "HOLIDAY_INVALID_COUNTRY_CODE";
+  public static final String HOLIDAY_EXTERNAL_API_ERROR = "HOLIDAY_EXTERNAL_API_ERROR";
+  public static final String HOLIDAY_ALREADY_EXISTS = "HOLIDAY_ALREADY_EXISTS";
 
   public static final String REQUEST_NOT_FOUND = "REQUEST_NOT_FOUND";
   public static final String INVALID_TIME_RANGE = "INVALID_TIME_RANGE";

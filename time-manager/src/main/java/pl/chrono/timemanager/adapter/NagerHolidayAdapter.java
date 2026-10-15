@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Component;
 import pl.chrono.timemanager.dto.response.ExternalHolidayDto;
+import pl.chrono.timemanager.exception.HolidayException;
 import pl.chrono.timemanager.ports.I_ExternalHolidayProvider;
 
 @Component
@@ -31,7 +32,7 @@ public class NagerHolidayAdapter implements I_ExternalHolidayProvider {
 
   @Override
   public List<ExternalHolidayDto> fetchHolidays(int year, String countryCode) {
-    String url = String.format(API_URL, year, countryCode.toUpperCase());
+    String url = String.format(API_URL, year, countryCode);
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(url))
         .timeout(Duration.ofSeconds(10))
@@ -40,15 +41,22 @@ public class NagerHolidayAdapter implements I_ExternalHolidayProvider {
 
     try {
       HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      if (response.statusCode() == 404) {
+        throw new HolidayException.InvalidCountryCode(countryCode);
+      }
+      if (response.statusCode() == 400) {
+        throw new HolidayException.InvalidYear(year);
+      }
       if (response.statusCode() != 200) {
-        throw new IllegalStateException(
-            "Nie udało się pobrać świąt z zewnętrznego API. Kod HTTP: " + response.statusCode());
+        throw new HolidayException.ExternalApiError("HTTP status " + response.statusCode());
       }
 
       List<NagerHolidayItem> items = objectMapper.readValue(
           response.body(), new TypeReference<List<NagerHolidayItem>>() {});
 
       return items.stream()
+          .filter(NagerHolidayItem::global)
           .map(item -> new ExternalHolidayDto(
               item.localName(),
               item.name(),
@@ -56,11 +64,11 @@ public class NagerHolidayAdapter implements I_ExternalHolidayProvider {
               false
           ))
           .toList();
-    } catch (IOException | InterruptedException e) {
-      if (e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
-      throw new IllegalStateException("Błąd komunikacji z zewnętrznym API świąt", e);
+    } catch (IOException e) {
+      throw new HolidayException.ExternalApiError(e.getMessage());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new HolidayException.ExternalApiError("Request interrupted");
     }
   }
 
@@ -68,7 +76,8 @@ public class NagerHolidayAdapter implements I_ExternalHolidayProvider {
   public record NagerHolidayItem(
       LocalDate date,
       String localName,
-      String name
+      String name,
+      boolean global
   ) {
   }
 }

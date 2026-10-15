@@ -3,10 +3,16 @@ package pl.chrono.workforceapi.exception;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.chrono.applicationmanager.exception.ApplicationManagerException;
@@ -32,6 +38,42 @@ public class GlobalExceptionHandler {
     return buildErrorResponse(ex.getErrorCode(), ex.getMessage(), ex.getStatus());
   }
 
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
+    return buildErrorResponse("ILLEGAL_ARGUMENT", ex.getMessage(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<Object> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth == null || auth instanceof AnonymousAuthenticationToken) {
+      return buildErrorResponse(
+          "UNAUTHORIZED",
+          "Authentication is required to access this resource",
+          HttpStatus.UNAUTHORIZED
+      );
+    }
+    return buildErrorResponse("ACCESS_DENIED", "Access Denied", HttpStatus.FORBIDDEN);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<Object> handleValidationException(MethodArgumentNotValidException ex) {
+    String message = ex.getBindingResult().getFieldErrors().stream()
+        .map(err -> err.getField() + ": " + err.getDefaultMessage())
+        .collect(Collectors.joining(", "));
+    return buildErrorResponse("VALIDATION_ERROR", message, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<Object> handleHttpMessageNotReadableException(
+      HttpMessageNotReadableException ex) {
+    return buildErrorResponse(
+        "MALFORMED_JSON_REQUEST",
+        "Invalid request body format or data types",
+        HttpStatus.BAD_REQUEST
+    );
+  }
+
   @NonNull
   private ResponseEntity<Object> buildErrorResponse(String errorCode, String message, HttpStatus status) {
     Map<String, Object> body = new HashMap<>();
@@ -39,21 +81,5 @@ public class GlobalExceptionHandler {
     body.put("message", message);
     body.put("timestamp", LocalDateTime.now());
     return new ResponseEntity<>(body, status);
-  }
-
-  @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
-    Map<String, Object> body = new HashMap<>();
-    body.put("message", ex.getMessage());
-    body.put("timestamp", LocalDateTime.now());
-    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-  }
-
-  @ExceptionHandler(AuthorizationDeniedException.class)
-  public ResponseEntity<Object> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
-    Map<String, Object> body = new HashMap<>();
-    body.put("message", "Access Denied");
-    body.put("timestamp", LocalDateTime.now());
-    return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
   }
 }
