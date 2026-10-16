@@ -52,7 +52,7 @@ class PolicyConfigurationServiceIT {
   @BeforeEach
   void setUp() {
     savedPolicy = persistPolicy("Standard", 8);
-    savedHoliday = persistHoliday("Nowy Rok", true, LocalDate.of(2026, 1, 1));
+    savedHoliday = persistHoliday("Nowy Rok", LocalDate.of(2026, 1, 1));
   }
 
   @Test
@@ -157,7 +157,7 @@ class PolicyConfigurationServiceIT {
         .getHolidaysForPolicy(savedPolicy.getPolicyId());
 
     assertThat(result).hasSize(1);
-    assertThat(result.get(0).name()).isEqualTo("Nowy Rok");
+    assertThat(result.getFirst().name()).isEqualTo("Nowy Rok");
   }
 
   @Test
@@ -242,7 +242,7 @@ class PolicyConfigurationServiceIT {
 
   @Test
   void assignHolidaysToPolicyBulk_assignsAllHolidays() {
-    Holiday second = persistHoliday("Boze Narodzenie", true, LocalDate.of(2026, 12, 25));
+    Holiday second = persistHoliday("Boze Narodzenie", LocalDate.of(2026, 12, 25));
     MassAssignHolidayRequest request = new MassAssignHolidayRequest(
         List.of(savedHoliday.getHolidayId(), second.getHolidayId()));
 
@@ -258,7 +258,7 @@ class PolicyConfigurationServiceIT {
   @Test
   void assignHolidaysToPolicyBulk_skipsAlreadyAssigned() {
     persistHolidayPolicyLink(savedHoliday, savedPolicy);
-    Holiday second = persistHoliday("Boze Narodzenie", true, LocalDate.of(2026, 12, 25));
+    Holiday second = persistHoliday("Boze Narodzenie", LocalDate.of(2026, 12, 25));
     entityManager.flush();
 
     MassAssignHolidayRequest request = new MassAssignHolidayRequest(
@@ -291,10 +291,9 @@ class PolicyConfigurationServiceIT {
     return policyRepository.save(policy);
   }
 
-  private Holiday persistHoliday(String name, boolean occursYearly, LocalDate date) {
+  private Holiday persistHoliday(String name, LocalDate date) {
     Holiday h = new Holiday();
     h.setName(name);
-    h.setOccursYearly(occursYearly);
     h.setDate(date);
     return holidayRepository.save(h);
   }

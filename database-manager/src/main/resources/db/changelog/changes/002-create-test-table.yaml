@@ -1,0 +1,22 @@
+# PLIK DEMONSTRACYJNY JAK DZIAŁA LIQUIBASE, JEGO EFEKTY SĄ ODWRÓCONE W KOLEJNYM PLIKU 004-drop-test-table.yaml
+
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-test-table
+      author: JDlubak
+      changes:
+        - createTable:
+            tableName: liquibase_test
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false

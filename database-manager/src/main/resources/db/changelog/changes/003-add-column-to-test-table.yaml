@@ -1,0 +1,13 @@
+# PLIK DEMONSTRACYJNY JAK DZIAŁA LIQUIBASE, JEGO EFEKTY SĄ ODWRÓCONE W KOLEJNYM PLIKU 004-drop-test-table.yaml
+
+databaseChangeLog:
+  - changeSet:
+      id: 003-add-column-to-test-table
+      author: JDlubak
+      changes:
+        - addColumn:
+            tableName: liquibase_test
+            columns:
+              - column:
+                  name: extra_info
+                  type: VARCHAR(255)

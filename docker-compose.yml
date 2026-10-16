@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chrono-backend
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./gui
+      dockerfile: Dockerfile
+    container_name: chrono-gui
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend

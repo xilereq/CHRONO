@@ -1,0 +1,9 @@
+# ODWRÓCENIE EFEKTÓW PLIKU 002-create-test-table.yaml I 003-add-column-to-test-table.yaml
+
+databaseChangeLog:
+  - changeSet:
+      id: 004-drop-test-table
+      author: JDlubak
+      changes:
+        - dropTable:
+            tableName: liquibase_test

@@ -1,10 +1,11 @@
 package pl.chrono.timemanager.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.List;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import pl.chrono.dbmanager.repository.HolidayPolicyRepository;
 import pl.chrono.dbmanager.repository.HolidayRepository;
 import pl.chrono.dbmanager.repository.PolicyRepository;
 import pl.chrono.timemanager.TestConfig;
+import pl.chrono.timemanager.dto.request.BatchCreateHolidaysRequest;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.exception.HolidayException;
@@ -42,21 +44,37 @@ class HolidayServiceIT {
   @Test
   void createHoliday_savesAndReturnsHolidayWithCorrectFields() {
     CreateHolidayRequest request = new CreateHolidayRequest(
-        "Boze Narodzenie", true, LocalDate.of(2026, 12, 25));
+        "Boze Narodzenie", LocalDate.of(2026, 12, 25));
 
     HolidayDto result = holidayService.createHoliday(request);
 
     assertThat(result.holidayId()).isNotNull();
     assertThat(result.name()).isEqualTo("Boze Narodzenie");
-    assertThat(result.occursYearly()).isTrue();
     assertThat(result.date()).isEqualTo(LocalDate.of(2026, 12, 25));
     assertThat(holidayRepository.findById(result.holidayId())).isPresent();
   }
 
   @Test
+  void createHolidaysBatch_savesNewHolidaysAndAssignsToPolicy() {
+    Policy policy = persistPolicy();
+    CreateHolidayRequest req1 = new CreateHolidayRequest("Nowy Rok", LocalDate.of(2026, 1, 1));
+    CreateHolidayRequest req2 = new CreateHolidayRequest("Trzech Kroli", LocalDate.of(2026, 1, 6));
+    BatchCreateHolidaysRequest batchRequest = new BatchCreateHolidaysRequest(
+        List.of(req1, req2),
+        List.of(policy.getPolicyId())
+    );
+
+    List<HolidayDto> result = holidayService.createHolidaysBatch(batchRequest);
+    entityManager.flush();
+
+    assertThat(result).hasSize(2);
+    assertThat(holidayPolicyRepository.findByPolicy(policy)).hasSize(2);
+  }
+
+  @Test
   void getAllHolidays_returnsAllPersistedHolidays() {
-    persistHoliday("Nowy Rok", true, LocalDate.of(2026, 1, 1));
-    persistHoliday("Konstytucja 3 Maja", true, LocalDate.of(2026, 5, 3));
+    persistHoliday("Nowy Rok", LocalDate.of(2026, 1, 1));
+    persistHoliday("Konstytucja 3 Maja", LocalDate.of(2026, 5, 3));
 
     List<HolidayDto> result = holidayService.getAllHolidays();
 
@@ -67,7 +85,7 @@ class HolidayServiceIT {
 
   @Test
   void getHolidayById_returnsMatchingHoliday() {
-    Holiday saved = persistHoliday("Wszystkich Swietych", true, LocalDate.of(2026, 11, 1));
+    Holiday saved = persistHoliday("Wszystkich Swietych", LocalDate.of(2026, 11, 1));
 
     HolidayDto result = holidayService.getHolidayById(saved.getHolidayId());
 
@@ -82,7 +100,7 @@ class HolidayServiceIT {
 
   @Test
   void deleteHoliday_removesHolidayAndItsPolicyAssociations() {
-    Holiday holiday = persistHoliday("Swieto Pracy", true, LocalDate.of(2026, 5, 1));
+    Holiday holiday = persistHoliday("Swieto Pracy", LocalDate.of(2026, 5, 1));
     Policy policy = persistPolicy();
     persistHolidayPolicyLink(holiday, policy);
 
@@ -98,37 +116,29 @@ class HolidayServiceIT {
   }
 
   @Test
-  void isHoliday_trueForExactDateMatch_whenNotRecurring() {
-    persistHoliday("Jednorazowe swieto firmowe", false, LocalDate.of(2026, 6, 17));
+  void isHoliday_trueForExactDateMatch() {
+    persistHoliday("Swieto firmowe", LocalDate.of(2026, 6, 17));
 
     assertThat(holidayService.isHoliday(LocalDate.of(2026, 6, 17))).isTrue();
   }
 
   @Test
-  void isHoliday_falseForSameMonthDayDifferentYear_whenNotRecurring() {
-    persistHoliday("Jednorazowe swieto firmowe", false, LocalDate.of(2026, 6, 17));
+  void isHoliday_falseForDifferentYear() {
+    persistHoliday("Swieto firmowe", LocalDate.of(2026, 6, 17));
 
     assertThat(holidayService.isHoliday(LocalDate.of(2027, 6, 17))).isFalse();
   }
 
   @Test
-  void isHoliday_trueForSameMonthDayDifferentYear_whenRecurringYearly() {
-    persistHoliday("Boze Narodzenie", true, LocalDate.of(2020, 12, 25));
-
-    assertThat(holidayService.isHoliday(LocalDate.of(2026, 12, 25))).isTrue();
-  }
-
-  @Test
   void isHoliday_falseWhenNoMatchingHolidayExists() {
-    persistHoliday("Boze Narodzenie", true, LocalDate.of(2020, 12, 25));
+    persistHoliday("Boze Narodzenie", LocalDate.of(2026, 12, 25));
 
     assertThat(holidayService.isHoliday(LocalDate.of(2026, 7, 1))).isFalse();
   }
 
-  private Holiday persistHoliday(String name, boolean occursYearly, LocalDate date) {
+  private Holiday persistHoliday(String name, LocalDate date) {
     Holiday holiday = new Holiday();
     holiday.setName(name);
-    holiday.setOccursYearly(occursYearly);
     holiday.setDate(date);
     return holidayRepository.save(holiday);
   }

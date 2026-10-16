@@ -8,14 +8,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
 @Table(name = "holiday", indexes = {
-    @Index(name = "idx_holiday_date", columnList = "date"),
-    @Index(name = "idx_holiday_yearly", columnList = "occurs_yearly")
-})
+        @Index(name = "idx_holiday_date", columnList = "date")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uq_holiday_name_date", columnNames = {"name", "date"})
+    }
+)
 @Getter
 @Setter
 public class Holiday {
@@ -26,8 +30,6 @@ public class Holiday {
 
   @Column(length = 100)
   private String name;
-
-  private boolean occursYearly;
 
   private LocalDate date;
 }

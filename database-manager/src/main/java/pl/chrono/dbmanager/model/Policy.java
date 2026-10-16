@@ -65,14 +65,7 @@ public class Policy {
       boolean isHoliday = holidayPolicies.stream()
           .map(HolidayPolicy::getHoliday)
           .filter(holiday -> holiday != null && holiday.getDate() != null)
-          .anyMatch(holiday -> {
-            if (holiday.isOccursYearly()) {
-              return holiday.getDate().getMonth() == date.getMonth() &&
-                  holiday.getDate().getDayOfMonth() == date.getDayOfMonth();
-            } else {
-              return holiday.getDate().equals(date);
-            }
-          });
+          .anyMatch(holiday -> date.equals(holiday.getDate()));
       if (isHoliday) {
         return 0;
       }

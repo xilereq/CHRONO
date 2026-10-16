@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-drop-occurs-yearly
+      author: JDlubak
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: holiday
+            columnName: occurs_yearly
+      changes:
+        - dropColumn:
+            tableName: holiday
+            columnName: occurs_yearly
+
+  - changeSet:
+      id: 005-add-holiday-unique-constraint
+      author: JDlubak
+      changes:
+        - addUniqueConstraint:
+            tableName: holiday
+            columnNames: name, date
+            constraintName: uq_holiday_name_date
