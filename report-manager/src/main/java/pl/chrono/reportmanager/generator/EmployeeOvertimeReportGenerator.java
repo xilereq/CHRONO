@@ -1,126 +1,88 @@
 package pl.chrono.reportmanager.generator;
 
 import com.lowagie.text.Document;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
-import org.apache.poi.ss.usermodel.Row;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.EmployeeOvertimeReport;
 import pl.chrono.reportmanager.dto.OvertimeEntry;
-import pl.chrono.reportmanager.dto.ReportFormat;
-import pl.chrono.reportmanager.exception.ReportGenerationException;
-
-import java.io.ByteArrayOutputStream;
 
 @Component
-public class EmployeeOvertimeReportGenerator implements I_ReportGenerator<EmployeeOvertimeReport> {
+public class EmployeeOvertimeReportGenerator
+    extends AbstractReportGenerator<EmployeeOvertimeReport> {
+
+  private static final String[] HEADERS = {"Data", "Przepracowano", "Wymagano", "Nadgodziny"};
 
   @Override
-  public byte[] generate(EmployeeOvertimeReport report, ReportFormat format) {
-    try {
-      return switch (format) {
-        case CSV -> generateCsv(report);
-        case PDF -> generatePdf(report);
-        case XLSX -> generateXlsx(report);
-        default -> throw new ReportGenerationException.UnsupportedFormat(format.name());
-      };
-    } catch (ReportGenerationException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ReportGenerationException.Failed(format.name(), e);
+  protected void writeCsv(EmployeeOvertimeReport report, StringBuilder csv) {
+    csvRow(csv, "Raport Nadgodzin (Od - Do):", period(report));
+    csvRow(csv, "Pracownik:", report.employeeFullName());
+    csvRow(csv, "Suma nadgodzin:", formatSeconds(report.totalOvertimeSeconds()));
+    csvRow(csv);
+    csvRow(csv, (Object[]) HEADERS);
+
+    for (OvertimeEntry entry : report.entries()) {
+      csvRow(csv, rowValues(entry));
     }
   }
 
-  private byte[] generateCsv(EmployeeOvertimeReport report) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Raport Nadgodzin (Od - Do):;").append(report.startDate()).append(" - ").append(report.endDate()).append("\n");
-    sb.append("Pracownik:;").append(report.employeeFullName()).append("\n");
-    sb.append("Suma nadgodzin:;").append(formatSeconds(report.totalOvertimeSeconds())).append("\n\n");
-
-    sb.append("Data;Przepracowano;Wymagano;Nadgodziny\n");
-
-    report.entries().forEach(e -> {
-      sb.append(e.date()).append(";")
-          .append(formatSeconds(e.workedSeconds())).append(";")
-          .append(formatSeconds((long) e.requiredSeconds())).append(";")
-          .append(formatSeconds(e.overtimeSeconds())).append("\n");
-    });
-
-    return addUtf8Bom(sb.toString());
-  }
-
-  private byte[] generatePdf(EmployeeOvertimeReport report) throws Exception {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    Document document = new Document();
-    PdfWriter.getInstance(document, out);
-    document.open();
-
-    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-    Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
-    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-
-    document.add(new Paragraph("Raport Nadgodzin: " + report.startDate() + " - " + report.endDate(), titleFont));
-    document.add(new Paragraph("Pracownik: " + report.employeeFullName(), normalFont));
-    document.add(new Paragraph("Suma nadgodzin: " + formatSeconds(report.totalOvertimeSeconds()), normalFont));
-    document.add(new Paragraph(" "));
-
-    PdfPTable table = new PdfPTable(4);
-    table.setWidthPercentage(100);
-
-    String[] headers = {"Data", "Przepracowano", "Wymagano", "Nadgodziny"};
-    for (String header : headers) {
-      table.addCell(new PdfPCell(new Phrase(header, headerFont)));
+  @Override
+  protected void writePdf(EmployeeOvertimeReport report, Document document)
+      throws DocumentException {
+    addPdfTitle(document, title(report));
+    for (String line : summaryLines(report)) {
+      addPdfText(document, line);
     }
+    addPdfSpacer(document);
 
-    for (OvertimeEntry e : report.entries()) {
-      table.addCell(e.date().toString());
-      table.addCell(formatSeconds(e.workedSeconds()));
-      table.addCell(formatSeconds((long) e.requiredSeconds()));
-      table.addCell(formatSeconds(e.overtimeSeconds()));
+    PdfPTable table = createPdfTable(HEADERS);
+    for (OvertimeEntry entry : report.entries()) {
+      addPdfRow(table, rowValues(entry));
     }
-
     document.add(table);
-    document.close();
-    return out.toByteArray();
   }
 
-  private byte[] generateXlsx(EmployeeOvertimeReport report) throws Exception {
-    try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      Sheet sheet = workbook.createSheet("Nadgodziny - Pracownik");
+  @Override
+  protected String getSheetName() {
+    return "Nadgodziny - Pracownik";
+  }
 
-      sheet.createRow(0).createCell(0).setCellValue("Raport Nadgodzin: " + report.startDate() + " - " + report.endDate());
-      sheet.createRow(1).createCell(0).setCellValue("Pracownik: " + report.employeeFullName());
-      sheet.createRow(2).createCell(0).setCellValue("Suma nadgodzin: " + formatSeconds(report.totalOvertimeSeconds()));
+  @Override
+  protected void writeXlsx(EmployeeOvertimeReport report, Sheet sheet) {
+    List<String> titleLines = new ArrayList<>();
+    titleLines.add(title(report));
+    titleLines.addAll(summaryLines(report));
 
-      Row headerRow = sheet.createRow(4);
-      String[] headers = {"Data", "Przepracowano", "Wymagano", "Nadgodziny"};
-      for (int i = 0; i < headers.length; i++) {
-        headerRow.createCell(i).setCellValue(headers[i]);
-      }
-
-      int rowIdx = 5;
-      for (OvertimeEntry e : report.entries()) {
-        Row row = sheet.createRow(rowIdx++);
-        row.createCell(0).setCellValue(e.date().toString());
-        row.createCell(1).setCellValue(formatSeconds(e.workedSeconds()));
-        row.createCell(2).setCellValue(formatSeconds((long) e.requiredSeconds()));
-        row.createCell(3).setCellValue(formatSeconds(e.overtimeSeconds()));
-      }
-
-      for (int i = 0; i < headers.length; i++) {
-        sheet.autoSizeColumn(i);
-      }
-
-      workbook.write(out);
-      return out.toByteArray();
+    int rowIdx = writeXlsxHeader(sheet, titleLines, HEADERS);
+    for (OvertimeEntry entry : report.entries()) {
+      xlsxRow(sheet, rowIdx++, rowValues(entry));
     }
+  }
+
+  private String period(EmployeeOvertimeReport report) {
+    return report.startDate() + " - " + report.endDate();
+  }
+
+  private String title(EmployeeOvertimeReport report) {
+    return "Raport Nadgodzin: " + period(report);
+  }
+
+  private List<String> summaryLines(EmployeeOvertimeReport report) {
+    return List.of(
+        "Pracownik: " + report.employeeFullName(),
+        "Suma nadgodzin: " + formatSeconds(report.totalOvertimeSeconds())
+    );
+  }
+
+  private Object[] rowValues(OvertimeEntry entry) {
+    return new Object[] {
+        entry.date(),
+        formatSeconds(entry.workedSeconds()),
+        formatSeconds((long) entry.requiredSeconds()),
+        formatSeconds(entry.overtimeSeconds())
+    };
   }
 }
