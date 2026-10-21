@@ -1,12 +1,15 @@
 package pl.chrono.reportmanager.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +17,7 @@ import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
+import pl.chrono.dbmanager.model.enums.ApplicationType;
 import pl.chrono.dbmanager.repository.ApplicationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.dbmanager.repository.WorkLogRepository;
@@ -26,6 +30,9 @@ import pl.chrono.timemanager.service.WorkTimeCalculationService;
 @RequiredArgsConstructor
 public class TimesheetReportService {
 
+  private static final Set<ApplicationType> FULL_DAY_ABSENCES =
+      EnumSet.of(ApplicationType.HOLIDAY_LEAVE, ApplicationType.SICK_LEAVE);
+
   private final UserRepository userRepository;
   private final WorkLogRepository workLogRepository;
   private final ApplicationRepository applicationRepository;
@@ -36,63 +43,18 @@ public class TimesheetReportService {
     User user = userRepository.findById(employeeId)
         .orElseThrow(() -> new ReportUserException.NotFound(employeeId));
 
+    Map<LocalDate, List<WorkLog>> workLogsByDate = workLogRepository
+        .findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
+            employeeId, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX))
+        .stream()
+        .collect(Collectors.groupingBy(wl -> wl.getStartTime().toLocalDate()));
+
+    LocalDateTime now = LocalDateTime.now();
     List<DailyTimesheetEntry> dailyEntries = new ArrayList<>();
 
-    long totalWork = 0L;
-    long totalRequired = 0L;
-    long totalBalance = 0L;
-    long totalNight = 0L;
-
-    LocalDate currentDate = startDate;
-
-    while (!currentDate.isAfter(endDate)) {
-      Optional<WorkLog> workLogOpt = workLogRepository.findByUserUserIdAndStartTimeBetween(
-          employeeId,
-          currentDate.atStartOfDay(),
-          currentDate.atTime(LocalTime.MAX)
-      );
-
-      List<Application> apps = applicationRepository.findApprovedByEmployeeAndDate(employeeId, currentDate);
-      String appType = apps.isEmpty() ? null : apps.getFirst().getType().name();
-
-      LocalTime startTime = null;
-      LocalTime endTime = null;
-      long effectiveWork = 0L;
-      int requiredSeconds = 0;
-      long nightSeconds = 0L;
-
-      Policy policyForDay = user.getPolicyForDate(currentDate);
-      requiredSeconds = workTimeCalculationService.getBaseRequiredSeconds(currentDate, policyForDay);
-
-      if (workLogOpt.isPresent()) {
-        WorkLog wl = workLogOpt.get();
-        startTime = wl.getStartTime().toLocalTime();
-        endTime = wl.getEndTime() != null ? wl.getEndTime().toLocalTime() : null;
-        int roundingSeconds = workTimeCalculationService.getRoundingSeconds(policyForDay);
-        effectiveWork = wl.getEffectiveWorkTime(LocalDateTime.now(), requiredSeconds, roundingSeconds);
-
-        if (wl.getEndTime() != null) {
-          nightSeconds = calculateNightSeconds(wl.getStartTime(), wl.getEndTime());
-        }
-
-      } else {
-        if (appType != null && isFullDayAbsence(apps.getFirst())) {
-          effectiveWork = requiredSeconds;
-        }
-      }
-
-      long balance = effectiveWork - requiredSeconds;
-
-      dailyEntries.add(new DailyTimesheetEntry(
-          currentDate, startTime, endTime, effectiveWork, requiredSeconds, balance, nightSeconds, appType
-      ));
-
-      totalWork += effectiveWork;
-      totalRequired += requiredSeconds;
-      totalBalance += balance;
-      totalNight += nightSeconds;
-
-      currentDate = currentDate.plusDays(1);
+    for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+      List<WorkLog> dayLogs = workLogsByDate.getOrDefault(date, List.of());
+      dailyEntries.add(buildDailyEntry(user, date, dayLogs, now));
     }
 
     return new EmployeeTimesheetReport(
@@ -100,11 +62,53 @@ public class TimesheetReportService {
         user.getName() + " " + user.getSurname(),
         startDate,
         endDate,
-        totalWork,
-        totalRequired,
-        totalBalance,
-        totalNight,
+        dailyEntries.stream().mapToLong(DailyTimesheetEntry::effectiveWorkSeconds).sum(),
+        dailyEntries.stream().mapToLong(DailyTimesheetEntry::requiredSeconds).sum(),
+        dailyEntries.stream().mapToLong(DailyTimesheetEntry::balanceSeconds).sum(),
+        dailyEntries.stream().mapToLong(DailyTimesheetEntry::nightSeconds).sum(),
         dailyEntries
+    );
+  }
+
+  private DailyTimesheetEntry buildDailyEntry(User user, LocalDate date, List<WorkLog> dayLogs,
+                                              LocalDateTime now) {
+    List<Application> apps =
+        applicationRepository.findApprovedByEmployeeAndDate(user.getUserId(), date);
+    Application app = apps.isEmpty() ? null : apps.getFirst();
+
+    Policy policyForDay = user.getPolicyForDate(date);
+    int requiredSeconds = workTimeCalculationService.getBaseRequiredSeconds(date, policyForDay);
+
+    LocalTime startTime = null;
+    LocalTime endTime = null;
+    long effectiveWork = 0L;
+    long nightSeconds = 0L;
+
+    if (!dayLogs.isEmpty()) {
+      int roundingSeconds = workTimeCalculationService.getRoundingSeconds(policyForDay);
+      startTime = dayLogs.getFirst().getStartTime().toLocalTime();
+      LocalDateTime lastEnd = dayLogs.getLast().getEndTime();
+      endTime = lastEnd != null ? lastEnd.toLocalTime() : null;
+
+      for (WorkLog wl : dayLogs) {
+        effectiveWork += wl.getEffectiveWorkTime(now, requiredSeconds, roundingSeconds);
+        if (wl.getEndTime() != null) {
+          nightSeconds += calculateNightSeconds(wl.getStartTime(), wl.getEndTime());
+        }
+      }
+    } else if (app != null && FULL_DAY_ABSENCES.contains(app.getType())) {
+      effectiveWork = requiredSeconds;
+    }
+
+    return new DailyTimesheetEntry(
+        date,
+        startTime,
+        endTime,
+        effectiveWork,
+        requiredSeconds,
+        effectiveWork - requiredSeconds,
+        nightSeconds,
+        app != null ? app.getType().name() : null
     );
   }
 
@@ -137,10 +141,5 @@ public class TimesheetReportService {
       return Duration.between(overlapStart, overlapEnd).getSeconds();
     }
     return 0;
-  }
-
-  private boolean isFullDayAbsence(Application app) {
-    String type = app.getType().name();
-    return type.equals("HOLIDAY_LEAVE") || type.equals("SICK_LEAVE") || type.equals("ON_DEMAND_LEAVE");
   }
 }

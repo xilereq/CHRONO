@@ -27,6 +27,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,8 +67,8 @@ class TimesheetReportServiceTest {
     wl.setStartTime(date.atTime(21, 0));
     wl.setEndTime(date.plusDays(1).atTime(3, 0));
 
-    when(workLogRepository.findByUserUserIdAndStartTimeBetween(eq(empId), eq(date.atStartOfDay()), eq(date.atTime(LocalTime.MAX))))
-        .thenReturn(Optional.of(wl));
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(eq(empId), eq(date.atStartOfDay()), eq(date.atTime(LocalTime.MAX))))
+        .thenReturn(List.of(wl));
 
     when(applicationRepository.findApprovedByEmployeeAndDate(eq(empId), eq(date))).thenReturn(List.of());
 
@@ -91,8 +93,8 @@ class TimesheetReportServiceTest {
     User user = new User(); user.setUserId(empId); user.setName("A"); user.setSurname("B");
     when(userRepository.findById(empId)).thenReturn(Optional.of(user));
 
-    when(workLogRepository.findByUserUserIdAndStartTimeBetween(eq(empId), any(), any()))
-        .thenReturn(Optional.empty());
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(eq(empId), any(), any()))
+        .thenReturn(List.of());
 
     Application sickLeave = new Application();
     sickLeave.setType(ApplicationType.SICK_LEAVE);
@@ -119,7 +121,7 @@ class TimesheetReportServiceTest {
     WorkLog wl = new WorkLog();
     wl.setStartTime(date.atTime(8, 0));
 
-    when(workLogRepository.findByUserUserIdAndStartTimeBetween(eq(empId), any(), any())).thenReturn(Optional.of(wl));
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(eq(empId), any(), any())).thenReturn(List.of(wl));
     when(applicationRepository.findApprovedByEmployeeAndDate(eq(empId), eq(date))).thenReturn(List.of());
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(28800);
 
@@ -141,8 +143,8 @@ class TimesheetReportServiceTest {
     user.setSurname("B");
     when(userRepository.findById(empId)).thenReturn(Optional.of(user));
 
-    when(workLogRepository.findByUserUserIdAndStartTimeBetween(eq(empId), any(), any()))
-        .thenReturn(Optional.empty());
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(eq(empId), any(), any()))
+        .thenReturn(List.of());
 
     Application holidayLeave = new Application();
     holidayLeave.setType(ApplicationType.HOLIDAY_LEAVE);
@@ -168,8 +170,8 @@ class TimesheetReportServiceTest {
     user.setSurname("B");
     when(userRepository.findById(empId)).thenReturn(Optional.of(user));
 
-    when(workLogRepository.findByUserUserIdAndStartTimeBetween(eq(empId), any(), any()))
-        .thenReturn(Optional.empty());
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(eq(empId), any(), any()))
+        .thenReturn(List.of());
 
     Application homeOffice = new Application();
     homeOffice.setType(ApplicationType.HOME_OFFICE);
@@ -182,5 +184,72 @@ class TimesheetReportServiceTest {
     assertThat(report.dailyEntries().get(0).applicationType()).isEqualTo("HOME_OFFICE");
     assertThat(report.dailyEntries().get(0).effectiveWorkSeconds()).isEqualTo(0L);
     assertThat(report.dailyEntries().get(0).balanceSeconds()).isEqualTo(-28800L);
+  }
+
+  @Test
+  void shouldSumMultipleWorkLogsFromSameDay() {
+    Integer empId = 1;
+    LocalDate date = LocalDate.of(2023, 10, 13);
+
+    User user = new User();
+    user.setUserId(empId);
+    user.setName("A");
+    user.setSurname("B");
+    when(userRepository.findById(empId)).thenReturn(Optional.of(user));
+
+    WorkLog morning = new WorkLog();
+    morning.setStartTime(date.atTime(5, 0));
+    morning.setEndTime(date.atTime(9, 0));
+    WorkLog afternoon = new WorkLog();
+    afternoon.setStartTime(date.atTime(13, 0));
+    afternoon.setEndTime(date.atTime(17, 0));
+
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(eq(empId), any(), any()))
+        .thenReturn(List.of(morning, afternoon));
+    when(applicationRepository.findApprovedByEmployeeAndDate(eq(empId), eq(date))).thenReturn(List.of());
+    when(workTimeCalculationService.getBaseRequiredSeconds(eq(date), any())).thenReturn(28800);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+
+    EmployeeTimesheetReport report = timesheetReportService.generateTimesheet(empId, date, date);
+
+    var entry = report.dailyEntries().get(0);
+    assertThat(entry.startTime()).isEqualTo(LocalTime.of(5, 0));
+    assertThat(entry.endTime()).isEqualTo(LocalTime.of(17, 0));
+    assertThat(entry.effectiveWorkSeconds()).isEqualTo(28800L);
+    assertThat(entry.balanceSeconds()).isEqualTo(0L);
+    assertThat(entry.nightSeconds()).isEqualTo(3600L);
+  }
+
+  @Test
+  void shouldFetchWorkLogsOnceForWholePeriod() {
+    Integer empId = 1;
+    LocalDate start = LocalDate.of(2023, 10, 9);
+    LocalDate end = LocalDate.of(2023, 10, 13);
+
+    User user = new User();
+    user.setUserId(empId);
+    user.setName("A");
+    user.setSurname("B");
+    when(userRepository.findById(empId)).thenReturn(Optional.of(user));
+
+    WorkLog wednesday = new WorkLog();
+    wednesday.setStartTime(LocalDate.of(2023, 10, 11).atTime(8, 0));
+    wednesday.setEndTime(LocalDate.of(2023, 10, 11).atTime(16, 0));
+
+    when(workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
+        eq(empId), eq(start.atStartOfDay()), eq(end.atTime(LocalTime.MAX))))
+        .thenReturn(List.of(wednesday));
+    when(applicationRepository.findApprovedByEmployeeAndDate(eq(empId), any())).thenReturn(List.of());
+    when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(28800);
+    when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
+
+    EmployeeTimesheetReport report = timesheetReportService.generateTimesheet(empId, start, end);
+
+    assertThat(report.dailyEntries()).hasSize(5);
+    assertThat(report.dailyEntries().get(2).effectiveWorkSeconds()).isEqualTo(28800L);
+    assertThat(report.totalWorkSeconds()).isEqualTo(28800L);
+    assertThat(report.totalRequiredSeconds()).isEqualTo(5 * 28800L);
+    verify(workLogRepository, times(1))
+        .findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(any(), any(), any());
   }
 }
