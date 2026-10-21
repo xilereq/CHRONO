@@ -1,4 +1,3 @@
-
 export const getErrorMessage = (errorData) => {
     const errorCode = errorData?.code;
 
@@ -29,6 +28,21 @@ export const getErrorMessage = (errorData) => {
 
         case 'HOLIDAY_NOT_ASSIGNED':
             return 'Nie można usunąć powiązania, ponieważ to święto nie jest przypisane do tej polityki.';
+
+        case 'HOLIDAY_INVALID_YEAR':
+            return 'Nieprawidłowy rok. Dozwolony zakres to 1976–2076.';
+
+        case 'HOLIDAY_INVALID_COUNTRY_CODE':
+            return 'Nieprawidłowy lub nieobsługiwany kod kraju (podaj 2-literowy kod ISO, np. PL).';
+
+        case 'HOLIDAY_EXTERNAL_API_ERROR':
+            return 'Nie udało się pobrać świąt z zewnętrznego serwisu. Spróbuj ponownie później.';
+
+        case 'HOLIDAY_ALREADY_EXISTS':
+            return 'Święto o takiej nazwie i dacie już istnieje w systemie.';
+
+        case 'HOLIDAY_NONE_FOUND':
+            return 'Nie znaleziono wybranych świąt.';
 
         case 'WORK_ALREADY_STARTED':
             return 'Praca została już rozpoczęta. Nie możesz otworzyć kolejnej aktywnej sesji.';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../main.css';
 import './policies.css';
-import { PoliciesSidebar, PolicyFormTab, HolidayTabs, UserManagementTab, PolicyListTab, AssignPolicyTab } from "../../components";
+import { PoliciesSidebar, PolicyFormTab, HolidayTabs, PolicyListTab, AssignPolicyTab } from "../../components";
 
 const Policies = () => {
     const [activeTab, setActiveTab] = useState('policies');

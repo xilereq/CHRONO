@@ -124,6 +124,23 @@ const policiesService = {
         return response.json();
     },
 
+    previewExternalHolidays: async (year, countryCode) => {
+        const params = new URLSearchParams({ year: String(year), countryCode });
+        const response = await fetch(`${HOLIDAYS_API_URL}/external?${params}`, {
+            headers: getHeaders()
+        });
+        return handleApiResponse(response);
+    },
+
+    createHolidaysBatch: async (payload) => {
+        const response = await fetch(`${HOLIDAYS_API_URL}/batch`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+        });
+        return handleApiResponse(response);
+    },
+
     assignPolicyBulk: async (payload) => {
         const response = await fetch(`${API_URL}/assign-bulk`, {
             method: 'POST',

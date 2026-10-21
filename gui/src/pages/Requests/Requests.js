@@ -15,7 +15,11 @@ const Requests = () => {
         if (location.state && location.state.openForm) {
             setIsFormOpen(true);
             if (location.state.prefillType) {
-                setPrefillData({ type: location.state.prefillType });
+                setPrefillData({
+                    type: location.state.prefillType,
+                    startDate: location.state.prefillStartDate || '',
+                    endDate: location.state.prefillEndDate || location.state.prefillStartDate || '',
+                });
             }
             window.history.replaceState({}, document.title);
         }
