@@ -10,7 +10,7 @@ public class ReportScheduleException extends ReportException {
   }
 
   public static class NotFound extends ReportScheduleException {
-    public NotFound(Integer scheduleId) {
+    public NotFound(Long scheduleId) {
       super(
           ErrorCodes.SCHEDULE_NOT_FOUND,
           "Scheduled report with ID " + scheduleId + " does not exist.",

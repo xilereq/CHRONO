@@ -8,12 +8,14 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.ScheduledReport;
@@ -22,71 +24,95 @@ import pl.chrono.dbmanager.model.enums.ReportPeriod;
 import pl.chrono.dbmanager.model.enums.ScheduleFrequency;
 import pl.chrono.dbmanager.model.enums.ScheduleRunStatus;
 import pl.chrono.dbmanager.model.enums.ScheduledReportType;
-import pl.chrono.dbmanager.repository.ScheduledReportRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_ScheduledReportData;
+import pl.chrono.dbmanager.ports.I_UserData;
+import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.reportmanager.api.I_ReportFacade;
+import pl.chrono.reportmanager.api.I_ScheduledReportService;
 import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.ScheduledReportRequestDto;
 import pl.chrono.reportmanager.dto.ScheduledReportResponseDto;
 import pl.chrono.reportmanager.event.ReportAttachmentDto;
 import pl.chrono.reportmanager.event.ScheduledReportEmailEvent;
 import pl.chrono.reportmanager.event.ScheduledReportFailureEvent;
+import pl.chrono.reportmanager.exception.ReportScheduleException;
+import pl.chrono.reportmanager.exception.ReportScheduleSecurityException;
+import pl.chrono.reportmanager.exception.ReportUserException;
+import pl.chrono.reportmanager.mapper.ScheduledReportMapper;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ScheduledReportService {
+public class ScheduledReportService implements I_ScheduledReportService {
 
   private static final int MAX_RETRY_ATTEMPTS = 5;
 
-  private final ScheduledReportRepository scheduledReportRepository;
-  private final UserRepository userRepository;
+  private final I_ScheduledReportData scheduledReportData;
+  private final I_UserData userData;
+  private final ScheduledReportMapper scheduledReportMapper;
   private final I_ReportFacade reportFacade;
   private final ApplicationEventPublisher eventPublisher;
 
+  @Override
   @Transactional
-  public ScheduledReportResponseDto createSchedule(User currentUser, ScheduledReportRequestDto dto) {
+  @LogActivity(action = "CREATE_SCHEDULED_REPORT", details = "Created scheduled report")
+  public ScheduledReportResponseDto createSchedule(
+      Integer currentUserId, ScheduledReportRequestDto dto) {
+    User currentUser = getCurrentUser(currentUserId);
     List<User> targetUsers = fetchAndValidatePermissions(currentUser, dto);
 
     ScheduledReport entity = new ScheduledReport();
     entity.setCreator(currentUser);
-    applyDtoToEntity(entity, dto, targetUsers);
+    scheduledReportMapper.updateEntityFromDto(dto, entity);
+    entity.setTargetUsers(new HashSet<>(targetUsers));
     entity.setActive(true);
     entity.setRetryCount(0);
     entity.setNextRunAt(calculateNextRunAt(entity, LocalDateTime.now()));
 
-    ScheduledReport saved = scheduledReportRepository.save(entity);
-    return mapToResponse(saved);
+    ScheduledReport saved = scheduledReportData.saveScheduledReport(entity);
+    return scheduledReportMapper.toDto(saved);
   }
 
+  @Override
   @Transactional
-  public ScheduledReportResponseDto updateSchedule(User currentUser, Long scheduleId, ScheduledReportRequestDto dto) {
+  @LogActivity(action = "UPDATE_SCHEDULED_REPORT", details = "Updated scheduled report")
+  public ScheduledReportResponseDto updateSchedule(
+      Integer currentUserId, Long scheduleId, ScheduledReportRequestDto dto) {
+    User currentUser = getCurrentUser(currentUserId);
     ScheduledReport entity = getAccessibleSchedule(currentUser, scheduleId);
     List<User> targetUsers = fetchAndValidatePermissions(currentUser, dto);
 
-    applyDtoToEntity(entity, dto, targetUsers);
+    scheduledReportMapper.updateEntityFromDto(dto, entity);
+    entity.setTargetUsers(new HashSet<>(targetUsers));
     entity.setRetryCount(0);
     entity.setNextRunAt(calculateNextRunAt(entity, LocalDateTime.now()));
 
-    return mapToResponse(scheduledReportRepository.save(entity));
+    return scheduledReportMapper.toDto(scheduledReportData.saveScheduledReport(entity));
   }
 
+  @Override
   @Transactional(readOnly = true)
-  public List<ScheduledReportResponseDto> getSchedules(User currentUser) {
+  public List<ScheduledReportResponseDto> getSchedules(Integer currentUserId) {
+    User currentUser = getCurrentUser(currentUserId);
     List<ScheduledReport> schedules = isHrOrAdmin(currentUser)
-        ? scheduledReportRepository.findAllWithDetails()
-        : scheduledReportRepository.findAllByCreatorIdWithDetails(currentUser.getUserId());
+        ? scheduledReportData.findAllScheduledReports()
+        : scheduledReportData.findAllScheduledReportsByCreatorId(currentUser.getUserId());
 
-    return schedules.stream().map(this::mapToResponse).toList();
+    return schedules.stream().map(scheduledReportMapper::toDto).toList();
   }
 
+  @Override
   @Transactional(readOnly = true)
-  public ScheduledReportResponseDto getScheduleById(User currentUser, Long scheduleId) {
-    return mapToResponse(getAccessibleSchedule(currentUser, scheduleId));
+  public ScheduledReportResponseDto getScheduleById(Integer currentUserId, Long scheduleId) {
+    User currentUser = getCurrentUser(currentUserId);
+    return scheduledReportMapper.toDto(getAccessibleSchedule(currentUser, scheduleId));
   }
 
+  @Override
   @Transactional
-  public ScheduledReportResponseDto toggleSchedule(User currentUser, Long scheduleId) {
+  @LogActivity(action = "TOGGLE_SCHEDULED_REPORT", details = "Toggled scheduled report status")
+  public ScheduledReportResponseDto toggleSchedule(Integer currentUserId, Long scheduleId) {
+    User currentUser = getCurrentUser(currentUserId);
     ScheduledReport entity = getAccessibleSchedule(currentUser, scheduleId);
     boolean newState = !entity.isActive();
     entity.setActive(newState);
@@ -95,27 +121,34 @@ public class ScheduledReportService {
       entity.setRetryCount(0);
       entity.setNextRunAt(calculateNextRunAt(entity, LocalDateTime.now()));
     }
-    return mapToResponse(scheduledReportRepository.save(entity));
+    return scheduledReportMapper.toDto(scheduledReportData.saveScheduledReport(entity));
   }
 
+  @Override
   @Transactional
-  public void deleteSchedule(User currentUser, Long scheduleId) {
+  @LogActivity(action = "DELETE_SCHEDULED_REPORT", details = "Deleted scheduled report")
+  public void deleteSchedule(Integer currentUserId, Long scheduleId) {
+    User currentUser = getCurrentUser(currentUserId);
     ScheduledReport entity = getAccessibleSchedule(currentUser, scheduleId);
-    scheduledReportRepository.delete(entity);
+    scheduledReportData.deleteScheduledReport(entity);
   }
 
+  @Override
   @Transactional
-  public void triggerScheduleNow(User currentUser, Long scheduleId) {
+  @LogActivity(action = "TRIGGER_SCHEDULED_REPORT", details = "Triggered scheduled report manually")
+  public void triggerScheduleNow(Integer currentUserId, Long scheduleId) {
+    User currentUser = getCurrentUser(currentUserId);
     ScheduledReport schedule = getAccessibleSchedule(currentUser, scheduleId);
     generateAndSendReport(schedule);
     schedule.setLastRunAt(LocalDateTime.now());
     schedule.setLastRunStatus(ScheduleRunStatus.SUCCESS);
-    scheduledReportRepository.save(schedule);
+    scheduledReportData.saveScheduledReport(schedule);
   }
 
+  @Override
   public void processDueSchedules() {
     LocalDateTime now = LocalDateTime.now();
-    List<ScheduledReport> dueSchedules = scheduledReportRepository.findAllDueWithDetails(now);
+    List<ScheduledReport> dueSchedules = scheduledReportData.findAllDueScheduledReports(now);
 
     if (dueSchedules.isEmpty()) {
       return;
@@ -127,8 +160,7 @@ public class ScheduledReportService {
     }
   }
 
-  @Transactional
-  public void processSingleScheduleExecution(ScheduledReport schedule, LocalDateTime referenceTime) {
+  void processSingleScheduleExecution(ScheduledReport schedule, LocalDateTime referenceTime) {
     try {
       generateAndSendReport(schedule);
 
@@ -136,7 +168,7 @@ public class ScheduledReportService {
       schedule.setLastRunStatus(ScheduleRunStatus.SUCCESS);
       schedule.setRetryCount(0);
       schedule.setNextRunAt(calculateNextRunAt(schedule, referenceTime));
-      scheduledReportRepository.save(schedule);
+      scheduledReportData.saveScheduledReport(schedule);
 
     } catch (Exception e) {
       int attempts = schedule.getRetryCount() + 1;
@@ -161,7 +193,7 @@ public class ScheduledReportService {
         schedule.setRetryCount(0);
         schedule.setNextRunAt(calculateNextRunAt(schedule, referenceTime));
       }
-      scheduledReportRepository.save(schedule);
+      scheduledReportData.saveScheduledReport(schedule);
     }
   }
 
@@ -185,7 +217,8 @@ public class ScheduledReportService {
           format
       );
 
-      String safeUserName = (targetUser.getName() + "_" + targetUser.getSurname()).replaceAll("\\s+", "_");
+      String safeUserName =
+          (targetUser.getName() + "_" + targetUser.getSurname()).replaceAll("\\s+", "_");
       String fileName = String.format("%s_%s_%s_%s.%s",
           schedule.getReportType().name(),
           safeUserName,
@@ -224,14 +257,17 @@ public class ScheduledReportService {
         endDate
     );
 
-    eventPublisher.publishEvent(new ScheduledReportEmailEvent(recipients, subject, body, attachments));
+    eventPublisher.publishEvent(
+        new ScheduledReportEmailEvent(recipients, subject, body, attachments));
   }
 
   private byte[] invokeFacade(ScheduledReportType type, Integer userId,
                               LocalDate startDate, LocalDate endDate, ReportFormat format) {
     return switch (type) {
-      case EMPLOYEE_TIMESHEET -> reportFacade.getEmployeeTimesheet(userId, startDate, endDate, format);
-      case EMPLOYEE_OVERTIME -> reportFacade.getEmployeeOvertime(userId, startDate, endDate, format);
+      case EMPLOYEE_TIMESHEET ->
+          reportFacade.getEmployeeTimesheet(userId, startDate, endDate, format);
+      case EMPLOYEE_OVERTIME ->
+          reportFacade.getEmployeeOvertime(userId, startDate, endDate, format);
       case TEAM_WORKLOAD -> reportFacade.getTeamWorkload(userId, startDate, endDate, format);
       case TEAM_ABSENCES -> reportFacade.getTeamAbsences(userId, startDate, endDate, format);
       case TEAM_OVERTIME -> reportFacade.getTeamOvertime(userId, startDate, endDate, format);
@@ -248,7 +284,8 @@ public class ScheduledReportService {
           today
       };
       case PREVIOUS_WEEK -> {
-        LocalDate prevMonday = today.minusWeeks(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate prevMonday =
+            today.minusWeeks(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         yield new LocalDate[]{prevMonday, prevMonday.plusDays(6)};
       }
       case CURRENT_MONTH -> new LocalDate[]{today.withDayOfMonth(1), today};
@@ -266,8 +303,10 @@ public class ScheduledReportService {
     };
   }
 
-  public LocalDateTime calculateNextRunAt(ScheduledReport schedule, LocalDateTime fromTime) {
-    LocalTime execTime = schedule.getExecutionTime() != null ? schedule.getExecutionTime() : LocalTime.of(7, 0);
+  LocalDateTime calculateNextRunAt(ScheduledReport schedule, LocalDateTime fromTime) {
+    LocalTime execTime = schedule.getExecutionTime() != null
+        ? schedule.getExecutionTime()
+        : LocalTime.of(7, 0);
     LocalDate baseDate = fromTime.toLocalDate();
 
     return switch (schedule.getFrequency()) {
@@ -287,30 +326,47 @@ public class ScheduledReportService {
         LocalDateTime candidate = candidateDate.atTime(execTime);
         if (!candidate.isAfter(fromTime)) {
           LocalDate nextMonth = baseDate.plusMonths(1);
-          candidate = nextMonth.withDayOfMonth(Math.min(dom, nextMonth.lengthOfMonth())).atTime(execTime);
+          candidate = nextMonth
+              .withDayOfMonth(Math.min(dom, nextMonth.lengthOfMonth()))
+              .atTime(execTime);
         }
         yield candidate;
       }
     };
   }
 
+  private User getCurrentUser(Integer currentUserId) {
+    if (currentUserId == null) {
+      throw new ReportUserException.NotFound(null);
+    }
+    return userData.findById(currentUserId)
+        .orElseThrow(() -> new ReportUserException.NotFound(currentUserId));
+  }
+
   private List<User> fetchAndValidatePermissions(User currentUser, ScheduledReportRequestDto dto) {
     if (dto.frequency() == ScheduleFrequency.WEEKLY && dto.dayOfWeek() == null) {
-      throw new IllegalArgumentException("Dla częstotliwości WEEKLY należy podać dzień tygodnia (1-7).");
+      throw new ReportScheduleException.MissingDayOfWeek();
     }
     if (dto.frequency() == ScheduleFrequency.MONTHLY && dto.dayOfMonth() == null) {
-      throw new IllegalArgumentException("Dla częstotliwości MONTHLY należy podać dzień miesiąca (1-28).");
+      throw new ReportScheduleException.MissingDayOfMonth();
     }
     if (dto.reportPeriod() == ReportPeriod.CUSTOM) {
       if (dto.customStartDate() == null || dto.customEndDate() == null
           || dto.customStartDate().isAfter(dto.customEndDate())) {
-        throw new IllegalArgumentException("Dla okresu CUSTOM wymagany jest poprawny zakres dat.");
+        throw new ReportScheduleException.InvalidCustomDateRange();
       }
     }
 
-    List<User> targetUsers = userRepository.findAllById(dto.targetUserIds());
-    if (targetUsers.size() != new HashSet<>(dto.targetUserIds()).size()) {
-      throw new IllegalArgumentException("Jeden lub więcej wskazanych użytkowników nie istnieje.");
+    List<User> targetUsers = userData.findAllByIds(dto.targetUserIds());
+    Set<Integer> requestedIds = new LinkedHashSet<>(dto.targetUserIds());
+    if (targetUsers.size() != requestedIds.size()) {
+      Set<Integer> foundIds = targetUsers.stream()
+          .map(User::getUserId)
+          .collect(Collectors.toSet());
+      List<Integer> missingIds = requestedIds.stream()
+          .filter(id -> !foundIds.contains(id))
+          .toList();
+      throw new ReportScheduleException.UsersNotFound(missingIds);
     }
 
     boolean hrOrAdmin = isHrOrAdmin(currentUser);
@@ -318,48 +374,37 @@ public class ScheduledReportService {
 
     if (!hrOrAdmin && !manager) {
       if (dto.reportType().isTeamReport()) {
-        throw new AccessDeniedException("Pracownik nie może planować raportów zespołowych.");
+        throw new ReportScheduleSecurityException.UnauthorizedTeamReport();
       }
-      if (targetUsers.size() != 1 || !targetUsers.getFirst().getUserId().equals(currentUser.getUserId())) {
-        throw new AccessDeniedException("Pracownik może zaplanować raport wyłącznie dla samego siebie.");
+      if (targetUsers.size() != 1
+          || !targetUsers.getFirst().getUserId().equals(currentUser.getUserId())) {
+        throw new ReportScheduleSecurityException.UnauthorizedTargetUser();
       }
-      if (dto.recipientEmails().size() != 1 || !dto.recipientEmails().contains(currentUser.getEmail())) {
-        throw new AccessDeniedException("Pracownik może wysyłać raporty wyłącznie na swój własny adres e-mail.");
+      if (dto.recipientEmails().size() != 1
+          || !dto.recipientEmails().contains(currentUser.getEmail())) {
+        throw new ReportScheduleSecurityException.UnauthorizedRecipientEmail();
       }
     } else if (manager && !hrOrAdmin) {
       boolean allAllowed = targetUsers.stream().allMatch(u ->
           u.getUserId().equals(currentUser.getUserId())
-              || (u.getManager() != null && u.getManager().getUserId().equals(currentUser.getUserId()))
+              || (u.getManager() != null
+              && u.getManager().getUserId().equals(currentUser.getUserId()))
       );
       if (!allAllowed) {
-        throw new AccessDeniedException("Manager może planować raporty wyłącznie dla siebie oraz swoich podwładnych.");
+        throw new ReportScheduleSecurityException.UnauthorizedManagerTargetUsers();
       }
     }
 
     return targetUsers;
   }
 
-  private void applyDtoToEntity(ScheduledReport entity, ScheduledReportRequestDto dto, List<User> targetUsers) {
-    entity.setName(dto.name());
-    entity.setReportType(dto.reportType());
-    entity.setReportFormat(dto.reportFormat().name());
-    entity.setFrequency(dto.frequency());
-    entity.setDayOfWeek(dto.dayOfWeek());
-    entity.setDayOfMonth(dto.dayOfMonth());
-    entity.setExecutionTime(dto.executionTime() != null ? dto.executionTime() : LocalTime.of(7, 0));
-    entity.setReportPeriod(dto.reportPeriod());
-    entity.setCustomStartDate(dto.customStartDate());
-    entity.setCustomEndDate(dto.customEndDate());
-    entity.setRecipientEmails(String.join(",", dto.recipientEmails()));
-    entity.setTargetUsers(new HashSet<>(targetUsers));
-  }
-
   private ScheduledReport getAccessibleSchedule(User currentUser, Long scheduleId) {
-    ScheduledReport schedule = scheduledReportRepository.findByIdWithDetails(scheduleId)
-        .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono harmonogramu o ID: " + scheduleId));
+    ScheduledReport schedule = scheduledReportData.findScheduledReportById(scheduleId)
+        .orElseThrow(() -> new ReportScheduleException.NotFound(scheduleId));
 
-    if (!isHrOrAdmin(currentUser) && !schedule.getCreator().getUserId().equals(currentUser.getUserId())) {
-      throw new AccessDeniedException("Brak uprawnień do tego harmonogramu.");
+    if (!isHrOrAdmin(currentUser)
+        && !schedule.getCreator().getUserId().equals(currentUser.getUserId())) {
+      throw new ReportScheduleSecurityException.UnauthorizedScheduleAccess();
     }
     return schedule;
   }
@@ -387,30 +432,5 @@ public class ScheduledReportService {
       case XLSX -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       case CSV -> "text/csv";
     };
-  }
-
-  private ScheduledReportResponseDto mapToResponse(ScheduledReport entity) {
-    return new ScheduledReportResponseDto(
-        entity.getScheduleId(),
-        entity.getName(),
-        entity.getCreator().getUserId(),
-        entity.getCreator().getName() + " " + entity.getCreator().getSurname(),
-        entity.getReportType(),
-        ReportFormat.valueOf(entity.getReportFormat()),
-        entity.getFrequency(),
-        entity.getDayOfWeek(),
-        entity.getDayOfMonth(),
-        entity.getExecutionTime(),
-        entity.getReportPeriod(),
-        entity.getCustomStartDate(),
-        entity.getCustomEndDate(),
-        entity.getTargetUsers().stream().map(User::getUserId).toList(),
-        Arrays.asList(entity.getRecipientEmails().split(",")),
-        entity.isActive(),
-        entity.getNextRunAt(),
-        entity.getLastRunAt(),
-        entity.getLastRunStatus(),
-        entity.getRetryCount()
-    );
   }
 }
