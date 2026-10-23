@@ -1,5 +1,11 @@
 package pl.chrono.notificationmanager.service;
 
+import jakarta.mail.Address;
+import jakarta.mail.Message;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -7,15 +13,26 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.reportmanager.event.ReportAttachmentDto;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -104,5 +121,91 @@ class EmailNotificationServiceTest {
     emailNotificationService.sendEmailNotification(1, "Msg", "ANY");
 
     verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+  }
+
+  @Test
+  void sendEmailNotification_ShouldUseScheduledReportFailedSubject_WhenTypeIsScheduledReportFailed() {
+    User user = new User(); user.setEmail("test@test.pl");
+    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+    emailNotificationService.sendEmailNotification(1, "Msg", "SCHEDULED_REPORT_FAILED");
+
+    ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+    verify(mailSender, times(1)).send(messageCaptor.capture());
+    assertEquals("Błąd generowania cyklicznego raportu - Chrono", messageCaptor.getValue().getSubject());
+  }
+
+  // --- sendReportEmailWithAttachments (używane przez raporty cykliczne) ---
+
+  private MimeMessage stubMimeMessage() {
+    MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+    when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+    return mimeMessage;
+  }
+
+  private static Map<String, byte[]> extractAttachments(MimeMessage message) throws Exception {
+    MimeMultipart root = (MimeMultipart) message.getContent();
+    Map<String, byte[]> attachments = new LinkedHashMap<>();
+    for (int i = 0; i < root.getCount(); i++) {
+      MimeBodyPart part = (MimeBodyPart) root.getBodyPart(i);
+      if (part.getFileName() != null) {
+        attachments.put(part.getFileName(), part.getInputStream().readAllBytes());
+      }
+    }
+    return attachments;
+  }
+
+  @Test
+  void sendReportEmailWithAttachments_ShouldBuildAndSendMessage_WithAllAttachments() throws Exception {
+    MimeMessage mimeMessage = stubMimeMessage();
+    String[] recipients = {"jan@chrono.pl", "anna@chrono.pl"};
+    byte[] pdfBytes = {1, 2, 3};
+    byte[] csvBytes = "id,hours".getBytes(StandardCharsets.UTF_8);
+    List<ReportAttachmentDto> attachments = List.of(
+        new ReportAttachmentDto("timesheet.pdf", pdfBytes, "application/pdf"),
+        new ReportAttachmentDto("overtime.csv", csvBytes, "text/csv"));
+
+    emailNotificationService.sendReportEmailWithAttachments(
+        recipients, "[Chrono] Raport cykliczny", "Treść maila", attachments);
+
+    verify(mailSender, times(1)).send(mimeMessage);
+
+    assertEquals("no-reply@chrono.pl", mimeMessage.getFrom()[0].toString());
+    assertEquals("[Chrono] Raport cykliczny", mimeMessage.getSubject());
+
+    Address[] to = mimeMessage.getRecipients(Message.RecipientType.TO);
+    assertEquals(2, to.length);
+    assertEquals("jan@chrono.pl", to[0].toString());
+    assertEquals("anna@chrono.pl", to[1].toString());
+
+    Map<String, byte[]> sentAttachments = extractAttachments(mimeMessage);
+    assertEquals(List.of("timesheet.pdf", "overtime.csv"), new ArrayList<>(sentAttachments.keySet()));
+    assertArrayEquals(pdfBytes, sentAttachments.get("timesheet.pdf"));
+    assertArrayEquals(csvBytes, sentAttachments.get("overtime.csv"));
+  }
+
+  @Test
+  void sendReportEmailWithAttachments_ShouldSendMessageWithoutAttachments_WhenListIsEmpty() throws Exception {
+    MimeMessage mimeMessage = stubMimeMessage();
+
+    emailNotificationService.sendReportEmailWithAttachments(
+        new String[] {"jan@chrono.pl"}, "Temat", "Treść", List.of());
+
+    verify(mailSender, times(1)).send(mimeMessage);
+    assertEquals("Temat", mimeMessage.getSubject());
+    assertTrue(extractAttachments(mimeMessage).isEmpty());
+  }
+
+  @Test
+  void sendReportEmailWithAttachments_ShouldPropagateException_WhenMailSenderFails() {
+    MimeMessage mimeMessage = stubMimeMessage();
+    doThrow(new MailSendException("SMTP Server down")).when(mailSender).send(any(MimeMessage.class));
+
+    MailSendException thrown = assertThrows(MailSendException.class, () ->
+        emailNotificationService.sendReportEmailWithAttachments(
+            new String[] {"jan@chrono.pl"}, "Temat", "Treść", List.of()));
+
+    assertEquals("SMTP Server down", thrown.getMessage());
+    verify(mailSender, times(1)).send(mimeMessage);
   }
 }
