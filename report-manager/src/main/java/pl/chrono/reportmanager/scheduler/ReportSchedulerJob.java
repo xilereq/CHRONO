@@ -6,14 +6,14 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import pl.chrono.reportmanager.service.ScheduledReportService;
+import pl.chrono.reportmanager.api.I_ScheduledReportService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReportSchedulerJob {
 
-  private final ScheduledReportService scheduledReportService;
+  private final I_ScheduledReportService scheduledReportService;
 
   @EventListener(ApplicationReadyEvent.class)
   public void checkOverdueReportsOnStartup() {

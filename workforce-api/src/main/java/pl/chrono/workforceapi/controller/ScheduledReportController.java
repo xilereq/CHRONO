@@ -2,11 +2,9 @@ package pl.chrono.workforceapi.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -14,76 +12,90 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pl.chrono.dbmanager.model.User;
+import pl.chrono.reportmanager.api.I_ScheduledReportService;
 import pl.chrono.reportmanager.dto.ScheduledReportRequestDto;
 import pl.chrono.reportmanager.dto.ScheduledReportResponseDto;
-import pl.chrono.reportmanager.service.ScheduledReportService;
+import pl.chrono.usermanager.service.AuthService;
 
 @RestController
 @RequestMapping("/api/reports/schedules")
-@RequiredArgsConstructor
-public class ScheduledReportController {
+public class ScheduledReportController extends BaseController {
 
-  private final ScheduledReportService scheduledReportService;
+  private final I_ScheduledReportService scheduledReportService;
+
+  public ScheduledReportController(
+      AuthService authService, I_ScheduledReportService scheduledReportService) {
+    super(authService);
+    this.scheduledReportService = scheduledReportService;
+  }
 
   @PostMapping
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ScheduledReportResponseDto> createSchedule(
-      @AuthenticationPrincipal User currentUser,
+      @RequestHeader("Authorization") String token,
       @Valid @RequestBody ScheduledReportRequestDto requestDto) {
+    Integer currentUserId = extractId(token);
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(scheduledReportService.createSchedule(currentUser, requestDto));
+        .body(scheduledReportService.createSchedule(currentUserId, requestDto));
   }
 
   @GetMapping
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<List<ScheduledReportResponseDto>> getSchedules(
-      @AuthenticationPrincipal User currentUser) {
-    return ResponseEntity.ok(scheduledReportService.getSchedules(currentUser));
+      @RequestHeader("Authorization") String token) {
+    Integer currentUserId = extractId(token);
+    return ResponseEntity.ok(scheduledReportService.getSchedules(currentUserId));
   }
 
   @GetMapping("/{scheduleId}")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ScheduledReportResponseDto> getScheduleById(
-      @AuthenticationPrincipal User currentUser,
+      @RequestHeader("Authorization") String token,
       @PathVariable Long scheduleId) {
-    return ResponseEntity.ok(scheduledReportService.getScheduleById(currentUser, scheduleId));
+    Integer currentUserId = extractId(token);
+    return ResponseEntity.ok(scheduledReportService.getScheduleById(currentUserId, scheduleId));
   }
 
   @PutMapping("/{scheduleId}")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ScheduledReportResponseDto> updateSchedule(
-      @AuthenticationPrincipal User currentUser,
+      @RequestHeader("Authorization") String token,
       @PathVariable Long scheduleId,
       @Valid @RequestBody ScheduledReportRequestDto requestDto) {
-    return ResponseEntity.ok(scheduledReportService.updateSchedule(currentUser, scheduleId, requestDto));
+    Integer currentUserId = extractId(token);
+    return ResponseEntity.ok(
+        scheduledReportService.updateSchedule(currentUserId, scheduleId, requestDto));
   }
 
   @PatchMapping("/{scheduleId}/toggle")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ScheduledReportResponseDto> toggleSchedule(
-      @AuthenticationPrincipal User currentUser,
+      @RequestHeader("Authorization") String token,
       @PathVariable Long scheduleId) {
-    return ResponseEntity.ok(scheduledReportService.toggleSchedule(currentUser, scheduleId));
+    Integer currentUserId = extractId(token);
+    return ResponseEntity.ok(scheduledReportService.toggleSchedule(currentUserId, scheduleId));
   }
 
   @PostMapping("/{scheduleId}/trigger")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<Void> triggerScheduleNow(
-      @AuthenticationPrincipal User currentUser,
+      @RequestHeader("Authorization") String token,
       @PathVariable Long scheduleId) {
-    scheduledReportService.triggerScheduleNow(currentUser, scheduleId);
+    Integer currentUserId = extractId(token);
+    scheduledReportService.triggerScheduleNow(currentUserId, scheduleId);
     return ResponseEntity.noContent().build();
   }
 
   @DeleteMapping("/{scheduleId}")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<Void> deleteSchedule(
-      @AuthenticationPrincipal User currentUser,
+      @RequestHeader("Authorization") String token,
       @PathVariable Long scheduleId) {
-    scheduledReportService.deleteSchedule(currentUser, scheduleId);
+    Integer currentUserId = extractId(token);
+    scheduledReportService.deleteSchedule(currentUserId, scheduleId);
     return ResponseEntity.noContent().build();
   }
 }
