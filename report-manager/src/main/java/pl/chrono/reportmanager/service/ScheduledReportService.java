@@ -350,11 +350,11 @@ public class ScheduledReportService implements I_ScheduledReportService {
     if (dto.frequency() == ScheduleFrequency.MONTHLY && dto.dayOfMonth() == null) {
       throw new ReportScheduleException.MissingDayOfMonth();
     }
-    if (dto.reportPeriod() == ReportPeriod.CUSTOM) {
-      if (dto.customStartDate() == null || dto.customEndDate() == null
-          || dto.customStartDate().isAfter(dto.customEndDate())) {
-        throw new ReportScheduleException.InvalidCustomDateRange();
-      }
+    if (dto.reportPeriod() == ReportPeriod.CUSTOM
+        && (dto.customStartDate() == null
+        || dto.customEndDate() == null
+        || dto.customStartDate().isAfter(dto.customEndDate()))) {
+      throw new ReportScheduleException.InvalidCustomDateRange();
     }
 
     List<User> targetUsers = userData.findAllByIds(dto.targetUserIds());
