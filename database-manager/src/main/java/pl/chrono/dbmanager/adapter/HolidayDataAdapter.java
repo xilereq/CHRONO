@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.adapter;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,11 @@ public class HolidayDataAdapter implements I_HolidayData {
   @Override
   public Optional<Holiday> findHolidayById(Integer holidayId) {
     return holidayRepository.findById(holidayId);
+  }
+
+  @Override
+  public List<Holiday> findHolidaysByIds(Collection<Integer> holidayIds) {
+    return holidayRepository.findAllById(holidayIds);
   }
 
   @Override

@@ -16,9 +16,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import pl.chrono.timemanager.api.I_LeaveLogService;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.exception.WorkException;
-import pl.chrono.timemanager.service.LeaveLogService;
 import pl.chrono.usermanager.security.JwtService;
 import pl.chrono.usermanager.service.AuthService;
 import pl.chrono.workforceapi.TestApiConfig;
@@ -33,7 +33,7 @@ class LeaveLogControllerIT {
   @Autowired
   private MockMvc mockMvc;
   @MockitoBean
-  private LeaveLogService leaveLogService;
+  private I_LeaveLogService leaveLogService;
   @MockitoBean
   private AuthService authService;
   @MockitoBean

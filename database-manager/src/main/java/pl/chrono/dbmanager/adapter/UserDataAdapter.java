@@ -1,5 +1,6 @@
 package pl.chrono.dbmanager.adapter;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,16 @@ public class UserDataAdapter implements I_UserData {
   }
 
   @Override
+  public Optional<User> findById(Integer userId) {
+    return userRepository.findById(userId);
+  }
+
+  @Override
+  public List<User> findAllByIds(Collection<Integer> userIds) {
+    return userRepository.findAllById(userIds);
+  }
+
+  @Override
   public Optional<User> findByEmail(String email) {
     return userRepository.findByEmail(email);
   }
@@ -62,5 +73,18 @@ public class UserDataAdapter implements I_UserData {
     return roleRepository.findByName(roleName);
   }
 
+  @Override
+  public List<Integer> findAllUserIds() {
+    return userRepository.findAllUserIds();
+  }
 
+  @Override
+  public Optional<User> findByIdWithPessimisticLock(Integer userId) {
+    return userRepository.findByIdWithPessimisticLock(userId);
+  }
+
+  @Override
+  public User getUserReference(Integer userId) {
+    return userRepository.getReferenceById(userId);
+  }
 }

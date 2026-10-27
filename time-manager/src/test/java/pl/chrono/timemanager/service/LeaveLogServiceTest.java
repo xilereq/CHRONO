@@ -19,7 +19,7 @@ import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
@@ -32,7 +32,7 @@ class LeaveLogServiceTest {
   private I_TimeData timeData;
 
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
 
   @Mock
   private LeaveLogMapper leaveLogMapper;
@@ -50,7 +50,7 @@ class LeaveLogServiceTest {
 
     assertThrows(WorkException.NoActiveWork.class, () -> leaveLogService.startLeave(userId));
 
-    verifyNoInteractions(userRepository, leaveLogMapper);
+    verifyNoInteractions(userData, leaveLogMapper);
   }
 
   @Test
@@ -71,7 +71,7 @@ class LeaveLogServiceTest {
 
     when(timeData.findActiveWorkLog(userId)).thenReturn(Optional.of(workLog));
     when(timeData.isUserOnLeave(userId)).thenReturn(false);
-    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    when(userData.findById(userId)).thenReturn(Optional.empty());
 
     assertThrows(UserException.NotFound.class, () -> leaveLogService.startLeave(userId));
   }
@@ -86,7 +86,7 @@ class LeaveLogServiceTest {
 
     when(timeData.findActiveWorkLog(userId)).thenReturn(Optional.of(workLog));
     when(timeData.isUserOnLeave(userId)).thenReturn(false);
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userData.findById(userId)).thenReturn(Optional.of(user));
     when(timeData.saveLeaveLog(any(LeaveLog.class))).thenReturn(savedLeaveLog);
     when(leaveLogMapper.toDto(savedLeaveLog)).thenReturn(expectedDto);
 

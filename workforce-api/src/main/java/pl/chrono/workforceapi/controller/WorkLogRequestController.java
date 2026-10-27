@@ -11,19 +11,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.chrono.timemanager.api.I_WorkLogRequestService;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
 import pl.chrono.timemanager.dto.response.WorkLogRequestDto;
-import pl.chrono.timemanager.service.WorkLogRequestService;
 import pl.chrono.usermanager.service.AuthService;
 
 @RestController
 @RequestMapping("/api/work-log-requests")
 public class WorkLogRequestController extends BaseController {
 
-  private final WorkLogRequestService requestService;
+  private final I_WorkLogRequestService requestService;
 
-  public WorkLogRequestController(AuthService authService, WorkLogRequestService requestService) {
+  public WorkLogRequestController(AuthService authService, I_WorkLogRequestService requestService) {
     super(authService);
     this.requestService = requestService;
   }

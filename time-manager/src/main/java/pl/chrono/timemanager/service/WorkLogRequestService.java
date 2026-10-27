@@ -15,20 +15,21 @@ import pl.chrono.dbmanager.model.WorkLogRequest;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
+import pl.chrono.timemanager.api.I_WorkLogRequestService;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
 import pl.chrono.timemanager.dto.response.WorkLogRequestDto;
+import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkLogRequestException;
 import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
-import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 
 @Service
 @RequiredArgsConstructor
-public class WorkLogRequestService {
+public class WorkLogRequestService implements I_WorkLogRequestService {
 
-  private final UserRepository userRepository;
+  private final I_UserData userData;
   private final I_TimeData timeData;
   private final OvertimeService overtimeService;
   private final WorkLogRequestMapper mapper;
@@ -36,6 +37,7 @@ public class WorkLogRequestService {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
+  @Override
   public void submitRequest(Integer employeeId, WorkLogCreateRequest requestDto) {
     LocalDateTime proposedStart = requestDto.proposedStartTime();
     LocalDateTime proposedEnd = requestDto.proposedEndTime();
@@ -44,7 +46,7 @@ public class WorkLogRequestService {
       throw new WorkLogRequestException.InvalidTimeRange();
     }
 
-    User employee = userRepository.findById(employeeId)
+    User employee = userData.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
     LocalDate targetDate = proposedStart.toLocalDate();
@@ -75,6 +77,7 @@ public class WorkLogRequestService {
   }
 
   @Transactional
+  @Override
   public void approveRequest(Long requestId, Integer reviewerId, WorkLogResolveRequest resolveDto) {
     WorkLogRequest request = getPendingRequest(requestId);
     User reviewer = getUserAndValidateAccess(reviewerId, request);
@@ -131,6 +134,7 @@ public class WorkLogRequestService {
   }
 
   @Transactional
+  @Override
   public void rejectRequest(Long requestId, Integer reviewerId, WorkLogResolveRequest resolveDto) {
     WorkLogRequest request = getPendingRequest(requestId);
     User reviewer = getUserAndValidateAccess(reviewerId, request);
@@ -145,13 +149,15 @@ public class WorkLogRequestService {
   }
 
   @Transactional(readOnly = true)
+  @Override
   public List<WorkLogRequestDto> getEmployeeRequests(Integer employeeId) {
     return timeData.findWorkLogRequestsByEmployee(employeeId).stream().map(mapper::toDto).toList();
   }
 
   @Transactional(readOnly = true)
+  @Override
   public List<WorkLogRequestDto> getPendingRequestsForReviewer(Integer reviewerId) {
-    User reviewer = userRepository.findById(reviewerId)
+    User reviewer = userData.findById(reviewerId)
         .orElseThrow(() -> new UserException.NotFound(reviewerId));
 
     boolean isAdmin = reviewer.getRoles().stream()
@@ -176,7 +182,7 @@ public class WorkLogRequestService {
   }
 
   private User getUserAndValidateAccess(Integer reviewerId, WorkLogRequest request) {
-    User reviewer = userRepository.findById(reviewerId)
+    User reviewer = userData.findById(reviewerId)
         .orElseThrow(() -> new UserException.NotFound(reviewerId));
 
     boolean isAdmin = reviewer.getRoles().stream()

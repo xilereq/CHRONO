@@ -10,14 +10,15 @@ import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
+import pl.chrono.dbmanager.ports.I_ApplicationData;
+import pl.chrono.timemanager.api.I_WorkTimeCalculationService;
 import pl.chrono.timemanager.exception.WorkException;
 
 @Service
 @RequiredArgsConstructor
-public class WorkTimeCalculationService {
+public class WorkTimeCalculationService implements I_WorkTimeCalculationService {
 
-  private final ApplicationRepository applicationRepository;
+  private final I_ApplicationData applicationData;
 
   public int calculateWorkingDays(LocalDate startDate, LocalDate endDate, Policy policy) {
     if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
@@ -41,13 +42,14 @@ public class WorkTimeCalculationService {
     return getBaseRequiredSeconds(date, policy) > 0;
   }
 
+  @Override
   public int getBaseRequiredSeconds(LocalDate date, Policy policy) {
     return resolvePolicy(policy).getRequiredSecondsForDate(date);
   }
 
   public int getAdjustedRequiredSeconds(Integer userId, LocalDate date, Policy policy) {
     int baseRequiredSeconds = getBaseRequiredSeconds(date, policy);
-    List<Application> applications = applicationRepository.findApprovedByEmployeeAndDate(
+    List<Application> applications = applicationData.findApprovedApplicationsByEmployeeAndDate(
         userId, date);
 
     int adjustedRequiredSeconds = baseRequiredSeconds;
@@ -70,7 +72,7 @@ public class WorkTimeCalculationService {
   }
 
   public boolean hasApprovedHomeOffice(Integer userId, LocalDate date) {
-    return applicationRepository.findApprovedByEmployeeAndDate(userId, date).stream()
+    return applicationData.findApprovedApplicationsByEmployeeAndDate(userId, date).stream()
         .anyMatch(app -> app.getType() == ApplicationType.HOME_OFFICE);
   }
 
@@ -85,13 +87,14 @@ public class WorkTimeCalculationService {
     return resolvePolicy(policy).getMaxAllowedSeconds();
   }
 
+  @Override
   public int getRoundingSeconds(Policy policy) {
     Policy usedPolicy = resolvePolicy(policy);
     return usedPolicy.getRoundingMinutes() != null ? usedPolicy.getRoundingMinutes() * 60 : 0;
   }
 
   public int getExcusedSecondsForDate(Integer userId, LocalDate date, Policy policy) {
-    List<Application> applications = applicationRepository.findApprovedByEmployeeAndDate(userId, date);
+    List<Application> applications = applicationData.findApprovedApplicationsByEmployeeAndDate(userId, date);
 
     boolean hasFullDayLeave = applications.stream()
         .anyMatch(app -> app.getType() == ApplicationType.HOLIDAY_LEAVE ||

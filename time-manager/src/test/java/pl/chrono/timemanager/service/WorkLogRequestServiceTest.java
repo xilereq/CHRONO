@@ -31,7 +31,7 @@ import pl.chrono.dbmanager.model.WorkLogRequest;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.model.enums.WorkLogRequestStatus;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.dto.request.WorkLogCreateRequest;
 import pl.chrono.timemanager.dto.request.WorkLogResolveRequest;
 import pl.chrono.timemanager.dto.response.WorkLogRequestDto;
@@ -47,7 +47,7 @@ class WorkLogRequestServiceTest {
   private final Integer MANAGER_ID = 10;
   private final Long REQUEST_ID = 1L;
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
   @Mock
   private I_TimeData timeData;
   @Mock
@@ -87,7 +87,7 @@ class WorkLogRequestServiceTest {
     WorkLogCreateRequest req = mock(WorkLogCreateRequest.class);
     when(req.proposedStartTime()).thenReturn(LocalDateTime.now());
     when(req.proposedEndTime()).thenReturn(LocalDateTime.now().plusHours(1));
-    when(userRepository.findById(EMPLOYEE_ID)).thenReturn(Optional.empty());
+    when(userData.findById(EMPLOYEE_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> requestService.submitRequest(EMPLOYEE_ID, req)).isInstanceOf(
         UserException.NotFound.class);
@@ -104,7 +104,7 @@ class WorkLogRequestServiceTest {
     when(mockPolicy.getMaxAllowedSeconds()).thenReturn(12 * 3600);
     when(mockPolicy.getMaxDailyHours()).thenReturn(12);
 
-    when(userRepository.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
     doReturn(mockPolicy).when(spyUser).getPolicyForDate(any());
 
     assertThatThrownBy(() -> requestService.submitRequest(EMPLOYEE_ID, req)).isInstanceOf(
@@ -118,7 +118,7 @@ class WorkLogRequestServiceTest {
     when(req.proposedEndTime()).thenReturn(LocalDateTime.now().plusHours(4));
 
     User spyUser = spy(new User());
-    when(userRepository.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
     doReturn(null).when(spyUser).getPolicyForDate(any());
 
     when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
@@ -138,7 +138,7 @@ class WorkLogRequestServiceTest {
     when(req.reason()).thenReturn("Zapomniałem kliknąć");
 
     User spyUser = spy(new User());
-    when(userRepository.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
     doReturn(null).when(spyUser).getPolicyForDate(any());
 
     when(workTimeCalculationService.getAdjustedRequiredSeconds(any(), any(), any())).thenReturn(
@@ -164,7 +164,7 @@ class WorkLogRequestServiceTest {
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
 
     User reviewer = new User();
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(reviewer));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(reviewer));
 
     assertThatThrownBy(
         () -> requestService.approveRequest(REQUEST_ID, MANAGER_ID, null)).isInstanceOf(
@@ -187,7 +187,7 @@ class WorkLogRequestServiceTest {
 
     User reviewer = new User();
     reviewer.setUserId(MANAGER_ID);
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(reviewer));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(reviewer));
 
     assertThatThrownBy(
         () -> requestService.approveRequest(REQUEST_ID, MANAGER_ID, null)).isInstanceOf(
@@ -212,7 +212,7 @@ class WorkLogRequestServiceTest {
     Role adminRole = mock(Role.class);
     when(adminRole.getName()).thenReturn("ROLE_ADMIN");
     admin.setRoles(Set.of(adminRole));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(admin));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(admin));
 
     when(timeData.findWorkLogsByUserAndDate(eq(EMPLOYEE_ID), any(), any())).thenReturn(List.of());
 
@@ -238,7 +238,7 @@ class WorkLogRequestServiceTest {
     request.setProposedEndTime(LocalDateTime.now());
 
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
 
     when(timeData.findWorkLogsByUserAndDate(eq(EMPLOYEE_ID), any(), any())).thenReturn(List.of());
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(EMPLOYEE_ID), any())).thenReturn(true);
@@ -268,7 +268,7 @@ class WorkLogRequestServiceTest {
     request.setProposedEndTime(LocalDateTime.now());
 
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
     when(workTimeCalculationService.hasApprovedHomeOffice(any(), any())).thenReturn(false);
 
     WorkLog primaryLog = new WorkLog();
@@ -310,7 +310,7 @@ class WorkLogRequestServiceTest {
     request.setProposedEndTime(LocalDateTime.now());
 
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
 
     WorkLog primaryLog = new WorkLog();
     primaryLog.setWorkLogId(99);
@@ -341,7 +341,7 @@ class WorkLogRequestServiceTest {
     request.setEmployee(employee);
 
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
 
     requestService.rejectRequest(REQUEST_ID, MANAGER_ID, new WorkLogResolveRequest("Brak zgody"));
 
@@ -382,7 +382,7 @@ class WorkLogRequestServiceTest {
     when(adminRole.getName()).thenReturn("ROLE_ADMIN");
     admin.setRoles(Set.of(adminRole));
 
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(admin));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(admin));
     when(timeData.findAllPendingWorkLogRequests()).thenReturn(List.of(new WorkLogRequest()));
     when(mapper.toDto(any())).thenReturn(mock(WorkLogRequestDto.class));
 
@@ -395,7 +395,7 @@ class WorkLogRequestServiceTest {
   @Test
   void getPendingRequestsManagerTest() {
     User manager = new User();
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
     when(timeData.findPendingWorkLogRequestsForManager(MANAGER_ID)).thenReturn(
         List.of(new WorkLogRequest()));
     when(mapper.toDto(any())).thenReturn(mock(WorkLogRequestDto.class));
@@ -408,7 +408,7 @@ class WorkLogRequestServiceTest {
 
   @Test
   void getPendingRequestsForReviewerUserNotFoundExceptionTest() {
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> requestService.getPendingRequestsForReviewer(MANAGER_ID)).isInstanceOf(
         UserException.NotFound.class);
@@ -429,7 +429,7 @@ class WorkLogRequestServiceTest {
     request.setStatus(WorkLogRequestStatus.PENDING);
 
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(
         () -> requestService.approveRequest(REQUEST_ID, MANAGER_ID, null)).isInstanceOf(
@@ -450,7 +450,7 @@ class WorkLogRequestServiceTest {
     request.setEmployee(employee);
 
     when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
-    when(userRepository.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
+    when(userData.findById(MANAGER_ID)).thenReturn(Optional.of(manager));
 
     requestService.rejectRequest(REQUEST_ID, MANAGER_ID, null);
 
@@ -467,7 +467,7 @@ class WorkLogRequestServiceTest {
     when(req.reason()).thenReturn("Test limits");
 
     User spyUser = spy(new User());
-    when(userRepository.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(EMPLOYEE_ID)).thenReturn(Optional.of(spyUser));
 
     Policy mockPolicy = mock(Policy.class);
     when(mockPolicy.getMaxAllowedSeconds()).thenReturn(12 * 3600);

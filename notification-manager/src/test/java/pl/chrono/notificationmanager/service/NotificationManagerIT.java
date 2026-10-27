@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.dbmanager.model.Notification;
@@ -16,6 +17,7 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.repository.NotificationRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.notificationmanager.TestConfig;
+import pl.chrono.timemanager.api.I_GoogleCalendarService;
 import pl.chrono.usermanager.event.PasswordResetEvent;
 
 import java.util.List;
@@ -45,6 +47,9 @@ class NotificationManagerIT {
 
   @Autowired
   private UserRepository userRepository;
+
+  @MockitoBean
+  private I_GoogleCalendarService googleCalendarService;
 
   @Autowired
   private JavaMailSender javaMailSender;

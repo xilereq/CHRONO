@@ -11,7 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.chrono.dbmanager.repository.OperationLogRepository;
+import pl.chrono.dbmanager.ports.I_OperationLogData;
 
 @ExtendWith(MockitoExtension.class)
 class WorkTaskSchedulerTest {
@@ -20,7 +20,7 @@ class WorkTaskSchedulerTest {
   private ScheduleService scheduleService;
 
   @Mock
-  private OperationLogRepository operationLogRepository;
+  private I_OperationLogData operationLogData;
 
   @InjectMocks
   private WorkTaskScheduler workTaskScheduler;
@@ -39,7 +39,7 @@ class WorkTaskSchedulerTest {
 
   @Test
   void overtimeExpirationDoneThisQuarterTest() {
-    when(operationLogRepository.existsByActionAndTimestampBetween(
+    when(operationLogData.isLogPresent(
         eq("SYSTEM_EXPIRE_OVERTIME"),
         any(LocalDateTime.class), any(LocalDateTime.class)
     )).thenReturn(true);
@@ -52,7 +52,7 @@ class WorkTaskSchedulerTest {
 
   @Test
   void overtimeExpirationFailedThisQuarterTest() {
-    when(operationLogRepository.existsByActionAndTimestampBetween(
+    when(operationLogData.isLogPresent(
         eq("SYSTEM_EXPIRE_OVERTIME"),
         any(LocalDateTime.class), any(LocalDateTime.class)
     )).thenReturn(false);

@@ -34,4 +34,11 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
   );
 
   List<Application> findByEmployeeManagerUserIdAndStartDateBetween(Integer managerId, LocalDate startDate, LocalDate endDate);
+
+  @Query("SELECT a FROM Application a WHERE a.employee.userId = :employeeId AND a.status = 'APPROVED' AND a.type IN :types AND a.endDate >= :fromDate")
+  List<Application> findSyncableApplications(
+      @Param("employeeId") Integer employeeId,
+      @Param("fromDate") LocalDate fromDate,
+      @Param("types") List<ApplicationType> types
+  );
 }

@@ -26,11 +26,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
+import pl.chrono.timemanager.api.I_WorkLogService;
 import pl.chrono.timemanager.dto.request.StartWorkRequest;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.exception.WorkException;
-import pl.chrono.timemanager.service.WorkLogService;
 import pl.chrono.usermanager.security.JwtService;
 import pl.chrono.usermanager.service.AuthService;
 import pl.chrono.workforceapi.TestApiConfig;
@@ -46,7 +46,7 @@ class WorkLogControllerIT {
   @Autowired
   private MockMvc mockMvc;
   @MockitoBean
-  private WorkLogService workLogService;
+  private I_WorkLogService workLogService;
   @MockitoBean
   private AuthService authService;
   @MockitoBean

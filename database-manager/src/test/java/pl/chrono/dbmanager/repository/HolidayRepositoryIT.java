@@ -1,10 +1,8 @@
 package pl.chrono.dbmanager.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;

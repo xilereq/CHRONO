@@ -1,13 +1,18 @@
 package pl.chrono.notificationmanager.service;
 
+import jakarta.mail.internet.MimeMessage;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.reportmanager.event.ReportAttachmentDto;
 
 @Slf4j
 @Service
@@ -39,12 +44,39 @@ public class EmailNotificationService {
     });
   }
 
+  public void sendReportEmailWithAttachments(
+      String[] recipientEmails,
+      String subject,
+      String bodyText,
+      List<ReportAttachmentDto> attachments) throws Exception {
+
+    MimeMessage mimeMessage = mailSender.createMimeMessage();
+    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+    helper.setFrom(senderEmail);
+    helper.setTo(recipientEmails);
+    helper.setSubject(subject);
+    helper.setText(bodyText, false);
+
+    for (ReportAttachmentDto attachment : attachments) {
+      helper.addAttachment(
+          attachment.fileName(),
+          new ByteArrayResource(attachment.content()),
+          attachment.contentType()
+      );
+    }
+
+    mailSender.send(mimeMessage);
+    log.info("Wysłano raport cykliczny '{}' do: {}", subject, String.join(", ", recipientEmails));
+  }
+
   private String resolveSubject(String type) {
     return switch (type) {
       case "APPLICATION_CREATED" -> "Nowy wniosek oczekuje na Twoją decyzję";
       case "APPLICATION_STATUS_CHANGED" -> "Zmiana statusu Twojego wniosku";
       case "VIOLATION_REST", "VIOLATION_MAX_WORK" -> "Ostrzeżenie o naruszeniu czasu pracy";
       case "PASSWORD_RESET" -> "Resetowanie hasła w systemie Chrono";
+      case "SCHEDULED_REPORT_FAILED" -> "Błąd generowania cyklicznego raportu - Chrono";
       default -> "Nowe powiadomienie systemowe - Chrono";
     };
   }

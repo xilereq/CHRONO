@@ -22,9 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.dbmanager.model.Holiday;
 import pl.chrono.dbmanager.model.HolidayPolicy;
 import pl.chrono.dbmanager.model.Policy;
-import pl.chrono.dbmanager.repository.HolidayPolicyRepository;
-import pl.chrono.dbmanager.repository.HolidayRepository;
-import pl.chrono.dbmanager.repository.PolicyRepository;
+import pl.chrono.dbmanager.ports.I_HolidayData;
+import pl.chrono.dbmanager.ports.I_PolicyData;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
 import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
@@ -40,16 +39,13 @@ import pl.chrono.timemanager.mapper.PolicyMapper;
 public class PolicyConfigurationServiceTest {
 
   @Mock
-  private PolicyRepository policyRepository;
+  private I_PolicyData policyData;
 
   @Mock
   private PolicyMapper policyMapper;
 
   @Mock
-  private HolidayRepository holidayRepository;
-
-  @Mock
-  private HolidayPolicyRepository holidayPolicyRepository;
+  private I_HolidayData holidayData;
 
   @Mock
   private HolidayMapper holidayMapper;
@@ -73,7 +69,7 @@ public class PolicyConfigurationServiceTest {
     PolicyDto expectedDto = new PolicyDto(1, "Test Policy", 8, 10, 40, 15, dayOfWeekSet);
 
     when(policyMapper.toEntity(request)).thenReturn(mappedPolicy);
-    when(policyRepository.save(mappedPolicy)).thenReturn(savedPolicy);
+    when(policyData.savePolicy(mappedPolicy)).thenReturn(savedPolicy);
     when(policyMapper.toDto(savedPolicy)).thenReturn(expectedDto);
 
     PolicyDto result = policyConfigurationService.createPolicy(request);
@@ -82,7 +78,7 @@ public class PolicyConfigurationServiceTest {
     assertEquals(expectedDto, result);
 
     verify(policyMapper).toEntity(request);
-    verify(policyRepository).save(mappedPolicy);
+    verify(policyData).savePolicy(mappedPolicy);
     verify(policyMapper).toDto(savedPolicy);
   }
 
@@ -91,7 +87,7 @@ public class PolicyConfigurationServiceTest {
     Policy policy1 = new Policy();
     PolicyDto dto1 = new PolicyDto(1, "Polityka 1", 8, 10, 40, 15, Set.of(DayOfWeek.MONDAY));
 
-    when(policyRepository.findAll()).thenReturn(List.of(policy1));
+    when(policyData.findAllPolicies()).thenReturn(List.of(policy1));
     when(policyMapper.toDto(policy1)).thenReturn(dto1);
 
     List<PolicyDto> result = policyConfigurationService.getAllPolicies();
@@ -106,7 +102,7 @@ public class PolicyConfigurationServiceTest {
     Policy policy = new Policy();
     PolicyDto dto = new PolicyDto(policyId, "Test", 8, 10, 40, 15, Set.of(DayOfWeek.MONDAY));
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
     when(policyMapper.toDto(policy)).thenReturn(dto);
 
     PolicyDto result = policyConfigurationService.getPolicyById(policyId);
@@ -117,7 +113,7 @@ public class PolicyConfigurationServiceTest {
   @Test
   void getPolicyByIdExceptionTest() {
     Integer policyId = 999;
-    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class, () -> policyConfigurationService.getPolicyById(policyId));
@@ -134,8 +130,8 @@ public class PolicyConfigurationServiceTest {
 
     HolidayDto holidayDto = new HolidayDto(1, "Majówka", LocalDate.of(2026, 5, 1));
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayPolicyRepository.findByPolicy(policy)).thenReturn(List.of(holidayPolicy));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(policyData.findHolidayPoliciesByPolicy(policy)).thenReturn(List.of(holidayPolicy));
     when(holidayMapper.toDto(holiday)).thenReturn(holidayDto);
 
     List<HolidayDto> result = policyConfigurationService.getHolidaysForPolicy(policyId);
@@ -147,7 +143,7 @@ public class PolicyConfigurationServiceTest {
   @Test
   void getHolidaysForPolicyExceptionTest() {
     Integer policyId = 999;
-    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class,
@@ -164,20 +160,20 @@ public class PolicyConfigurationServiceTest {
     Policy policy = new Policy();
     Holiday holiday = new Holiday();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findById(holidayId)).thenReturn(Optional.of(holiday));
-    when(holidayPolicyRepository.existsByPolicyAndHoliday(policy, holiday)).thenReturn(false);
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidayById(holidayId)).thenReturn(Optional.of(holiday));
+    when(policyData.existsHolidayPolicy(policy, holiday)).thenReturn(false);
 
     policyConfigurationService.assignHolidayToPolicy(policyId, request);
 
-    verify(holidayPolicyRepository).save(any(HolidayPolicy.class));
+    verify(policyData).saveHolidayPolicy(any(HolidayPolicy.class));
   }
 
   @Test
   void assignHolidayToPolicyExceptionTest() {
     Integer policyId = 1;
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class,
@@ -195,17 +191,17 @@ public class PolicyConfigurationServiceTest {
     Policy policy = new Policy();
     Holiday holiday = new Holiday();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findById(request.holidayId())).thenReturn(Optional.of(holiday));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidayById(request.holidayId())).thenReturn(Optional.of(holiday));
 
-    when(holidayPolicyRepository.existsByPolicyAndHoliday(policy, holiday)).thenReturn(true);
+    when(policyData.existsHolidayPolicy(policy, holiday)).thenReturn(true);
 
     assertThrows(
         HolidayException.AlreadyAssigned.class,
         () -> policyConfigurationService.assignHolidayToPolicy(policyId, request)
     );
 
-    verify(holidayPolicyRepository, never()).save(any());
+    verify(policyData, never()).saveHolidayPolicy(any());
   }
 
   @Test
@@ -214,8 +210,8 @@ public class PolicyConfigurationServiceTest {
     AssignHolidayRequest request = new AssignHolidayRequest(999);
     Policy policy = new Policy();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findById(request.holidayId())).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidayById(request.holidayId())).thenReturn(Optional.empty());
 
     assertThrows(
         HolidayException.NotFound.class,
@@ -231,21 +227,21 @@ public class PolicyConfigurationServiceTest {
     Holiday holiday = new Holiday();
     HolidayPolicy assignment = new HolidayPolicy();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findById(holidayId)).thenReturn(Optional.of(holiday));
-    when(holidayPolicyRepository.findByPolicyAndHoliday(policy, holiday)).thenReturn(
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidayById(holidayId)).thenReturn(Optional.of(holiday));
+    when(policyData.findHolidayPolicyByPolicyAndHoliday(policy, holiday)).thenReturn(
         Optional.of(assignment));
 
     policyConfigurationService.removeHolidayFromPolicy(policyId, holidayId);
 
-    verify(holidayPolicyRepository).delete(assignment);
+    verify(policyData).deleteHolidayPolicy(assignment);
   }
 
   @Test
   void removeHolidayFromPolicyExceptionTest() {
     Integer policyId = 1;
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class,
@@ -260,8 +256,8 @@ public class PolicyConfigurationServiceTest {
 
     Policy policy = new Policy();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findById(holidayId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidayById(holidayId)).thenReturn(Optional.empty());
 
     assertThrows(
         HolidayException.NotFound.class,
@@ -277,10 +273,10 @@ public class PolicyConfigurationServiceTest {
     Policy policy = new Policy();
     Holiday holiday = new Holiday();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findById(holidayId)).thenReturn(Optional.of(holiday));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidayById(holidayId)).thenReturn(Optional.of(holiday));
 
-    when(holidayPolicyRepository.findByPolicyAndHoliday(policy, holiday)).thenReturn(
+    when(policyData.findHolidayPolicyByPolicyAndHoliday(policy, holiday)).thenReturn(
         Optional.empty());
 
     assertThrows(
@@ -294,19 +290,19 @@ public class PolicyConfigurationServiceTest {
     Integer policyId = 1;
     Policy policy = new Policy();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
 
     policyConfigurationService.deletePolicy(policyId);
 
-    verify(holidayPolicyRepository).deleteByPolicy(policy);
-    verify(policyRepository).delete(policy);
+    verify(policyData).deleteHolidayPoliciesByPolicy(policy);
+    verify(policyData).deletePolicy(policy);
   }
 
   @Test
   void deletePolicyExceptionTest() {
     Integer policyId = 1;
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class,
@@ -319,7 +315,7 @@ public class PolicyConfigurationServiceTest {
     Integer policyId = 999;
     MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(1, 2));
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class,
@@ -333,8 +329,8 @@ public class PolicyConfigurationServiceTest {
     MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(99, 100));
     Policy policy = new Policy();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findAllById(request.holidayIds())).thenReturn(List.of());
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidaysByIds(request.holidayIds())).thenReturn(List.of());
 
     assertThrows(
         HolidayException.NoneFound.class,
@@ -354,14 +350,14 @@ public class PolicyConfigurationServiceTest {
     HolidayPolicy existingHp = new HolidayPolicy();
     existingHp.setHoliday(holiday);
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(holidayRepository.findAllById(request.holidayIds())).thenReturn(List.of(holiday));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(holidayData.findHolidaysByIds(request.holidayIds())).thenReturn(List.of(holiday));
 
-    when(holidayPolicyRepository.findByPolicy(policy)).thenReturn(List.of(existingHp));
+    when(policyData.findHolidayPoliciesByPolicy(policy)).thenReturn(List.of(existingHp));
 
     policyConfigurationService.assignHolidaysToPolicyBulk(policyId, request);
 
-    verify(holidayPolicyRepository, never()).saveAll(any());
+    verify(policyData, never()).saveAllHolidayPolicies(any());
   }
 
   @Test
@@ -379,17 +375,17 @@ public class PolicyConfigurationServiceTest {
     HolidayPolicy existingHp = new HolidayPolicy();
     existingHp.setHoliday(assignedHoliday);
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
 
-    when(holidayRepository.findAllById(request.holidayIds())).thenReturn(
+    when(holidayData.findHolidaysByIds(request.holidayIds())).thenReturn(
         List.of(assignedHoliday, newHoliday));
 
-    when(holidayPolicyRepository.findByPolicy(policy)).thenReturn(List.of(existingHp));
+    when(policyData.findHolidayPoliciesByPolicy(policy)).thenReturn(List.of(existingHp));
 
     policyConfigurationService.assignHolidaysToPolicyBulk(policyId, request);
 
     ArgumentCaptor<List<HolidayPolicy>> captor = ArgumentCaptor.forClass(List.class);
-    verify(holidayPolicyRepository).saveAll(captor.capture());
+    verify(policyData).saveAllHolidayPolicies(captor.capture());
 
     List<HolidayPolicy> savedList = captor.getValue();
 

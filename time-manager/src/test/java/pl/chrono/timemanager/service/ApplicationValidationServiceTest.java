@@ -20,7 +20,7 @@ import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.UsersPolicy;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.exception.ApplicationValidationException;
 import pl.chrono.timemanager.exception.UserException;
 
@@ -30,7 +30,7 @@ class ApplicationValidationServiceTest {
   private final LocalDate startDate = LocalDate.of(2026, 6, 1);
   private final LocalDate endDate = LocalDate.of(2026, 6, 5);
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
   @Mock
   private LeaveBalanceService leaveBalanceService;
   @Mock
@@ -56,7 +56,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void validateUserNotFoundExceptionTest() {
-    when(userRepository.findById(99)).thenReturn(Optional.empty());
+    when(userData.findById(99)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> validationService.validateApplicationLimits(
         99, startDate, endDate,
@@ -66,7 +66,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void validateNullPolicyUsesDefaultLimitTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatThrownBy(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -86,7 +86,7 @@ class ApplicationValidationServiceTest {
 
     doReturn(spyPolicy).when(spyUser).getActivePolicy();
 
-    when(userRepository.findById(1)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(1)).thenReturn(Optional.of(spyUser));
 
     assertThatThrownBy(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -99,7 +99,7 @@ class ApplicationValidationServiceTest {
     User spyUser = spy(new User());
     spyUser.setUserId(1);
     doReturn(policy).when(spyUser).getActivePolicy();
-    when(userRepository.findById(1)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(1)).thenReturn(Optional.of(spyUser));
 
     when(workingDaysCalculationService.calculateWorkingDays(startDate, endDate, policy)).thenReturn(
         10);
@@ -119,7 +119,7 @@ class ApplicationValidationServiceTest {
     User spyUser = spy(new User());
     spyUser.setUserId(1);
     doReturn(policy).when(spyUser).getActivePolicy();
-    when(userRepository.findById(1)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(1)).thenReturn(Optional.of(spyUser));
 
     when(workingDaysCalculationService.calculateWorkingDays(startDate, endDate, policy)).thenReturn(
         5);
@@ -139,7 +139,7 @@ class ApplicationValidationServiceTest {
     User spyUser = spy(new User());
     spyUser.setUserId(1);
     doReturn(policy).when(spyUser).getActivePolicy();
-    when(userRepository.findById(1)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(1)).thenReturn(Optional.of(spyUser));
 
     when(workingDaysCalculationService.calculateWorkingDays(startDate, endDate, policy)).thenReturn(
         -1);
@@ -154,7 +154,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void overtimeEarnNullDurationReturnTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -164,7 +164,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void OvertimeEarnZeroDurationReturnTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -174,7 +174,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void overtimeEarnPassTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -185,7 +185,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void earlyExitNullValueReturnTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -195,7 +195,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void earlyExitNegativeValueReturnTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -205,7 +205,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void validateEarlyExit_ExceedsBaseTime_ThrowsException() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatThrownBy(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -215,7 +215,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void validateOvertimeTakePassTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,
@@ -226,7 +226,7 @@ class ApplicationValidationServiceTest {
 
   @Test
   void validateLeavePassPassTest() {
-    when(userRepository.findById(1)).thenReturn(Optional.of(user));
+    when(userData.findById(1)).thenReturn(Optional.of(user));
 
     assertThatCode(() -> validationService.validateApplicationLimits(
         1, startDate, endDate,

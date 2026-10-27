@@ -32,7 +32,7 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.event.LawViolationEvent;
@@ -48,7 +48,7 @@ class WorkLogServiceTest {
   @Mock
   private I_TimeData timeData;
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
   @Mock
   private WorkLogMapper workLogMapper;
   @Mock
@@ -93,7 +93,7 @@ class WorkLogServiceTest {
   void loginThrowsExceptionWhenUserNotFoundTest() {
     UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
 
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(USER_ID)).thenReturn(Optional.empty());
 
     assertThrows(UserException.NotFound.class, () -> workLogService.handleUserLoginEvent(event));
     verifyNoInteractions(timeData);
@@ -104,7 +104,7 @@ class WorkLogServiceTest {
     UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
     User mockUser = mock(User.class);
 
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(mockUser));
     when(mockUser.isForcePasswordChange()).thenReturn(true);
 
     workLogService.handleUserLoginEvent(event);
@@ -117,7 +117,7 @@ class WorkLogServiceTest {
     UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
     User mockUser = mock(User.class);
 
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(mockUser));
     when(mockUser.isForcePasswordChange()).thenReturn(false);
 
     when(timeData.isUserWorking(USER_ID)).thenReturn(true);
@@ -132,7 +132,7 @@ class WorkLogServiceTest {
     UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
     User mockUser = mock(User.class);
 
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(mockUser));
     when(mockUser.isForcePasswordChange()).thenReturn(false);
 
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
@@ -149,8 +149,8 @@ class WorkLogServiceTest {
     UserLoginEvent event = new UserLoginEvent(USER_ID, "test");
     User mockUser = mock(User.class);
 
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(mockUser));
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(mockUser));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(mockUser));
     when(mockUser.isForcePasswordChange()).thenReturn(false);
 
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
@@ -177,7 +177,7 @@ class WorkLogServiceTest {
   @Test
   void startWorkWorkStartedExceptionTest() {
     when(timeData.isUserWorking(USER_ID)).thenReturn(true);
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     assertThatThrownBy(
         () -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE)).isInstanceOf(
@@ -189,7 +189,7 @@ class WorkLogServiceTest {
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(
         List.of(new WorkLog()));
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     assertThatThrownBy(
         () -> workLogService.startWork(USER_ID, WorkLocationType.OFFICE)).isInstanceOf(
@@ -209,7 +209,7 @@ class WorkLogServiceTest {
     user.setEmploymentStartDate(LocalDate.now().minusYears(1));
     user.setEmploymentEndDate(LocalDate.now().minusDays(1));
 
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
 
@@ -224,7 +224,7 @@ class WorkLogServiceTest {
     User user = new User();
     user.setEmploymentStartDate(LocalDate.now().plusDays(1));
 
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
 
@@ -241,7 +241,7 @@ class WorkLogServiceTest {
     user.setEmploymentStartDate(LocalDate.now().minusYears(1));
     user.setEmploymentEndDate(LocalDate.now());
 
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
@@ -257,7 +257,7 @@ class WorkLogServiceTest {
     user.setEmploymentStartDate(null);
     user.setEmploymentEndDate(null);
 
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
@@ -273,7 +273,7 @@ class WorkLogServiceTest {
     user.setEmploymentStartDate(LocalDate.now().minusMonths(6));
     user.setEmploymentEndDate(null);
 
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(user));
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
@@ -287,7 +287,7 @@ class WorkLogServiceTest {
   void startWorkNoHomeOfficeApplicationExceptionTest() {
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
 
@@ -300,7 +300,7 @@ class WorkLogServiceTest {
   void startWorkHomeOfficeLocationWithApplicationIfNotSpecifiedTest() {
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(true);
 
@@ -319,7 +319,7 @@ class WorkLogServiceTest {
   void startWorkOfficeLocationWithoutApplicationIfNotSpecifiedTest() {
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
 
@@ -338,7 +338,7 @@ class WorkLogServiceTest {
   void startWorkWithHOApplicationPassesTest() {
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(true);
     when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
@@ -353,7 +353,7 @@ class WorkLogServiceTest {
   void startWorkWithHOOfficeApplicationButChoseOfficeTest() {
     when(timeData.isUserWorking(USER_ID)).thenReturn(false);
     when(timeData.findWorkLogsByUserAndDate(eq(USER_ID), any(), any())).thenReturn(List.of());
-    when(userRepository.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
+    when(userData.findByIdWithPessimisticLock(USER_ID)).thenReturn(Optional.of(new User()));
 
     when(workTimeCalculationService.hasApprovedHomeOffice(eq(USER_ID), any())).thenReturn(false);
     when(timeData.saveWorkLog(any())).thenReturn(new WorkLog());
@@ -667,7 +667,7 @@ class WorkLogServiceTest {
 
   @Test
   void todayTargetUserNotFoundTest() {
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(USER_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> workLogService.getTodayTarget(USER_ID)).isInstanceOf(
         UserException.NotFound.class);
@@ -676,7 +676,7 @@ class WorkLogServiceTest {
   @Test
   void getTodayTargetTest() {
     User user = new User();
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(user));
     when(workTimeCalculationService.getAdjustedRequiredSeconds(
         eq(USER_ID), any(),
         any()
@@ -690,7 +690,7 @@ class WorkLogServiceTest {
 
   @Test
   void getMonthlyStatsUserNotFoundTest() {
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(USER_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> workLogService.getMonthlyStats(USER_ID)).isInstanceOf(
         UserException.NotFound.class);
@@ -700,7 +700,7 @@ class WorkLogServiceTest {
   void getMonthlyStatsProperTest() {
     User user = new User();
     user.setUserId(USER_ID);
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(user));
 
     when(workTimeCalculationService.isWithinEmploymentPeriod(any(User.class), any(LocalDate.class)))
         .thenReturn(true);
@@ -728,7 +728,7 @@ class WorkLogServiceTest {
   void getMonthlyStatsFiltersOutNullEndTimesAndFutureLogsTest() {
     User user = new User();
     user.setUserId(USER_ID);
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(user));
     when(workTimeCalculationService.isWithinEmploymentPeriod(any(User.class), any(LocalDate.class)))
         .thenReturn(true);
     when(workTimeCalculationService.getBaseRequiredSeconds(any(), any())).thenReturn(8 * 3600);
@@ -833,7 +833,7 @@ class WorkLogServiceTest {
   void getMonthlyStatsExcludesDaysOutsideEmploymentPeriodTest() {
     User user = new User();
     user.setUserId(USER_ID);
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(user));
 
     when(workTimeCalculationService.isWithinEmploymentPeriod(any(User.class), any(LocalDate.class)))
         .thenReturn(false);

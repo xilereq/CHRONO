@@ -12,20 +12,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.chrono.timemanager.api.I_HolidayService;
 import pl.chrono.timemanager.dto.request.BatchCreateHolidaysRequest;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
 import pl.chrono.timemanager.dto.response.ExternalHolidayDto;
 import pl.chrono.timemanager.dto.response.HolidayDto;
-import pl.chrono.timemanager.service.HolidayService;
 import pl.chrono.usermanager.service.AuthService;
 
 @RestController
 @RequestMapping("/api/holidays")
 public class HolidayController extends BaseController {
 
-  private final HolidayService holidayService;
+  private final I_HolidayService holidayService;
 
-  public HolidayController(AuthService authService, HolidayService holidayService) {
+  public HolidayController(AuthService authService, I_HolidayService holidayService) {
     super(authService);
     this.holidayService = holidayService;
   }

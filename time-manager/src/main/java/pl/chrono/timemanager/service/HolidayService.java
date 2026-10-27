@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Holiday;
 import pl.chrono.dbmanager.ports.I_HolidayData;
 import pl.chrono.logmanager.audit.LogActivity;
+import pl.chrono.timemanager.api.I_HolidayService;
 import pl.chrono.timemanager.dto.request.BatchCreateHolidaysRequest;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
 import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
@@ -25,7 +26,7 @@ import pl.chrono.timemanager.ports.I_ExternalHolidayProvider;
 
 @Service
 @RequiredArgsConstructor
-public class HolidayService {
+public class HolidayService implements I_HolidayService {
 
   private static final int MIN_SUPPORTED_YEAR = 1976;
   private static final int MAX_SUPPORTED_YEAR = 2076;
@@ -38,6 +39,7 @@ public class HolidayService {
 
   @Transactional
   @LogActivity(action = "CREATE_HOLIDAY", details = "Created holiday")
+  @Override
   public HolidayDto createHoliday(CreateHolidayRequest request) {
     String cleanName = request.name().trim();
     if (holidayData.existsByNameAndDate(cleanName, request.date())) {
@@ -49,6 +51,7 @@ public class HolidayService {
   }
 
   @Transactional(readOnly = true)
+  @Override
   public List<ExternalHolidayDto> previewExternalHolidays(int year, String countryCode) {
     if (year < MIN_SUPPORTED_YEAR || year > MAX_SUPPORTED_YEAR) {
       throw new HolidayException.InvalidYear(year);
@@ -75,6 +78,7 @@ public class HolidayService {
 
   @Transactional
   @LogActivity(action = "IMPORT_HOLIDAYS", details = "Batch imported holidays and assigned to policies")
+  @Override
   public List<HolidayDto> createHolidaysBatch(BatchCreateHolidaysRequest batchRequest) {
     Map<String, CreateHolidayRequest> uniqueRequests = new LinkedHashMap<>();
     for (CreateHolidayRequest req : batchRequest.holidays()) {
@@ -120,11 +124,13 @@ public class HolidayService {
   }
 
   @Transactional(readOnly = true)
+  @Override
   public List<HolidayDto> getAllHolidays() {
     return holidayData.findAllHolidays().stream().map(holidayMapper::toDto).toList();
   }
 
   @Transactional(readOnly = true)
+  @Override
   public HolidayDto getHolidayById(Integer holidayId) {
     return holidayData.findHolidayById(holidayId).map(holidayMapper::toDto)
         .orElseThrow(() -> new HolidayException.NotFound(holidayId));
@@ -132,6 +138,7 @@ public class HolidayService {
 
   @Transactional
   @LogActivity(action = "DELETE_HOLIDAY", details = "Deleted holiday")
+  @Override
   public void deleteHoliday(Integer holidayId) {
     holidayData.deleteHolidayById(holidayId);
   }

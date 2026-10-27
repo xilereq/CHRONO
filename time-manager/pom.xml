@@ -14,6 +14,11 @@
     <name>time-manager</name>
     <description>time-manager</description>
 
+    <properties>
+        <google-api-services-calendar.version>v3-rev20260925-2.0.0</google-api-services-calendar.version>
+        <google-auth-library-oauth2-http.version>1.30.1</google-auth-library-oauth2-http.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>pl.chrono</groupId>
@@ -29,6 +34,16 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-calendar</artifactId>
+            <version>${google-api-services-calendar.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>${google-auth-library-oauth2-http.version}</version>
         </dependency>
     </dependencies>
 

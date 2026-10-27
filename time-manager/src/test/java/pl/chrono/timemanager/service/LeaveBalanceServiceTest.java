@@ -20,8 +20,8 @@ import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_ApplicationData;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.exception.UserException;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,11 +29,11 @@ class LeaveBalanceServiceTest {
 
   private final Integer USER_ID = 1;
   @Mock
-  private ApplicationRepository applicationRepository;
+  private I_ApplicationData applicationData;
   @Mock
   private WorkTimeCalculationService workingDaysCalculationService;
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
   @InjectMocks
   private LeaveBalanceService leaveBalanceService;
 
@@ -79,7 +79,7 @@ class LeaveBalanceServiceTest {
 
   @Test
   void getUsedLeaveDaysInYearUserNotFoundExceptionTest() {
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(USER_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(
         () -> leaveBalanceService.getUsedLeaveDaysInYear(USER_ID, 2026)).isInstanceOf(
@@ -93,7 +93,7 @@ class LeaveBalanceServiceTest {
     Policy policy = new Policy();
     doReturn(policy).when(spyUser).getPolicyForDate(any());
 
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(spyUser));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(spyUser));
 
     Application app1 = new Application();
     app1.setStartDate(LocalDate.of(2026, 6, 1));
@@ -104,7 +104,7 @@ class LeaveBalanceServiceTest {
     app2.setEndDate(LocalDate.of(2026, 7, 2));
 
     when(
-        applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
+        applicationData.findApplicationsByEmployeeAndTypeAndDateRange(
             eq(USER_ID), eq(ApplicationType.HOLIDAY_LEAVE), eq(ApplicationStatus.APPROVED), any(),
             any()
         )).thenReturn(List.of(app1, app2));
@@ -125,7 +125,7 @@ class LeaveBalanceServiceTest {
 
   @Test
   void getRolloverDaysFromPreviousYearUserNotFoundTest() {
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+    when(userData.findById(USER_ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(
         () -> leaveBalanceService.getRolloverDaysFromPreviousYear(USER_ID, 2026)).isInstanceOf(
@@ -136,13 +136,13 @@ class LeaveBalanceServiceTest {
   void getRolloverDaysFromPreviousYearNegativeValueTest() {
     User user = new User();
     user.setEmploymentStartDate(null);
-    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+    when(userData.findById(USER_ID)).thenReturn(Optional.of(user));
 
     Application app = new Application();
     app.setStartDate(LocalDate.of(2025, 1, 1));
     app.setEndDate(LocalDate.of(2025, 1, 1));
     when(
-        applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
+        applicationData.findApplicationsByEmployeeAndTypeAndDateRange(
             eq(USER_ID), eq(ApplicationType.HOLIDAY_LEAVE), eq(ApplicationStatus.APPROVED), any(),
             any()
         )).thenReturn(List.of(app));

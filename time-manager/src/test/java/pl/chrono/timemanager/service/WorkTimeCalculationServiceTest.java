@@ -17,14 +17,14 @@ import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
+import pl.chrono.dbmanager.ports.I_ApplicationData;
 import pl.chrono.timemanager.exception.WorkException;
 
 @ExtendWith(MockitoExtension.class)
 class WorkTimeCalculationServiceTest {
 
   @Mock
-  private ApplicationRepository applicationRepository;
+  private I_ApplicationData applicationData;
 
   @InjectMocks
   private WorkTimeCalculationService service;
@@ -161,7 +161,7 @@ class WorkTimeCalculationServiceTest {
     Policy policy = mock(Policy.class);
     when(policy.getRequiredSecondsForDate(date)).thenReturn(8 * 3600);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(List.of());
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(List.of());
 
     assertThat(service.getAdjustedRequiredSeconds(1, date, policy)).isEqualTo(8 * 3600);
   }
@@ -188,7 +188,7 @@ class WorkTimeCalculationServiceTest {
     appHoliday.setType(ApplicationType.HOLIDAY_LEAVE);
     appHoliday.setDurationSeconds(1000);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(
         List.of(appEarlyExit, appOvertimeTake, appOvertimeEarn, appHoliday));
 
     assertThat(service.getAdjustedRequiredSeconds(1, date, policy)).isEqualTo(30600);
@@ -204,7 +204,7 @@ class WorkTimeCalculationServiceTest {
     appEarlyExit.setType(ApplicationType.EARLY_EXIT);
     appEarlyExit.setDurationSeconds(null);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(
         List.of(appEarlyExit));
 
     assertThat(service.getAdjustedRequiredSeconds(1, date, policy)).isEqualTo(8 * 3600);
@@ -220,7 +220,7 @@ class WorkTimeCalculationServiceTest {
     appEarlyExit.setType(ApplicationType.EARLY_EXIT);
     appEarlyExit.setDurationSeconds(4 * 3600);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(
         List.of(appEarlyExit));
 
     assertThat(service.getAdjustedRequiredSeconds(1, date, policy)).isZero();
@@ -232,7 +232,7 @@ class WorkTimeCalculationServiceTest {
     Application app = new Application();
     app.setType(ApplicationType.HOME_OFFICE);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(List.of(app));
 
     assertThat(service.hasApprovedHomeOffice(1, date)).isTrue();
   }
@@ -243,7 +243,7 @@ class WorkTimeCalculationServiceTest {
     Application app = new Application();
     app.setType(ApplicationType.HOLIDAY_LEAVE);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(List.of(app));
 
     assertThat(service.hasApprovedHomeOffice(1, date)).isFalse();
   }
@@ -251,7 +251,7 @@ class WorkTimeCalculationServiceTest {
   @Test
   void hasApprovedHomeOfficeEmptyListTest() {
     LocalDate date = LocalDate.now();
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(List.of());
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(List.of());
 
     assertThat(service.hasApprovedHomeOffice(1, date)).isFalse();
   }
@@ -309,7 +309,7 @@ class WorkTimeCalculationServiceTest {
   @Test
   void getExcusedSecondsForDateNoApplicationsTest() {
     LocalDate date = LocalDate.of(2026, 6, 10);
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date)).thenReturn(List.of());
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date)).thenReturn(List.of());
 
     assertThat(service.getExcusedSecondsForDate(1, date, null)).isZero();
   }
@@ -322,7 +322,7 @@ class WorkTimeCalculationServiceTest {
     Application appEarlyExit = new Application();
     appEarlyExit.setType(ApplicationType.EARLY_EXIT);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date))
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date))
         .thenReturn(List.of(appHomeOffice, appEarlyExit));
 
     assertThat(service.getExcusedSecondsForDate(1, date, null)).isZero();
@@ -337,7 +337,7 @@ class WorkTimeCalculationServiceTest {
     Application appHoliday = new Application();
     appHoliday.setType(ApplicationType.HOLIDAY_LEAVE);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date))
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date))
         .thenReturn(List.of(appHoliday));
 
     assertThat(service.getExcusedSecondsForDate(1, date, policy)).isEqualTo(8 * 3600);
@@ -354,7 +354,7 @@ class WorkTimeCalculationServiceTest {
     Application appHomeOffice = new Application();
     appHomeOffice.setType(ApplicationType.HOME_OFFICE);
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(1, date))
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(1, date))
         .thenReturn(List.of(appHomeOffice, appSick));
 
     assertThat(service.getExcusedSecondsForDate(1, date, policy)).isEqualTo(8 * 3600);

@@ -9,8 +9,8 @@ import pl.chrono.dbmanager.model.Application;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationStatus;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_ApplicationData;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.exception.UserException;
 
 @Service
@@ -20,9 +20,9 @@ public class LeaveBalanceService {
   private static final int DEFAULT_BASE_LEAVE_DAYS = 26;
   private static final int MAX_ANNUAL_LEAVE_DAYS = 31;
 
-  private final ApplicationRepository applicationRepository;
+  private final I_ApplicationData applicationData;
   private final WorkTimeCalculationService workingDaysCalculationService;
-  private final UserRepository userRepository;
+  private final I_UserData userData;
 
   public int calculateAnnualLeaveLimit(User user, int referenceYear) {
     int baseLimit = DEFAULT_BASE_LEAVE_DAYS;
@@ -43,14 +43,14 @@ public class LeaveBalanceService {
   }
 
   public int getUsedLeaveDaysInYear(Integer employeeId, int year) {
-    User user = userRepository.findById(employeeId)
+    User user = userData.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
     LocalDate startOfYear = LocalDate.of(year, 1, 1);
     LocalDate endOfYear = LocalDate.of(year, 12, 31);
 
     List<Application> approvedLeaves =
-        applicationRepository.findApplicationsByEmployeeAndTypeAndDateRange(
+        applicationData.findApplicationsByEmployeeAndTypeAndDateRange(
             employeeId, ApplicationType.HOLIDAY_LEAVE, ApplicationStatus.APPROVED, startOfYear,
             endOfYear
         );
@@ -64,7 +64,7 @@ public class LeaveBalanceService {
 
   public int getRolloverDaysFromPreviousYear(Integer employeeId, int currentYear) {
     int previousYear = currentYear - 1;
-    User user = userRepository.findById(employeeId)
+    User user = userData.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
     int previousYearLimit = calculateAnnualLeaveLimit(user, previousYear);

@@ -1,6 +1,7 @@
 package pl.chrono.workforceapi.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.chrono.timemanager.api.I_PolicyService;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
@@ -17,30 +19,24 @@ import pl.chrono.timemanager.dto.request.MassAssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.MassAssignPolicyRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.dto.response.PolicyDto;
-import pl.chrono.timemanager.service.PolicyConfigurationService;
-import pl.chrono.timemanager.service.PolicyManagementService;
 import pl.chrono.usermanager.service.AuthService;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/policies")
 public class PolicyController extends BaseController {
 
-  private final PolicyConfigurationService configService;
-  private final PolicyManagementService managementService;
+  private final I_PolicyService policyService;
 
   public PolicyController(AuthService authService,
-                          PolicyConfigurationService configService,
-                          PolicyManagementService managementService) {
+                          I_PolicyService policyService) {
     super(authService);
-    this.configService = configService;
-    this.managementService = managementService;
+    this.policyService = policyService;
   }
 
   @PostMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<PolicyDto> createPolicy(@Valid @RequestBody CreatePolicyRequest request) {
-    return ResponseEntity.ok(configService.createPolicy(request));
+    return ResponseEntity.ok(policyService.createPolicy(request));
   }
 
   @PostMapping("/{userId}/assign")
@@ -49,7 +45,7 @@ public class PolicyController extends BaseController {
       @PathVariable Integer userId,
       @Valid @RequestBody AssignPolicyRequest request) {
 
-    managementService.assignPolicyToUser(userId, request);
+    policyService.assignPolicyToUser(userId, request);
 
     return ResponseEntity.noContent().build();
   }
@@ -57,25 +53,25 @@ public class PolicyController extends BaseController {
   @GetMapping
   @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   public ResponseEntity<List<PolicyDto>> getAllPolicies() {
-    return ResponseEntity.ok(configService.getAllPolicies());
+    return ResponseEntity.ok(policyService.getAllPolicies());
   }
 
   @GetMapping("/{policyId}")
   @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   public ResponseEntity<PolicyDto> getPolicyById(@PathVariable Integer policyId) {
-    return ResponseEntity.ok(configService.getPolicyById(policyId));
+    return ResponseEntity.ok(policyService.getPolicyById(policyId));
   }
 
   @GetMapping("/{policyId}/holidays")
   @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
   public ResponseEntity<List<HolidayDto>> getHolidaysForPolicy(@PathVariable Integer policyId) {
-    return ResponseEntity.ok(configService.getHolidaysForPolicy(policyId));
+    return ResponseEntity.ok(policyService.getHolidaysForPolicy(policyId));
   }
 
   @DeleteMapping("/{policyId}")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Void> deletePolicy(@PathVariable Integer policyId) {
-    configService.deletePolicy(policyId);
+    policyService.deletePolicy(policyId);
     return ResponseEntity.noContent().build();
   }
 
@@ -85,7 +81,7 @@ public class PolicyController extends BaseController {
       @PathVariable Integer policyId,
       @Valid @RequestBody AssignHolidayRequest request) {
 
-    configService.assignHolidayToPolicy(policyId, request);
+    policyService.assignHolidayToPolicy(policyId, request);
     return ResponseEntity.noContent().build();
   }
 
@@ -95,7 +91,7 @@ public class PolicyController extends BaseController {
       @PathVariable Integer policyId,
       @PathVariable Integer holidayId) {
 
-    configService.removeHolidayFromPolicy(policyId, holidayId);
+    policyService.removeHolidayFromPolicy(policyId, holidayId);
     return ResponseEntity.noContent().build();
   }
 
@@ -104,7 +100,7 @@ public class PolicyController extends BaseController {
   public ResponseEntity<Void> assignPolicyBulk(
       @Valid @RequestBody MassAssignPolicyRequest request) {
 
-    managementService.assignPolicyToUsersBulk(request);
+    policyService.assignPolicyToUsersBulk(request);
     return ResponseEntity.noContent().build();
   }
 
@@ -114,7 +110,7 @@ public class PolicyController extends BaseController {
       @PathVariable Integer policyId,
       @Valid @RequestBody MassAssignHolidayRequest request) {
 
-    configService.assignHolidaysToPolicyBulk(policyId, request);
+    policyService.assignHolidaysToPolicyBulk(policyId, request);
     return ResponseEntity.noContent().build();
   }
 }

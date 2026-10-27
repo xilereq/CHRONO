@@ -9,9 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Holiday;
 import pl.chrono.dbmanager.model.HolidayPolicy;
 import pl.chrono.dbmanager.model.Policy;
-import pl.chrono.dbmanager.repository.HolidayPolicyRepository;
-import pl.chrono.dbmanager.repository.HolidayRepository;
-import pl.chrono.dbmanager.repository.PolicyRepository;
+import pl.chrono.dbmanager.ports.I_HolidayData;
+import pl.chrono.dbmanager.ports.I_PolicyData;
 import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
@@ -26,17 +25,16 @@ import pl.chrono.timemanager.mapper.PolicyMapper;
 @Service
 @RequiredArgsConstructor
 public class PolicyConfigurationService {
-  private final PolicyRepository policyRepository;
+  private final I_PolicyData policyData;
   private final PolicyMapper policyMapper;
-  private final HolidayRepository holidayRepository;
-  private final HolidayPolicyRepository holidayPolicyRepository;
+  private final I_HolidayData holidayData;
   private final HolidayMapper holidayMapper;
 
   @Transactional
   public PolicyDto createPolicy(CreatePolicyRequest request) {
     Policy policy = policyMapper.toEntity(request);
 
-    Policy saved = policyRepository.save(policy);
+    Policy saved = policyData.savePolicy(policy);
 
     return policyMapper.toDto(saved);
 
@@ -44,24 +42,24 @@ public class PolicyConfigurationService {
 
   @Transactional(readOnly = true)
   public List<PolicyDto> getAllPolicies() {
-    return policyRepository.findAll().stream()
+    return policyData.findAllPolicies().stream()
         .map(policyMapper::toDto)
         .toList();
   }
 
   @Transactional(readOnly = true)
   public PolicyDto getPolicyById(Integer policyId) {
-    return policyRepository.findById(policyId)
+    return policyData.findPolicyById(policyId)
         .map(policyMapper::toDto)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
   }
 
   @Transactional(readOnly = true)
   public List<HolidayDto> getHolidaysForPolicy(Integer policyId) {
-    Policy policy = policyRepository.findById(policyId)
+    Policy policy = policyData.findPolicyById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
 
-    return holidayPolicyRepository.findByPolicy(policy).stream()
+    return policyData.findHolidayPoliciesByPolicy(policy).stream()
         .map(HolidayPolicy::getHoliday)
         .map(holidayMapper::toDto)
         .toList();
@@ -70,13 +68,13 @@ public class PolicyConfigurationService {
   @Transactional
   @LogActivity(action = "ASSIGN_HOLIDAY", details = "Assigned holiday to policy")
   public void assignHolidayToPolicy(Integer policyId, AssignHolidayRequest request) {
-    Policy policy = policyRepository.findById(policyId)
+    Policy policy = policyData.findPolicyById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
 
-    Holiday holiday = holidayRepository.findById(request.holidayId())
+    Holiday holiday = holidayData.findHolidayById(request.holidayId())
         .orElseThrow(() -> new HolidayException.NotFound(request.holidayId()));
 
-    boolean alreadyAssigned = holidayPolicyRepository.existsByPolicyAndHoliday(policy, holiday);
+    boolean alreadyAssigned = policyData.existsHolidayPolicy(policy, holiday);
     if (alreadyAssigned) {
       throw new HolidayException.AlreadyAssigned();
     }
@@ -85,47 +83,47 @@ public class PolicyConfigurationService {
     holidayPolicy.setPolicy(policy);
     holidayPolicy.setHoliday(holiday);
 
-    holidayPolicyRepository.save(holidayPolicy);
+    policyData.saveHolidayPolicy(holidayPolicy);
   }
 
   @Transactional
   @LogActivity(action = "REMOVED_POLICY_HOLIDAY", details = "Removed holiday from policy")
   public void removeHolidayFromPolicy(Integer policyId, Integer holidayId) {
-    Policy policy = policyRepository.findById(policyId)
+    Policy policy = policyData.findPolicyById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
 
-    Holiday holiday = holidayRepository.findById(holidayId)
+    Holiday holiday = holidayData.findHolidayById(holidayId)
         .orElseThrow(() -> new HolidayException.NotFound(holidayId));
 
-    HolidayPolicy assignment = holidayPolicyRepository.findByPolicyAndHoliday(policy, holiday)
+    HolidayPolicy assignment = policyData.findHolidayPolicyByPolicyAndHoliday(policy, holiday)
         .orElseThrow(HolidayException.NotAssigned::new);
 
-    holidayPolicyRepository.delete(assignment);
+    policyData.deleteHolidayPolicy(assignment);
   }
 
   @Transactional
   @LogActivity(action = "DELETED_POLICY", details = "Deleted policy")
   public void deletePolicy(Integer policyId) {
-    Policy policy = policyRepository.findById(policyId)
+    Policy policy = policyData.findPolicyById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
 
-    holidayPolicyRepository.deleteByPolicy(policy);
+    policyData.deleteHolidayPoliciesByPolicy(policy);
 
-    policyRepository.delete(policy);
+    policyData.deletePolicy(policy);
   }
 
   @Transactional
   @LogActivity(action = "BULK_ASSIGN_HOLIDAYS", details = "Assigned multiple holidays to policy")
   public void assignHolidaysToPolicyBulk(Integer policyId, MassAssignHolidayRequest request) {
-    Policy policy = policyRepository.findById(policyId)
+    Policy policy = policyData.findPolicyById(policyId)
         .orElseThrow(() -> new PolicyException.NotFound(policyId));
 
-    List<Holiday> holidaysToAssign = holidayRepository.findAllById(request.holidayIds());
+    List<Holiday> holidaysToAssign = holidayData.findHolidaysByIds(request.holidayIds());
     if (holidaysToAssign.isEmpty()) {
       throw new HolidayException.NoneFound();
     }
 
-    List<HolidayPolicy> existingAssignments = holidayPolicyRepository.findByPolicy(policy);
+    List<HolidayPolicy> existingAssignments = policyData.findHolidayPoliciesByPolicy(policy);
     Set<Integer> existingHolidayIds = existingAssignments.stream()
         .map(hp -> hp.getHoliday().getHolidayId())
         .collect(Collectors.toSet());
@@ -141,7 +139,7 @@ public class PolicyConfigurationService {
         .toList();
 
     if (!newAssignments.isEmpty()) {
-      holidayPolicyRepository.saveAll(newAssignments);
+      policyData.saveAllHolidayPolicies(newAssignments);
     }
   }
 }
