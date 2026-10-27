@@ -7,6 +7,50 @@
     --text-muted: #6b7280;
     --primary-color: #FFDE42;
     --border-color: #e5e7eb;
+
+    --primary-hover: #f1c40f;
+    --primary-accent: #ffd23a;
+    --primary-soft: #fffbeb;
+    --on-primary: #111827;
+    --on-accent: #ffffff;
+    --text-subtle: #9ca3af;
+
+    --success: #16a34a;
+    --success-bright: #22c55e;
+    --success-bg: #f0fdf4;
+    --success-bg-strong: #dcfce7;
+    --success-border: #bbf7d0;
+    --danger: #ef4444;
+    --danger-strong: #dc2626;
+    --danger-text: #991b1b;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --warning: #f59e0b;
+    --warning-strong: #d97706;
+    --warning-text: #b45309;
+    --warning-bg: #fffbeb;
+    --warning-bg-strong: #fde68a;
+    --info: #3b82f6;
+    --info-bg: #eff6ff;
+
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 20px;
+    --radius-pill: 9999px;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+    --shadow-primary: 0 4px 10px rgba(212, 163, 42, 0.25);
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
 }
 
 [data-theme="dark"] {
@@ -17,6 +61,29 @@
     --text-muted: #9ca3af;
     --primary-color: #eab308;
     --border-color: #374151;
+
+    --primary-hover: #facc15;
+    --primary-accent: #fde047;
+    --primary-soft: rgba(234, 179, 8, 0.14);
+    --text-subtle: #6b7280;
+
+    --success-bright: #22c55e;
+    --success-bg: rgba(34, 197, 94, 0.12);
+    --success-bg-strong: rgba(34, 197, 94, 0.22);
+    --success-border: rgba(34, 197, 94, 0.35);
+    --danger-strong: #ef4444;
+    --danger-text: #fca5a5;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --danger-border: rgba(239, 68, 68, 0.35);
+    --warning-strong: #f59e0b;
+    --warning-text: #fbbf24;
+    --warning-bg: rgba(245, 158, 11, 0.12);
+    --warning-bg-strong: rgba(245, 158, 11, 0.25);
+    --info-bg: rgba(59, 130, 246, 0.14);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
 }
 
 body {

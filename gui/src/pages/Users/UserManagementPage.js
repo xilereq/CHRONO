@@ -154,8 +154,8 @@ const UserManagementPage = () => {
             <div className="policy-section" style={{ marginTop: '1.5rem' }}>
                 <h2 className="section-title">{t('userManagement.section1Title', 'Sekcja 1: Dodaj nowego użytkownika')}</h2>
                 <p className="section-subtitle mb-3">{t('userManagement.section1Subtitle', 'Zarejestruj nowe konto pracownicze w systemie.')}</p>
-                {userError && <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{userError}</div>}
-                {userMessage && <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}><strong>{userMessage}</strong></div>}
+                {userError && <div className="alert alert-error">{userError}</div>}
+                {userMessage && <div className="alert alert-success"><strong>{userMessage}</strong></div>}
 
                 <form onSubmit={handleUserFormSubmit}>
                     <div className="grid-2-col" style={{ marginTop: '15px' }}>
@@ -199,8 +199,8 @@ const UserManagementPage = () => {
             <div className="policy-section" style={{ marginTop: '2rem' }}>
                 <h2 className="section-title">{t('userManagement.section2Title', 'Sekcja 2: Przypisz Managera do istniejącego konta')}</h2>
                 <p className="section-subtitle mb-3">{t('userManagement.section2Subtitle', 'Wybierz pracownika oraz managera, którego chcesz mu przypisać.')}</p>
-                {managerError && <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{managerError}</div>}
-                {managerMessage && <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}><strong>{managerMessage}</strong></div>}
+                {managerError && <div className="alert alert-error">{managerError}</div>}
+                {managerMessage && <div className="alert alert-success"><strong>{managerMessage}</strong></div>}
 
                 <form className="grid-2-col" style={{ marginTop: '15px' }} onSubmit={handleManagerFormSubmit}>
                     <div className="form-group"><span className="form-label">{t('userManagement.employeeLabel', 'Pracownik')}</span>
@@ -229,8 +229,8 @@ const UserManagementPage = () => {
             <div className="policy-section" style={{ marginTop: '2rem' }}>
                 <h2 className="section-title">{t('userManagement.section3Title', 'Sekcja 3: Zarządzaj zatrudnieniem i statusem konta')}</h2>
                 <p className="section-subtitle mb-3">{t('userManagement.section3Subtitle', 'Zaktualizuj wybrane daty lub dezaktywuj konto pracownika. Pozostaw puste, by nie zmieniać.')}</p>
-                {employmentError && <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>{employmentError}</div>}
-                {employmentMessage && <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}><strong>{employmentMessage}</strong></div>}
+                {employmentError && <div className="alert alert-error">{employmentError}</div>}
+                {employmentMessage && <div className="alert alert-success"><strong>{employmentMessage}</strong></div>}
 
                 <form onSubmit={handleEmploymentFormSubmit} style={{ marginTop: '15px' }}>
                     <div className="grid-2-col">

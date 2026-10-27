@@ -9,23 +9,23 @@
     width: 100%;
     max-width: none;
     margin: 0;
-    padding: 1rem;
+    padding: var(--space-4);
     box-sizing: border-box;
 }
 
 .section-panel {
     background: var(--bg-card);
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
 }
 
 .full-width-list {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
     overflow: auto;
     width: 100%;
     min-height: calc(100vh - 260px);
@@ -34,20 +34,20 @@
 .requests-list {
     background: transparent;
     border: none;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     padding: 0;
     height: 100%;
     overflow: auto;
 }
 
 .form-top {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     width: 100%;
 }
 
 .responsive-row {
     display: flex;
-    gap: 12px;
+    gap: var(--space-3);
     flex-wrap: wrap;
     align-items: center;
 }
@@ -64,7 +64,7 @@
 }
 
 .empty {
-    padding: 1rem;
+    padding: var(--space-4);
     color: var(--text-muted);
     text-align: center;
 }
@@ -75,8 +75,8 @@
 .submit-actions {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
     width: 100%;
 }
 
@@ -84,13 +84,13 @@
 .big-yellow-btn {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    background: linear-gradient(180deg, var(--primary-color) 0%, #FFD23A 100%);
+    gap: var(--space-3);
+    background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-accent) 100%);
     border: 1px solid rgba(0,0,0,0.06);
-    color: #111827;
+    color: var(--on-primary);
     height: 56px;
-    padding: 0 1rem;
-    border-radius: 12px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-lg);
     font-weight: 800;
     text-transform: uppercase;
     cursor: pointer;
@@ -103,17 +103,17 @@
 .form-actions-group {
     display: flex;
     gap: 10px;
-    margin-top: 1.5rem;
+    margin-top: var(--space-5);
     justify-content: flex-start;
 }
 
 .btn-submit-size {
     width: auto;
-    padding: 0 1.5rem;
+    padding: 0 var(--space-5);
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .btn-submit-size svg {
@@ -131,7 +131,7 @@
 .action-btn {
     background: none;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 0.4rem 0.6rem;
     min-width: 40px;
     cursor: pointer;
@@ -143,14 +143,14 @@
 }
 
 .action-btn:hover { background: var(--bg-main); color: var(--text-main); }
-.action-btn.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+.action-btn.delete:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
 
 /* =========================================
    4. FORMULARZE I FILTRY (FORMS & FILTERS)
 ========================================= */
 .request-form-container {
     animation: slideDown 0.3s ease-out;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
 }
 
 .request-form-grid {
@@ -180,16 +180,16 @@
 
 .filters-bar {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-4);
     align-items: center;
-    padding: 1rem 1.5rem;
+    padding: var(--space-4) var(--space-5);
 }
 
 .filter-select,
 .filter-input {
     padding: 0.6rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     color: var(--text-main);
     background: var(--bg-card);
     min-width: 160px;
@@ -212,7 +212,7 @@
 }
 
 .requests-table th {
-    padding: 1rem 0.5rem;
+    padding: var(--space-4) var(--space-2);
     border-bottom: 2px solid var(--border-color);
     color: var(--text-main);
     font-weight: 600;
@@ -220,7 +220,7 @@
 }
 
 .requests-table td {
-    padding: 1rem 0.5rem;
+    padding: var(--space-4) var(--space-2);
     border-bottom: 1px solid var(--border-color);
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -234,7 +234,7 @@
 .status-cell {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     font-weight: 500;
 }
 
@@ -245,9 +245,9 @@
     display: inline-block;
 }
 
-.status-dot.Zatwierdzony { background-color: #10B981; }
-.status-dot.Weryfikacja { background-color: #FBBF24; }
-.status-dot.Odrzucony { background-color: #EF4444; }
+.status-dot.Zatwierdzony { background-color: var(--success-bright); }
+.status-dot.Weryfikacja { background-color: var(--warning); }
+.status-dot.Odrzucony { background-color: var(--danger); }
 
 .actions-cell {
     display: flex;
@@ -260,13 +260,13 @@
 .pagination {
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
 }
 
 .pagination span {
     padding: 0.4rem 0.8rem;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     cursor: pointer;
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -274,7 +274,7 @@
 }
 
 .pagination span:hover { background: var(--bg-main); }
-.pagination span.page-active { background: var(--primary-color); color: #111827; }
+.pagination span.page-active { background: var(--primary-color); color: var(--on-primary); }
 
 /* =========================================
    7. ANIMACJE (ANIMATIONS)
@@ -307,7 +307,7 @@
     .filters-date-row {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr;
-        gap: 0.5rem;
+        gap: var(--space-2);
         width: 100%;
     }
 
@@ -318,7 +318,7 @@
 
     .requests-table th,
     .requests-table td {
-        padding: 0.75rem 0.4rem;
+        padding: var(--space-3) 0.4rem;
         font-size: 0.85rem;
     }
 }
@@ -330,7 +330,7 @@
 }
 
 @media (max-width: 600px) {
-    .requests-container { padding: 0.5rem; }
+    .requests-container { padding: var(--space-2); }
     .section-panel { padding: 0.9rem; }
     .requests-table { font-size: 0.85rem; }
 
@@ -373,8 +373,8 @@
     .big-yellow-btn,
     .btn.btn-primary.big-yellow-btn {
         height: 48px;
-        border-radius: 10px;
-        padding: 0 0.75rem;
+        border-radius: var(--radius-md);
+        padding: 0 var(--space-3);
         font-size: 0.95rem;
         width: 100%;
     }

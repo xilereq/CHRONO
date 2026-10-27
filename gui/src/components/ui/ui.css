@@ -1,10 +1,10 @@
 /* --- Komponenty UI --- */
 .card {
     background: var(--bg-card);
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
-    padding: 1.5rem;
+    padding: var(--space-5);
     display: flex;
     flex-direction: column;
 }
@@ -12,21 +12,21 @@
 .card-title {
     color: var(--text-main);
     font-weight: 700;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-5);
     margin-top: 0;
     font-size: 1rem;
     text-transform: uppercase;
 }
 
 .btn {
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
     font-weight: 500;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
     transition: background-color 0.2s;
     width: 100%;
     cursor: pointer;
@@ -37,11 +37,11 @@
 
 .btn-primary {
     background: var(--primary-color);
-    color: #1f2937;
+    color: var(--on-primary);
 }
 
 .btn-primary:hover {
-    background: #F1C40F;
+    background: var(--primary-hover);
 }
 
 .btn-outline {
@@ -56,20 +56,20 @@
 
 /* --- Odznaki (Badge) --- */
 .badge-success-text {
-    color: #16a34a;
+    color: var(--success);
     font-weight: 500;
 }
 
 .badge-dots {
     display: flex;
-    gap: 0.25rem;
+    gap: var(--space-1);
     align-items: center;
 }
 
 .dot {
     width: 0.75rem;
     height: 0.75rem;
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     display: block;
 }
 
@@ -78,9 +78,86 @@
 }
 
 .dot-green {
-    background-color: #22c55e;
+    background-color: var(--success-bright);
 }
 
 .dot-red {
-    background-color: #ef4444;
+    background-color: var(--danger);
+}
+
+.alert {
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-4);
+    border: 1px solid;
+}
+
+.alert-error {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border-color: var(--danger-border);
+}
+
+.alert-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success-border);
+}
+
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--bg-card);
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.theme-toggle-btn:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.theme-toggle-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.language-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.language-option {
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.language-option:hover {
+    background: var(--bg-main);
+}
+
+.language-option.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--on-primary);
+    font-weight: 700;
+}
+
+.language-option:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }

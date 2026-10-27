@@ -406,7 +406,7 @@ const Reports = () => {
                                                 {item.val !== 0 && (
                                                     <div className="overtime-fill" style={{
                                                         width: `${(Math.abs(item.val) / maxOT) * 100}%`,
-                                                        background: item.val >= 0 ? '#FFDE42' : '#ef4444',
+                                                        background: item.val >= 0 ? 'var(--primary-color)' : 'var(--danger)',
                                                     }} />
                                                 )}
                                             </div>

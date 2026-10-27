@@ -130,7 +130,7 @@ const AssignPolicyTab = () => {
                                 ))
                             )}
                         </select>
-                        <span style={{ fontSize: '0.75rem', color: '#666', marginTop: '4px', display: 'block' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                             {t('policies.selectedCount', 'Zaznaczono:')} {formData.userIds.length}
                         </span>
                     </div>

@@ -107,7 +107,7 @@ const StatusCharts = () => {
                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                             />
                             <path
-                                style={{ color: '#22c55e' }}
+                                style={{ color: 'var(--success-bright)' }}
                                 strokeWidth="6"
                                 strokeDasharray={`${normalizedExcusedPercent}, 100`}
                                 strokeDashoffset={`-${workedPercent}`}
@@ -123,7 +123,7 @@ const StatusCharts = () => {
                             {t('statusCharts.worked', 'Przepracowano:')} {workedHours}h
                         </div>
                         <div className="legend-item">
-                            <div className="legend-dot" style={{ backgroundColor: '#22c55e' }}></div>
+                            <div className="legend-dot" style={{ backgroundColor: 'var(--success-bright)' }}></div>
                             {t('statusCharts.excused', 'Usprawiedliwione:')} {excusedHours}h
                         </div>
                         <div className="legend-item">

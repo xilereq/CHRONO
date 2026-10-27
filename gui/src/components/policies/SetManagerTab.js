@@ -58,12 +58,12 @@ const SetManagerTab = () => {
                 <p className="section-subtitle mb-3">{t('policies.assignmentSectionSubtitle', 'Wybierz pracownika oraz managera, którego chcesz mu przypisać.')}</p>
 
                 {error && (
-                    <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>
+                    <div className="alert alert-error">
                         {error}
                     </div>
                 )}
                 {message && (
-                    <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>
+                    <div className="alert alert-success">
                         <strong>{message}</strong>
                     </div>
                 )}

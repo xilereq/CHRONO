@@ -99,12 +99,12 @@ const PolicyListTab = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {policies.length === 0 ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                             {t('policies.noPoliciesText', 'Brak polityk. Dodaj nową w zakładce "Nowa Polityka".')}
                         </div>
                     ) : (
                         policies.map(policy => (
-                            <div key={policy.id} style={{ border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
+                            <div key={policy.id} style={{ border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden', background: 'var(--bg-card)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', background: expandedPolicyId === policy.id ? '#f8f9fa' : 'transparent' }}>
                                     <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleExpand(policy.id)}>
                                         <strong style={{ fontSize: '15px', color: 'var(--text-main)' }}>{policy.name}</strong>
@@ -117,24 +117,24 @@ const PolicyListTab = () => {
                                             {expandedPolicyId === policy.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                             {t('policies.holidaysBtn', 'Święta')}
                                         </button>
-                                        <button className="btn-outline-rounded" style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fef2f2' }} onClick={() => handleDeletePolicy(policy.id)}>
+                                        <button className="btn-outline-rounded" style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)', background: 'var(--danger-bg)' }} onClick={() => handleDeletePolicy(policy.id)}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>
 
                                 {expandedPolicyId === policy.id && (
-                                    <div style={{ padding: '15px', borderTop: '1px solid #eee', background: '#fafafa' }}>
+                                    <div style={{ padding: '15px', borderTop: '1px solid #eee', background: 'var(--bg-main)' }}>
                                         <h4 style={{ fontSize: '13px', margin: '0 0 10px 0', color: 'var(--text-main)' }}>{t('policies.assignedHolidaysLabel', 'Święta przypisane do tej polityki:')}</h4>
                                         {loading ? (
-                                            <div style={{ fontSize: '12px', color: '#666' }}>{t('common.loading_data', 'Ładowanie...')}</div>
+                                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('common.loading_data', 'Ładowanie...')}</div>
                                         ) : (
-                                            <ul style={{ margin: '0 0 15px 0', paddingLeft: '20px', fontSize: '13px', color: '#555' }}>
+                                            <ul style={{ margin: '0 0 15px 0', paddingLeft: '20px', fontSize: '13px', color: 'var(--text-muted)' }}>
                                                 {policyHolidays.length === 0 ? <li>{t('policies.noSpecificHolidays', 'Brak przypisanych świąt specyficznych.')}</li> :
                                                     policyHolidays.map(h => (
                                                         <li key={h.id || h.holidayId} style={{ marginBottom: '5px' }}>
                                                             {h.name} ({h.date})
-                                                            <span style={{ color: '#ef4444', marginLeft: '10px', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => handleRemoveHoliday(h.id || h.holidayId)}>
+                                                            <span style={{ color: 'var(--danger)', marginLeft: '10px', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => handleRemoveHoliday(h.id || h.holidayId)}>
                                                                 {t('policies.removeFromPolicyAction', 'Usuń z polityki')}
                                                             </span>
                                                         </li>
@@ -159,7 +159,7 @@ const PolicyListTab = () => {
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <span style={{ fontSize: '0.75rem', color: '#666', marginTop: '4px', display: 'block' }}>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                                                     {t('policies.selectedCount', 'Zaznaczono:')} {selectedHolidayIds.length} ({t('policies.multiSelectHoldHint', 'Przytrzymaj Ctrl/Cmd, aby zaznaczyć wiele')})
                                                 </span>
                                             </div>

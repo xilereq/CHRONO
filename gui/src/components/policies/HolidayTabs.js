@@ -212,7 +212,7 @@ const HolidayTabs = () => {
                 {importRows.length > 0 && (
                     <>
                         <div style={{ marginTop: '20px', border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 15px', background: '#fafafa', borderBottom: '1px solid #eee', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 15px', background: 'var(--bg-main)', borderBottom: '1px solid #eee', fontSize: '13px' }}>
                                 <input
                                     type="checkbox"
                                     checked={importRows.every(r => r.selected)}
@@ -237,7 +237,7 @@ const HolidayTabs = () => {
                                         onChange={(e) => updateImportRow(row.key, { date: e.target.value })}
                                     />
                                     {row.alreadyExists && (
-                                        <span style={{ fontSize: '12px', color: '#92400e', background: '#fde68a', borderRadius: '999px', padding: '2px 10px' }}>
+                                        <span style={{ fontSize: '12px', color: 'var(--warning-text)', background: 'var(--warning-bg-strong)', borderRadius: '999px', padding: '2px 10px' }}>
                                             {t('policies.importAlreadyExists', 'Już w bazie')}
                                         </span>
                                     )}
@@ -248,7 +248,7 @@ const HolidayTabs = () => {
                         <div style={{ marginTop: '20px' }}>
                             <span className="form-label">{t('policies.importPoliciesLabel', 'Przypisz do polityk (opcjonalnie)')}</span>
                             {policies.length === 0 ? (
-                                <div style={{ color: '#888', fontSize: '13px', marginTop: '8px' }}>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>
                                     {t('policies.importNoPolicies', 'Brak polityk – święta zostaną tylko zapisane w bazie.')}
                                 </div>
                             ) : (
@@ -283,7 +283,7 @@ const HolidayTabs = () => {
 
                 <div style={{ border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden' }}>
                     {globalHolidays.length === 0 ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                             {t('policies.noHolidaysText', 'Brak dodanych świąt.')}
                         </div>
                     ) : (
@@ -291,11 +291,11 @@ const HolidayTabs = () => {
                             <div key={holiday.holidayId} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', borderBottom: '1px solid #f5f5f5', alignItems: 'center' }}>
                                 <div>
                                     <strong style={{ display: 'block', fontSize: '15px' }}>{holiday.name}</strong>
-                                    <span style={{ color: '#666', fontSize: '13px' }}>{holiday.date}</span>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{holiday.date}</span>
                                 </div>
                                 <button
                                     className="btn-outline-rounded"
-                                    style={{ color: 'red', borderColor: '#ffcdd2', backgroundColor: '#ffebee', padding: '5px 10px' }}
+                                    style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)', backgroundColor: 'var(--danger-bg)', padding: '5px 10px' }}
                                     onClick={() => handleDeleteHoliday(holiday.holidayId)}
                                 >
                                     <Trash2 size={16} />
