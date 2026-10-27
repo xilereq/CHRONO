@@ -15,14 +15,14 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.UsersPolicy;
-import pl.chrono.dbmanager.repository.PolicyRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
-import pl.chrono.dbmanager.repository.UsersPolicyRepository;
+import pl.chrono.dbmanager.ports.I_PolicyData;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.dto.request.MassAssignPolicyRequest;
 import pl.chrono.timemanager.exception.PolicyException;
@@ -31,13 +31,10 @@ import pl.chrono.timemanager.exception.PolicyException;
 class PolicyManagementServiceTest {
 
   @Mock
-  private UsersPolicyRepository usersPolicyRepository;
+  private I_UserData userData;
 
   @Mock
-  private PolicyRepository policyRepository;
-
-  @Mock
-  private UserRepository userRepository;
+  private I_PolicyData policyData;
 
   @InjectMocks
   private PolicyManagementService policyManagementService;
@@ -52,7 +49,7 @@ class PolicyManagementServiceTest {
         () -> policyManagementService.assignPolicyToUser(userId, request)
     );
 
-    verifyNoInteractions(policyRepository, usersPolicyRepository, userRepository);
+    verifyNoInteractions(userData, policyData);
   }
 
   @Test
@@ -62,14 +59,16 @@ class PolicyManagementServiceTest {
     AssignPolicyRequest request = new AssignPolicyRequest(
         invalidPolicyId, LocalDate.now().plusDays(1));
 
-    when(policyRepository.findById(invalidPolicyId)).thenReturn(Optional.empty());
+    when(policyData.findPolicyById(invalidPolicyId)).thenReturn(Optional.empty());
 
     assertThrows(
         PolicyException.NotFound.class,
         () -> policyManagementService.assignPolicyToUser(userId, request)
     );
 
-    verifyNoInteractions(usersPolicyRepository, userRepository);
+    verify(policyData).findPolicyById(invalidPolicyId);
+    verifyNoMoreInteractions(policyData);
+    verifyNoInteractions(userData);
   }
 
   @Test
@@ -84,8 +83,8 @@ class PolicyManagementServiceTest {
     UsersPolicy oldAssignment = new UsersPolicy();
     oldAssignment.setPolicy(policy);
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(policy));
-    when(usersPolicyRepository.findActiveByUserId(userId)).thenReturn(Optional.of(oldAssignment));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(policy));
+    when(policyData.findActiveUsersPolicyByUserId(userId)).thenReturn(Optional.of(oldAssignment));
 
     assertThrows(
         PolicyException.AlreadyAssigned.class,
@@ -111,8 +110,8 @@ class PolicyManagementServiceTest {
     oldAssignment.setPolicy(oldPolicy);
     oldAssignment.setValidFrom(LocalDate.now().plusDays(2));
 
-    when(policyRepository.findById(newPolicyId)).thenReturn(Optional.of(newPolicy));
-    when(usersPolicyRepository.findActiveByUserId(userId)).thenReturn(Optional.of(oldAssignment));
+    when(policyData.findPolicyById(newPolicyId)).thenReturn(Optional.of(newPolicy));
+    when(policyData.findActiveUsersPolicyByUserId(userId)).thenReturn(Optional.of(oldAssignment));
 
     assertThrows(
         PolicyException.InvalidDate.class,
@@ -131,14 +130,14 @@ class PolicyManagementServiceTest {
     newPolicy.setPolicyId(policyId);
     User user = new User();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(newPolicy));
-    when(usersPolicyRepository.findActiveByUserId(userId)).thenReturn(Optional.empty());
-    when(userRepository.getReferenceById(userId)).thenReturn(user);
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(newPolicy));
+    when(policyData.findActiveUsersPolicyByUserId(userId)).thenReturn(Optional.empty());
+    when(userData.getUserReference(userId)).thenReturn(user);
 
     policyManagementService.assignPolicyToUser(userId, request);
 
     ArgumentCaptor<UsersPolicy> captor = ArgumentCaptor.forClass(UsersPolicy.class);
-    verify(usersPolicyRepository, times(1)).save(captor.capture());
+    verify(policyData, times(1)).saveUsersPolicy(captor.capture());
 
     UsersPolicy savedAssignment = captor.getValue();
     assertEquals(user, savedAssignment.getUser());
@@ -166,14 +165,14 @@ class PolicyManagementServiceTest {
     oldAssignment.setPolicy(oldPolicy);
     oldAssignment.setValidFrom(LocalDate.now().plusDays(1));
 
-    when(policyRepository.findById(newPolicyId)).thenReturn(Optional.of(newPolicy));
-    when(usersPolicyRepository.findActiveByUserId(userId)).thenReturn(Optional.of(oldAssignment));
-    when(userRepository.getReferenceById(userId)).thenReturn(user);
+    when(policyData.findPolicyById(newPolicyId)).thenReturn(Optional.of(newPolicy));
+    when(policyData.findActiveUsersPolicyByUserId(userId)).thenReturn(Optional.of(oldAssignment));
+    when(userData.getUserReference(userId)).thenReturn(user);
 
     policyManagementService.assignPolicyToUser(userId, request);
 
     ArgumentCaptor<UsersPolicy> captor = ArgumentCaptor.forClass(UsersPolicy.class);
-    verify(usersPolicyRepository, times(2)).save(captor.capture());
+    verify(policyData, times(2)).saveUsersPolicy(captor.capture());
 
     UsersPolicy updatedOld = captor.getAllValues().get(0);
     UsersPolicy createdNew = captor.getAllValues().get(1);
@@ -196,17 +195,17 @@ class PolicyManagementServiceTest {
     User user1 = new User();
     User user2 = new User();
 
-    when(policyRepository.findById(policyId)).thenReturn(Optional.of(newPolicy));
+    when(policyData.findPolicyById(policyId)).thenReturn(Optional.of(newPolicy));
 
-    when(usersPolicyRepository.findActiveByUserId(1)).thenReturn(Optional.empty());
-    when(usersPolicyRepository.findActiveByUserId(2)).thenReturn(Optional.empty());
+    when(policyData.findActiveUsersPolicyByUserId(1)).thenReturn(Optional.empty());
+    when(policyData.findActiveUsersPolicyByUserId(2)).thenReturn(Optional.empty());
 
-    when(userRepository.getReferenceById(1)).thenReturn(user1);
-    when(userRepository.getReferenceById(2)).thenReturn(user2);
+    when(userData.getUserReference(1)).thenReturn(user1);
+    when(userData.getUserReference(2)).thenReturn(user2);
 
     policyManagementService.assignPolicyToUsersBulk(request);
 
-    verify(usersPolicyRepository, times(2)).save(any(UsersPolicy.class));
+    verify(policyData, times(2)).saveUsersPolicy(any(UsersPolicy.class));
   }
 
   @Test
@@ -217,6 +216,6 @@ class PolicyManagementServiceTest {
 
     policyManagementService.assignPolicyToUsersBulk(request);
 
-    verifyNoInteractions(policyRepository, usersPolicyRepository, userRepository);
+    verifyNoInteractions(policyData, userData);
   }
 }

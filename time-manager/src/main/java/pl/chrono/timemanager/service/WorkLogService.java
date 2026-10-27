@@ -17,7 +17,8 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
+import pl.chrono.timemanager.api.I_WorkLogService;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
 import pl.chrono.timemanager.event.LawViolationEvent;
@@ -28,15 +29,16 @@ import pl.chrono.usermanager.event.UserLoginEvent;
 
 @Service
 @RequiredArgsConstructor
-public class WorkLogService {
+public class WorkLogService implements I_WorkLogService {
   private final I_TimeData timeData;
-  private final UserRepository userRepository;
+  private final I_UserData userData;
   private final WorkLogMapper workLogMapper;
   private final OvertimeService overtimeService;
   private final ApplicationEventPublisher eventPublisher;
   private final WorkTimeCalculationService workTimeCalculationService;
 
   @Transactional(readOnly = true)
+  @Override
   public List<WorkLogDto> getWorkLogsByDate(Integer userId, LocalDate date) {
     LocalDateTime startOfDay = date.atStartOfDay();
     LocalDateTime endOfDay = date.plusDays(1).atStartOfDay().minusNanos(1);
@@ -58,7 +60,7 @@ public class WorkLogService {
   @EventListener
   @Transactional
   public void handleUserLoginEvent(UserLoginEvent event) {
-    User user = userRepository.findById(event.userId())
+    User user = userData.findById(event.userId())
         .orElseThrow(() -> new UserException.NotFound(event.userId()));
     if (user.isForcePasswordChange()) {
       return;
@@ -69,8 +71,9 @@ public class WorkLogService {
   }
 
   @Transactional
+  @Override
   public WorkLogDto startWork(Integer userId, WorkLocationType location) {
-    User user = userRepository.findByIdWithPessimisticLock(userId)
+    User user = userData.findByIdWithPessimisticLock(userId)
         .orElseThrow(() -> new UserException.NotFound(userId));
 
     if (isUserWorking(userId)) {
@@ -103,6 +106,7 @@ public class WorkLogService {
   }
 
   @Transactional
+  @Override
   public void cancelWork(Integer userId) {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
         .orElseThrow(() -> new WorkException.NoActiveWork(userId));
@@ -115,6 +119,7 @@ public class WorkLogService {
   }
 
   @Transactional()
+  @Override
   public WorkLogDto endWork(Integer userId) {
     WorkLog workLog = timeData.findActiveWorkLog(userId)
         .orElseThrow(() -> new WorkException.NoActiveWork(userId));
@@ -168,11 +173,13 @@ public class WorkLogService {
   }
 
   @Transactional(readOnly = true)
+  @Override
   public boolean isUserWorking(Integer userId) {
     return timeData.isUserWorking(userId);
   }
 
   @Transactional(readOnly = true)
+  @Override
   public String getActiveWorkTime(Integer userId) {
     return timeData.findActiveWorkLog(userId).map(workLog -> {
       long workTime = workLog.calculateWorkTime(LocalDateTime.now());
@@ -239,8 +246,9 @@ public class WorkLogService {
   }
 
   @Transactional(readOnly = true)
+  @Override
   public WorkStats getMonthlyStats(Integer userId) {
-    User user = userRepository.findById(userId)
+    User user = userData.findById(userId)
         .orElseThrow(() -> new UserException.NotFound(userId));
 
     LocalDate today = LocalDate.now();
@@ -258,8 +266,9 @@ public class WorkLogService {
   }
 
   @Transactional(readOnly = true)
+  @Override
   public String getTodayTarget(Integer userId) {
-    User user = userRepository.findById(userId)
+    User user = userData.findById(userId)
         .orElseThrow(() -> new UserException.NotFound(userId));
     LocalDate today = LocalDate.now();
     Policy policyForToday = user.getPolicyForDate(today);

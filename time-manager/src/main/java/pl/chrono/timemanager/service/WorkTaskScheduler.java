@@ -7,13 +7,13 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import pl.chrono.dbmanager.repository.OperationLogRepository;
+import pl.chrono.dbmanager.ports.I_OperationLogData;
 
 @Component
 @RequiredArgsConstructor
 public class WorkTaskScheduler {
   private final ScheduleService scheduleService;
-  private final OperationLogRepository operationLogRepository;
+  private final I_OperationLogData operationLogData;
 
   @Scheduled(cron = "0 0 4 * * *")
   public void runCountOvertime() {
@@ -42,8 +42,7 @@ public class WorkTaskScheduler {
     LocalDateTime startOfQuarter = LocalDate.of(currentYear, firstMonthOfQuarter, 1).atStartOfDay();
     LocalDateTime now = LocalDateTime.now();
 
-    boolean alreadyRanThisQuarter = operationLogRepository.existsByActionAndTimestampBetween(
-        "SYSTEM_EXPIRE_OVERTIME", startOfQuarter, now);
+    boolean alreadyRanThisQuarter = operationLogData.isLogPresent("SYSTEM_EXPIRE_OVERTIME", startOfQuarter, now);
 
     if (!alreadyRanThisQuarter) {
       scheduleService.processOvertimeExpirations();

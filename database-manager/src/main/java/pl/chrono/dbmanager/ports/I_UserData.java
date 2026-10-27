@@ -30,4 +30,9 @@ public interface I_UserData {
 
   Optional<Role> findRoleByName(String roleName);
 
+  List<Integer> findAllUserIds();
+
+  Optional<User> findByIdWithPessimisticLock(Integer userId);
+
+  User getUserReference(Integer userId);
 }

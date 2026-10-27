@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import pl.chrono.timemanager.api.I_PolicyService;
 import pl.chrono.timemanager.dto.request.AssignHolidayRequest;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.dto.request.CreatePolicyRequest;
@@ -36,8 +37,6 @@ import pl.chrono.timemanager.dto.request.MassAssignPolicyRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.dto.response.PolicyDto;
 import pl.chrono.timemanager.exception.PolicyException;
-import pl.chrono.timemanager.service.PolicyConfigurationService;
-import pl.chrono.timemanager.service.PolicyManagementService;
 import pl.chrono.usermanager.security.JwtService;
 import pl.chrono.usermanager.service.AuthService;
 import pl.chrono.workforceapi.TestApiConfig;
@@ -55,9 +54,7 @@ class PolicyControllerIT {
   @Autowired
   private MockMvc mockMvc;
   @MockitoBean
-  private PolicyConfigurationService configService;
-  @MockitoBean
-  private PolicyManagementService managementService;
+  private I_PolicyService policyService;
   @MockitoBean
   private AuthService authService;
   @MockitoBean
@@ -91,7 +88,7 @@ class PolicyControllerIT {
         "Standard", 8, 12, 48, 0,
         List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY")
     );
-    when(configService.createPolicy(any(CreatePolicyRequest.class))).thenReturn(samplePolicyDto());
+    when(policyService.createPolicy(any(CreatePolicyRequest.class))).thenReturn(samplePolicyDto());
 
     mockMvc.perform(post("/api/policies").header("Authorization", BEARER_TOKEN)
             .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
@@ -122,7 +119,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void getAllPoliciesTest() throws Exception {
-    when(configService.getAllPolicies()).thenReturn(List.of(samplePolicyDto(), samplePolicyDto()));
+    when(policyService.getAllPolicies()).thenReturn(List.of(samplePolicyDto(), samplePolicyDto()));
 
     mockMvc.perform(get("/api/policies").header("Authorization", BEARER_TOKEN))
         .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
@@ -131,7 +128,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void getAllPoliciesEmptyListTest() throws Exception {
-    when(configService.getAllPolicies()).thenReturn(List.of());
+    when(policyService.getAllPolicies()).thenReturn(List.of());
 
     mockMvc.perform(get("/api/policies").header("Authorization", BEARER_TOKEN))
         .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
@@ -140,7 +137,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void getPolicyByIdTesty() throws Exception {
-    when(configService.getPolicyById(POLICY_ID)).thenReturn(samplePolicyDto());
+    when(policyService.getPolicyById(POLICY_ID)).thenReturn(samplePolicyDto());
 
     mockMvc.perform(
             get("/api/policies/{policyId}", POLICY_ID).header("Authorization", BEARER_TOKEN))
@@ -151,7 +148,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void getPolicyByIdNotFound4xxTest() throws Exception {
-    when(configService.getPolicyById(999)).thenThrow(new PolicyException.NotFound(999));
+    when(policyService.getPolicyById(999)).thenThrow(new PolicyException.NotFound(999));
 
     mockMvc.perform(get("/api/policies/{policyId}", 999).header("Authorization", BEARER_TOKEN))
         .andExpect(status().is4xxClientError());
@@ -160,7 +157,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void deletePolicyTest() throws Exception {
-    doNothing().when(configService).deletePolicy(POLICY_ID);
+    doNothing().when(policyService).deletePolicy(POLICY_ID);
 
     mockMvc.perform(
             delete("/api/policies/{policyId}", POLICY_ID).header("Authorization", BEARER_TOKEN))
@@ -170,7 +167,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void deletePolicyNotFound4xxTest() throws Exception {
-    doThrow(new PolicyException.NotFound(999)).when(configService).deletePolicy(999);
+    doThrow(new PolicyException.NotFound(999)).when(policyService).deletePolicy(999);
 
     mockMvc.perform(delete("/api/policies/{policyId}", 999).header("Authorization", BEARER_TOKEN))
         .andExpect(status().is4xxClientError());
@@ -180,7 +177,7 @@ class PolicyControllerIT {
   @WithMockUser(roles = "ADMIN")
   void assignPolicyTest() throws Exception {
     AssignPolicyRequest request = new AssignPolicyRequest(POLICY_ID, LocalDate.now());
-    doNothing().when(managementService)
+    doNothing().when(policyService)
         .assignPolicyToUser(eq(USER_ID), any(AssignPolicyRequest.class));
 
     mockMvc.perform(
@@ -202,7 +199,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void getHolidaysForPolicyListTest() throws Exception {
-    when(configService.getHolidaysForPolicy(POLICY_ID)).thenReturn(List.of(sampleHolidayDto()));
+    when(policyService.getHolidaysForPolicy(POLICY_ID)).thenReturn(List.of(sampleHolidayDto()));
 
     mockMvc.perform(
             get("/api/policies/{policyId}/holidays", POLICY_ID).header("Authorization",
@@ -216,7 +213,7 @@ class PolicyControllerIT {
   @WithMockUser(roles = "ADMIN")
   void assignHolidayToPolicyTest() throws Exception {
     AssignHolidayRequest request = new AssignHolidayRequest(HOLIDAY_ID);
-    doNothing().when(configService)
+    doNothing().when(policyService)
         .assignHolidayToPolicy(eq(POLICY_ID), any(AssignHolidayRequest.class));
 
     mockMvc.perform(
@@ -228,7 +225,7 @@ class PolicyControllerIT {
   @Test
   @WithMockUser(roles = "ADMIN")
   void removeHolidayFromPolicyTest() throws Exception {
-    doNothing().when(configService).removeHolidayFromPolicy(POLICY_ID, HOLIDAY_ID);
+    doNothing().when(policyService).removeHolidayFromPolicy(POLICY_ID, HOLIDAY_ID);
 
     mockMvc.perform(
         delete("/api/policies/{policyId}/holidays/{holidayId}", POLICY_ID, HOLIDAY_ID).header(
@@ -240,7 +237,7 @@ class PolicyControllerIT {
   void assignPolicyBulkTest() throws Exception {
     MassAssignPolicyRequest request = new MassAssignPolicyRequest(
         POLICY_ID, List.of(1, 2, 3), LocalDate.now());
-    doNothing().when(managementService).assignPolicyToUsersBulk(any(MassAssignPolicyRequest.class));
+    doNothing().when(policyService).assignPolicyToUsersBulk(any(MassAssignPolicyRequest.class));
 
     mockMvc.perform(post("/api/policies/assign-bulk").header("Authorization", BEARER_TOKEN)
             .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
@@ -251,7 +248,7 @@ class PolicyControllerIT {
   @WithMockUser(roles = "ADMIN")
   void assignHolidaysToPolicyBulkTest() throws Exception {
     MassAssignHolidayRequest request = new MassAssignHolidayRequest(List.of(1, 2, 3));
-    doNothing().when(configService)
+    doNothing().when(policyService)
         .assignHolidaysToPolicyBulk(eq(POLICY_ID), any(MassAssignHolidayRequest.class));
 
     mockMvc.perform(

@@ -13,7 +13,8 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
+import pl.chrono.timemanager.api.I_OvertimeService;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
@@ -21,10 +22,10 @@ import pl.chrono.timemanager.mapper.OvertimeMapper;
 
 @Service
 @RequiredArgsConstructor
-public class OvertimeService {
+public class OvertimeService implements I_OvertimeService {
   private final I_OvertimeData overtimeData;
   private final OvertimeMapper overtimeMapper;
-  private final UserRepository userRepository;
+  private final I_UserData userData;
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional(readOnly = true)
@@ -33,6 +34,7 @@ public class OvertimeService {
   }
 
   @Transactional
+  @Override
   public void reserveOvertimeForApplication(Application application) {
     int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
 
@@ -51,6 +53,7 @@ public class OvertimeService {
   }
 
   @Transactional
+  @Override
   public void refundOvertimeForApplication(Application application) {
     int duration = application.getDurationSeconds() != null ? application.getDurationSeconds() : 0;
 
@@ -145,7 +148,7 @@ public class OvertimeService {
     }
 
     OvertimeArchive archive = new OvertimeArchive();
-    archive.setUser(userRepository.getReferenceById(userId));
+    archive.setUser(userData.getUserReference(userId));
     archive.setType(OvertimeType.EXPIRED);
     archive.setDurationSeconds(expiredBalance);
     archive.setValidUntil(now);

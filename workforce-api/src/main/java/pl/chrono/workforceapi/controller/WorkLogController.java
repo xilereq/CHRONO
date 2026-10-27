@@ -1,5 +1,7 @@
 package pl.chrono.workforceapi.controller;
 
+import java.time.LocalDate;
+import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,20 +13,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.dbmanager.model.enums.WorkLocationType;
+import pl.chrono.timemanager.api.I_WorkLogService;
 import pl.chrono.timemanager.dto.request.StartWorkRequest;
 import pl.chrono.timemanager.dto.response.WorkLogDto;
 import pl.chrono.timemanager.dto.response.WorkStats;
-import pl.chrono.timemanager.service.WorkLogService;
 import pl.chrono.usermanager.service.AuthService;
-import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/work-log")
 public class WorkLogController extends BaseController {
-  private final WorkLogService workLogService;
+  private final I_WorkLogService workLogService;
 
-  public WorkLogController(AuthService authService, WorkLogService workLogService) {
+  public WorkLogController(AuthService authService, I_WorkLogService workLogService) {
     super(authService);
     this.workLogService = workLogService;
   }

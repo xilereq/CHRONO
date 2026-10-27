@@ -31,10 +31,10 @@ import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
+import pl.chrono.dbmanager.ports.I_ApplicationData;
+import pl.chrono.dbmanager.ports.I_OperationLogData;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
-import pl.chrono.dbmanager.repository.OperationLogRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.event.LawViolationEvent;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,15 +43,15 @@ class ScheduleServiceTest {
   @Mock
   private I_TimeData timeData;
   @Mock
-  private OperationLogRepository logRepository;
+  private I_OperationLogData operationLogData;
   @Mock
   private OvertimeService overtimeService;
   @Mock
-  private ApplicationRepository applicationRepository;
+  private I_ApplicationData applicationData;
   @Mock
   private ApplicationEventPublisher eventPublisher;
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
   @Mock
   private WorkTimeCalculationService workTimeCalculationService;
 
@@ -76,7 +76,7 @@ class ScheduleServiceTest {
 
     scheduleService.processWorkLogs();
 
-    verify(logRepository, never()).save(any());
+    verify(operationLogData, never()).saveLog(any());
   }
 
   @Test
@@ -109,7 +109,7 @@ class ScheduleServiceTest {
     assertThat(eventCaptor.getValue().violationType()).isEqualTo("UNCLOSED_WORK_LOG");
 
     ArgumentCaptor<OperationLog> logCaptor = ArgumentCaptor.forClass(OperationLog.class);
-    verify(logRepository).save(logCaptor.capture());
+    verify(operationLogData).saveLog(logCaptor.capture());
     assertThat(logCaptor.getValue().getDetails()).contains("1 flagged for correction");
   }
 
@@ -155,7 +155,7 @@ class ScheduleServiceTest {
     verify(timeData).deleteWorkLog(spyLog);
 
     ArgumentCaptor<OperationLog> logCaptor = ArgumentCaptor.forClass(OperationLog.class);
-    verify(logRepository).save(logCaptor.capture());
+    verify(operationLogData).saveLog(logCaptor.capture());
     assertThat(logCaptor.getValue().getDetails()).contains("1 abandoned and removed");
   }
 
@@ -202,7 +202,7 @@ class ScheduleServiceTest {
     verify(overtimeService, never()).registerDebt(any(), any());
 
     ArgumentCaptor<OperationLog> logCaptor = ArgumentCaptor.forClass(OperationLog.class);
-    verify(logRepository).save(logCaptor.capture());
+    verify(operationLogData).saveLog(logCaptor.capture());
     assertThat(logCaptor.getValue().getDetails()).contains("1 settled");
   }
 
@@ -222,7 +222,7 @@ class ScheduleServiceTest {
 
     Application app = new Application();
     app.setType(ApplicationType.OVERTIME_EARN);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
 
     scheduleService.processWorkLogs();
 
@@ -247,7 +247,7 @@ class ScheduleServiceTest {
     Application app = new Application();
     app.setType(ApplicationType.EARLY_EXIT);
     app.setDurationSeconds(2 * 3600);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
 
     scheduleService.processWorkLogs();
 
@@ -273,7 +273,7 @@ class ScheduleServiceTest {
     Application app = new Application();
     app.setType(ApplicationType.OVERTIME_TAKE);
     app.setDurationSeconds(2 * 3600);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
 
     scheduleService.processWorkLogs();
 
@@ -297,7 +297,7 @@ class ScheduleServiceTest {
     when(workTimeCalculationService.getRoundingSeconds(any())).thenReturn(0);
     doReturn(6 * 3600L).when(spyLog).getEffectiveWorkTime(any(), any(Integer.class), any(Integer.class));
 
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(Collections.emptyList());
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(Collections.emptyList());
 
     scheduleService.processWorkLogs();
 
@@ -310,14 +310,14 @@ class ScheduleServiceTest {
 
   @Test
   void processOvertimeExpirationsTest() {
-    when(userRepository.findAllUserIds()).thenReturn(List.of(1, 2, 3));
+    when(userData.findAllUserIds()).thenReturn(List.of(1, 2, 3));
 
     scheduleService.processOvertimeExpirations();
 
     verify(overtimeService, times(3)).expireUnusedOvertime(any(Integer.class));
 
     ArgumentCaptor<OperationLog> logCaptor = ArgumentCaptor.forClass(OperationLog.class);
-    verify(logRepository).save(logCaptor.capture());
+    verify(operationLogData).saveLog(logCaptor.capture());
     assertThat(logCaptor.getValue().getDetails()).contains("3 users");
   }
 
@@ -383,7 +383,7 @@ class ScheduleServiceTest {
 
     Application app = new Application();
     app.setType(ApplicationType.EARLY_EXIT);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
 
     scheduleService.processWorkLogs();
 
@@ -408,7 +408,7 @@ class ScheduleServiceTest {
 
     Application app = new Application();
     app.setType(ApplicationType.OVERTIME_EARN);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
 
     scheduleService.processWorkLogs();
 
@@ -433,7 +433,7 @@ class ScheduleServiceTest {
     Application app = new Application();
     app.setType(ApplicationType.EARLY_EXIT);
     app.setDurationSeconds(null);
-    when(applicationRepository.findApprovedByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
+    when(applicationData.findApprovedApplicationsByEmployeeAndDate(any(), any())).thenReturn(List.of(app));
 
     scheduleService.processWorkLogs();
 

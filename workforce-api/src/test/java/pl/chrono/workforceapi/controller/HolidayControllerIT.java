@@ -23,10 +23,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import pl.chrono.timemanager.api.I_HolidayService;
 import pl.chrono.timemanager.dto.request.CreateHolidayRequest;
 import pl.chrono.timemanager.dto.response.HolidayDto;
 import pl.chrono.timemanager.exception.HolidayException;
-import pl.chrono.timemanager.service.HolidayService;
 import pl.chrono.usermanager.security.JwtService;
 import pl.chrono.usermanager.service.AuthService;
 import pl.chrono.workforceapi.TestApiConfig;
@@ -41,7 +41,7 @@ class HolidayControllerIT {
   @Autowired
   private MockMvc mockMvc;
   @MockitoBean
-  private HolidayService holidayService;
+  private I_HolidayService holidayService;
   @MockitoBean
   private AuthService authService;
   @MockitoBean

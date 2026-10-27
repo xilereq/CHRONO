@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.ports;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import pl.chrono.dbmanager.model.Holiday;
@@ -11,6 +12,8 @@ public interface I_HolidayData {
   List<Holiday> findAllHolidays();
 
   Optional<Holiday> findHolidayById(Integer holidayId);
+
+  List<Holiday> findHolidaysByIds(Collection<Integer> holidayIds);
 
   Optional<Holiday> findByNameAndDate(String name, LocalDate date);
 

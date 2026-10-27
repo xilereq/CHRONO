@@ -28,7 +28,7 @@ import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.OvertimeType;
 import pl.chrono.dbmanager.ports.I_OvertimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.dto.response.OvertimeRecordDto;
 import pl.chrono.timemanager.event.LawViolationEvent;
 import pl.chrono.timemanager.exception.OvertimeException;
@@ -47,7 +47,7 @@ class OvertimeServiceTest {
   private ApplicationEventPublisher eventPublisher;
 
   @Mock
-  private UserRepository userRepository;
+  private I_UserData userData;
 
   @InjectMocks
   private OvertimeService overtimeService;
@@ -326,7 +326,7 @@ class OvertimeServiceTest {
 
     overtimeService.expireUnusedOvertime(1);
 
-    verify(userRepository, never()).getReferenceById(any());
+    verify(userData, never()).getUserReference(any());
     verify(overtimeData, never()).saveOvertimeRecord(any());
   }
 
@@ -339,7 +339,7 @@ class OvertimeServiceTest {
         -3600);
     overtimeService.expireUnusedOvertime(2);
 
-    verify(userRepository, never()).getReferenceById(any());
+    verify(userData, never()).getUserReference(any());
     verify(overtimeData, never()).saveOvertimeRecord(any());
   }
 
@@ -349,7 +349,7 @@ class OvertimeServiceTest {
     user.setUserId(1);
 
     when(overtimeData.getExpiringOvertimeBalance(eq(1), any(LocalDateTime.class))).thenReturn(7200);
-    when(userRepository.getReferenceById(1)).thenReturn(user);
+    when(userData.getUserReference(1)).thenReturn(user);
 
     overtimeService.expireUnusedOvertime(1);
 

@@ -12,10 +12,10 @@ import pl.chrono.dbmanager.model.OperationLog;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.WorkLog;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
+import pl.chrono.dbmanager.ports.I_ApplicationData;
+import pl.chrono.dbmanager.ports.I_OperationLogData;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.ApplicationRepository;
-import pl.chrono.dbmanager.repository.OperationLogRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.timemanager.event.LawViolationEvent;
 
 
@@ -23,11 +23,11 @@ import pl.chrono.timemanager.event.LawViolationEvent;
 @RequiredArgsConstructor
 public class ScheduleService {
   private final I_TimeData timeData;
-  private final OperationLogRepository logRepository;
+  private final I_OperationLogData operationLogData;
   private final OvertimeService overtimeService;
-  private final ApplicationRepository applicationRepository;
+  private final I_ApplicationData applicationData;
   private final ApplicationEventPublisher eventPublisher;
-  private final UserRepository userRepository;
+  private final I_UserData userData;
   private final WorkTimeCalculationService workTimeCalculationService;
 
   @Transactional
@@ -110,7 +110,7 @@ public class ScheduleService {
       int roundingSeconds = workTimeCalculationService.getRoundingSeconds(policyForDay);
       long workTime = workLog.getEffectiveWorkTime(now, baseRequiredSeconds, roundingSeconds);
 
-      List<Application> dailyApps = applicationRepository.findApprovedByEmployeeAndDate(
+      List<Application> dailyApps = applicationData.findApprovedApplicationsByEmployeeAndDate(
           userId, workDate);
 
       if (workTime > baseRequiredSeconds) {
@@ -172,12 +172,12 @@ public class ScheduleService {
     ));
     auditLog.setUserEmail("SYSTEM");
     auditLog.setTimestamp(LocalDateTime.now());
-    logRepository.save(auditLog);
+    operationLogData.saveLog(auditLog);
   }
 
   @Transactional
   public void processOvertimeExpirations() {
-    List<Integer> userIds = userRepository.findAllUserIds();
+    List<Integer> userIds = userData.findAllUserIds();
     int processedCount = 0;
 
     for (Integer userId : userIds) {
@@ -191,6 +191,6 @@ public class ScheduleService {
         "System verified and expired unused overtime for " + processedCount + " users.");
     auditLog.setUserEmail("SYSTEM");
     auditLog.setTimestamp(LocalDateTime.now());
-    logRepository.save(auditLog);
+    operationLogData.saveLog(auditLog);
   }
 }

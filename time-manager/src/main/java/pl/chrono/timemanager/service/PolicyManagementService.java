@@ -8,9 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.UsersPolicy;
-import pl.chrono.dbmanager.repository.PolicyRepository;
-import pl.chrono.dbmanager.repository.UserRepository;
-import pl.chrono.dbmanager.repository.UsersPolicyRepository;
+import pl.chrono.dbmanager.ports.I_PolicyData;
+import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.dto.request.AssignPolicyRequest;
 import pl.chrono.timemanager.dto.request.MassAssignPolicyRequest;
@@ -20,9 +19,8 @@ import pl.chrono.timemanager.exception.PolicyException;
 @Service
 @RequiredArgsConstructor
 public class PolicyManagementService {
-  private final UsersPolicyRepository usersPolicyRepository;
-  private final PolicyRepository policyRepository;
-  private final UserRepository userRepository;
+  private final I_PolicyData policyData;
+  private final I_UserData userData;
 
   @Transactional
   @LogActivity(action = "ASSIGNED_POLICY", details = "Assigned policy to user")
@@ -32,10 +30,10 @@ public class PolicyManagementService {
           ErrorCodes.PAST_START_DATE, "Start date cannot be in the past");
     }
 
-    Policy newPolicy = policyRepository.findById(request.policyId())
+    Policy newPolicy = policyData.findPolicyById(request.policyId())
         .orElseThrow(() -> new PolicyException.NotFound(request.policyId()));
 
-    usersPolicyRepository.findActiveByUserId(userId).ifPresent(oldPolicy -> {
+    policyData.findActiveUsersPolicyByUserId(userId).ifPresent(oldPolicy -> {
       if (oldPolicy.getPolicy().getPolicyId().equals(request.policyId())) {
         throw new PolicyException.AlreadyAssigned();
       }
@@ -47,16 +45,16 @@ public class PolicyManagementService {
       }
 
       oldPolicy.setValidTo(request.startDate().minusDays(1));
-      usersPolicyRepository.save(oldPolicy);
+      policyData.saveUsersPolicy(oldPolicy);
     });
 
     UsersPolicy newAssignment = new UsersPolicy();
-    User user = userRepository.getReferenceById(userId);
+    User user = userData.getUserReference(userId);
     newAssignment.setUser(user);
     newAssignment.setPolicy(newPolicy);
     newAssignment.setValidFrom(request.startDate());
     newAssignment.setValidTo(null);
-    usersPolicyRepository.save(newAssignment);
+    policyData.saveUsersPolicy(newAssignment);
   }
 
   @Transactional

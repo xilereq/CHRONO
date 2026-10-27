@@ -1,7 +1,5 @@
 package pl.chrono.reportmanager.mapper;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -10,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import pl.chrono.dbmanager.model.ScheduledReport;

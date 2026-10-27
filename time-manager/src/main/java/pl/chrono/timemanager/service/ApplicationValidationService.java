@@ -7,22 +7,24 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.Policy;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ApplicationType;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
+import pl.chrono.timemanager.api.I_ApplicationValidationService;
 import pl.chrono.timemanager.exception.ApplicationValidationException;
 import pl.chrono.timemanager.exception.UserException;
 
 @Service
 @RequiredArgsConstructor
-public class ApplicationValidationService {
+public class ApplicationValidationService implements I_ApplicationValidationService {
 
-  private final UserRepository userRepository;
+  private final I_UserData userData;
   private final LeaveBalanceService leaveBalanceService;
   private final WorkTimeCalculationService workingDaysCalculationService;
 
+  @Override
   @Transactional(readOnly = true)
   public void validateApplicationLimits(Integer employeeId, LocalDate startDate, LocalDate endDate, ApplicationType type, Integer durationSeconds) {
 
-    User user = userRepository.findById(employeeId)
+    User user = userData.findById(employeeId)
         .orElseThrow(() -> new UserException.NotFound(employeeId));
 
     workingDaysCalculationService.validateEmploymentPeriod(user, startDate, endDate);

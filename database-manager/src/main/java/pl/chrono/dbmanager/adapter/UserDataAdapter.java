@@ -72,4 +72,19 @@ public class UserDataAdapter implements I_UserData {
   public Optional<Role> findRoleByName(String roleName) {
     return roleRepository.findByName(roleName);
   }
+
+  @Override
+  public List<Integer> findAllUserIds() {
+    return userRepository.findAllUserIds();
+  }
+
+  @Override
+  public Optional<User> findByIdWithPessimisticLock(Integer userId) {
+    return userRepository.findByIdWithPessimisticLock(userId);
+  }
+
+  @Override
+  public User getUserReference(Integer userId) {
+    return userRepository.getReferenceById(userId);
+  }
 }

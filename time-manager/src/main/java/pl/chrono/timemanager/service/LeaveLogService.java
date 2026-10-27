@@ -8,7 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.dbmanager.model.LeaveLog;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.ports.I_TimeData;
-import pl.chrono.dbmanager.repository.UserRepository;
+import pl.chrono.dbmanager.ports.I_UserData;
+import pl.chrono.timemanager.api.I_LeaveLogService;
 import pl.chrono.timemanager.dto.response.LeaveLogDto;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkException;
@@ -16,12 +17,13 @@ import pl.chrono.timemanager.mapper.LeaveLogMapper;
 
 @Service
 @RequiredArgsConstructor
-public class LeaveLogService {
+public class LeaveLogService implements I_LeaveLogService {
   private final I_TimeData timeData;
-  private final UserRepository userRepository;
+  private final I_UserData userData;
   private final LeaveLogMapper leaveLogMapper;
   private final WorkTimeCalculationService workTimeCalculationService;
 
+  @Override
   @Transactional
   public LeaveLogDto startLeave(Integer userId) {
     var activeWorkLog = timeData.findActiveWorkLog(userId)
@@ -31,7 +33,7 @@ public class LeaveLogService {
       throw new WorkException.LeaveStarted(userId);
     }
 
-    User user = userRepository.findById(userId)
+    User user = userData.findById(userId)
         .orElseThrow(() -> new UserException.NotFound(userId));
     workTimeCalculationService.validateEmploymentPeriod(user, LocalDate.now());
 
@@ -43,6 +45,7 @@ public class LeaveLogService {
     return leaveLogMapper.toDto(saved);
   }
 
+  @Override
   @Transactional
   public LeaveLogDto endLeave(Integer userId) {
     LeaveLog leaveLog = timeData.findActiveLeaveLog(userId)
@@ -52,6 +55,7 @@ public class LeaveLogService {
     return leaveLogMapper.toDto(saved);
   }
 
+  @Override
   @Transactional(readOnly = true)
   public boolean isUserOnLeave(Integer userId) {
     return timeData.isUserOnLeave(userId);
