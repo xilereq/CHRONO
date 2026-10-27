@@ -1,99 +1,57 @@
 package pl.chrono.reportmanager.generator;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PdfPTable;
-import java.util.ArrayList;
+import static pl.chrono.reportmanager.dto.ValueType.DATE;
+import static pl.chrono.reportmanager.dto.ValueType.DURATION;
+import static pl.chrono.reportmanager.dto.ValueType.TEXT;
+import static pl.chrono.reportmanager.dto.ValueType.TIME;
+
+import java.util.Arrays;
 import java.util.List;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.DailyTimesheetEntry;
 import pl.chrono.reportmanager.dto.EmployeeTimesheetReport;
+import pl.chrono.reportmanager.dto.ReportColumn;
+import pl.chrono.reportmanager.dto.ReportDocument;
+import pl.chrono.reportmanager.dto.ReportField;
 
 @Component
-public class TimesheetReportGenerator extends AbstractReportGenerator<EmployeeTimesheetReport> {
+public class TimesheetReportGenerator implements I_ReportGenerator<EmployeeTimesheetReport> {
 
-  private static final String[] HEADERS = {
-    "Data", "Start", "Koniec", "Efektywny Czas", "Wymagany Czas", "Bilans", "Godziny Nocne",
-    "Wniosek"
-  };
-  private static final String[] PDF_HEADERS = {
-    "Data", "Start", "Koniec", "Efekt. Czas", "Wymagano", "Bilans", "Nocne", "Wniosek"
-  };
-
-  @Override
-  protected void writeCsv(EmployeeTimesheetReport report, StringBuilder csv) {
-    csvRow(csv, "Raport Okresowy:", report.startDate() + " do " + report.endDate());
-    csvRow(csv, "Pracownik:", report.employeeFullName());
-    csvRow(csv, "Przepracowano:", formatSeconds(report.totalWorkSeconds()));
-    csvRow(csv, "Wymagano:", formatSeconds(report.totalRequiredSeconds()));
-    csvRow(csv, "Bilans:", formatSeconds(report.totalBalanceSeconds()));
-    csvRow(csv, "Godziny Nocne:", formatSeconds(report.totalNightSeconds()));
-    csvRow(csv);
-    csvRow(csv, (Object[]) HEADERS);
-
-    for (DailyTimesheetEntry entry : report.dailyEntries()) {
-      csvRow(csv, rowValues(entry));
-    }
-  }
+  private static final List<ReportColumn> COLUMNS = List.of(
+      new ReportColumn("Data", DATE),
+      new ReportColumn("Start", TIME),
+      new ReportColumn("Koniec", TIME),
+      new ReportColumn("Efektywny Czas", DURATION),
+      new ReportColumn("Wymagany Czas", DURATION),
+      new ReportColumn("Bilans", DURATION),
+      new ReportColumn("Godziny Nocne", DURATION),
+      new ReportColumn("Wniosek", TEXT)
+  );
 
   @Override
-  protected void writePdf(EmployeeTimesheetReport report, Document document)
-      throws DocumentException {
-    addPdfTitle(document, title(report));
-    for (String line : summaryLines(report)) {
-      addPdfText(document, line);
-    }
-    addPdfSpacer(document);
-
-    PdfPTable table = createPdfTable(PDF_HEADERS);
-    for (DailyTimesheetEntry entry : report.dailyEntries()) {
-      addPdfRow(table, rowValues(entry));
-    }
-    document.add(table);
-  }
-
-  @Override
-  protected String getSheetName() {
-    return "Timesheet";
-  }
-
-  @Override
-  protected void writeXlsx(EmployeeTimesheetReport report, Sheet sheet) {
-    List<String> titleLines = new ArrayList<>();
-    titleLines.add(title(report));
-    titleLines.addAll(summaryLines(report));
-
-    int rowIdx = writeXlsxHeader(sheet, titleLines, HEADERS);
-    for (DailyTimesheetEntry entry : report.dailyEntries()) {
-      xlsxRow(sheet, rowIdx++, rowValues(entry));
-    }
-  }
-
-  private String title(EmployeeTimesheetReport report) {
-    return "Raport Okresowy: " + report.startDate() + " do " + report.endDate();
-  }
-
-  private List<String> summaryLines(EmployeeTimesheetReport report) {
-    return List.of(
-        "Pracownik: " + report.employeeFullName(),
-        "Przepracowano: " + formatSeconds(report.totalWorkSeconds()),
-        "Wymagano: " + formatSeconds(report.totalRequiredSeconds()),
-        "Bilans: " + formatSeconds(report.totalBalanceSeconds()),
-        "Godziny Nocne: " + formatSeconds(report.totalNightSeconds())
+  public ReportDocument generate(EmployeeTimesheetReport report) {
+    List<ReportField> fields = List.of(
+        ReportField.period(report.startDate(), report.endDate()),
+        new ReportField("Pracownik", report.employeeFullName(), TEXT),
+        new ReportField("Przepracowano", report.totalWorkSeconds(), DURATION),
+        new ReportField("Wymagano", report.totalRequiredSeconds(), DURATION),
+        new ReportField("Bilans", report.totalBalanceSeconds(), DURATION),
+        new ReportField("Godziny Nocne", report.totalNightSeconds(), DURATION)
     );
+    List<List<Object>> rows = report.dailyEntries().stream().map(this::toRow).toList();
+    return new ReportDocument("Raport Okresowy", fields, COLUMNS, rows);
   }
 
-  private Object[] rowValues(DailyTimesheetEntry entry) {
-    return new Object[] {
+  private List<Object> toRow(DailyTimesheetEntry entry) {
+    return Arrays.asList(
         entry.date(),
-        formatTime(entry.startTime()),
-        formatTime(entry.endTime()),
-        formatSeconds(entry.effectiveWorkSeconds()),
-        formatSeconds((long) entry.requiredSeconds()),
-        formatSeconds(entry.balanceSeconds()),
-        formatSeconds(entry.nightSeconds()),
-        entry.applicationType() != null ? entry.applicationType() : ""
-    };
+        entry.startTime(),
+        entry.endTime(),
+        entry.effectiveWorkSeconds(),
+        entry.requiredSeconds(),
+        entry.balanceSeconds(),
+        entry.nightSeconds(),
+        entry.applicationType()
+    );
   }
 }

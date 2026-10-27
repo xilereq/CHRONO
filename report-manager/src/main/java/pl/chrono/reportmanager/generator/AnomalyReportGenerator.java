@@ -1,68 +1,42 @@
 package pl.chrono.reportmanager.generator;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PdfPTable;
+import static pl.chrono.reportmanager.dto.ValueType.DURATION;
+import static pl.chrono.reportmanager.dto.ValueType.TEXT;
+
+import java.util.Arrays;
 import java.util.List;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.springframework.stereotype.Component;
+import pl.chrono.reportmanager.dto.ReportColumn;
+import pl.chrono.reportmanager.dto.ReportDocument;
+import pl.chrono.reportmanager.dto.ReportField;
 import pl.chrono.reportmanager.dto.TeamAnomalyEntry;
 import pl.chrono.reportmanager.dto.TeamAnomalyReport;
 
 @Component
-public class AnomalyReportGenerator extends AbstractReportGenerator<TeamAnomalyReport> {
+public class AnomalyReportGenerator implements I_ReportGenerator<TeamAnomalyReport> {
 
-  private static final String[] HEADERS = {
-    "Pracownik", "Przepracowano", "Wymagano", "Bilans", "Typ Anomalii"
-  };
-
-  @Override
-  protected void writeCsv(TeamAnomalyReport report, StringBuilder csv) {
-    csvRow(csv, "Raport Anomalii Czasu Pracy:", period(report));
-    csvRow(csv);
-    csvRow(csv, (Object[]) HEADERS);
-
-    for (TeamAnomalyEntry entry : report.entries()) {
-      csvRow(csv, rowValues(entry));
-    }
-  }
+  private static final List<ReportColumn> COLUMNS = List.of(
+      new ReportColumn("Pracownik", TEXT),
+      new ReportColumn("Przepracowano", DURATION),
+      new ReportColumn("Wymagano", DURATION),
+      new ReportColumn("Bilans", DURATION),
+      new ReportColumn("Typ Anomalii", TEXT)
+  );
 
   @Override
-  protected void writePdf(TeamAnomalyReport report, Document document) throws DocumentException {
-    addPdfTitle(document, "Raport Anomalii Czasu Pracy: " + period(report));
-    addPdfSpacer(document);
-
-    PdfPTable table = createPdfTable(HEADERS);
-    for (TeamAnomalyEntry entry : report.entries()) {
-      addPdfRow(table, rowValues(entry));
-    }
-    document.add(table);
+  public ReportDocument generate(TeamAnomalyReport report) {
+    List<ReportField> fields = List.of(ReportField.period(report.startDate(), report.endDate()));
+    List<List<Object>> rows = report.entries().stream().map(this::toRow).toList();
+    return new ReportDocument("Raport Anomalii Czasu Pracy", fields, COLUMNS, rows);
   }
 
-  @Override
-  protected String getSheetName() {
-    return "Anomalie";
-  }
-
-  @Override
-  protected void writeXlsx(TeamAnomalyReport report, Sheet sheet) {
-    int rowIdx = writeXlsxHeader(sheet, List.of("Raport Anomalii: " + period(report)), HEADERS);
-    for (TeamAnomalyEntry entry : report.entries()) {
-      xlsxRow(sheet, rowIdx++, rowValues(entry));
-    }
-  }
-
-  private String period(TeamAnomalyReport report) {
-    return report.startDate() + " - " + report.endDate();
-  }
-
-  private Object[] rowValues(TeamAnomalyEntry entry) {
-    return new Object[] {
+  private List<Object> toRow(TeamAnomalyEntry entry) {
+    return Arrays.asList(
         entry.employeeFullName(),
-        formatSeconds(entry.totalWorkSeconds()),
-        formatSeconds(entry.totalRequiredSeconds()),
-        formatSeconds(entry.balanceSeconds()),
+        entry.totalWorkSeconds(),
+        entry.totalRequiredSeconds(),
+        entry.balanceSeconds(),
         entry.anomalyType()
-    };
+    );
   }
 }

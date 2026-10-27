@@ -1,68 +1,39 @@
 package pl.chrono.reportmanager.generator;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PdfPTable;
+import static pl.chrono.reportmanager.dto.ValueType.DURATION;
+import static pl.chrono.reportmanager.dto.ValueType.NUMBER;
+import static pl.chrono.reportmanager.dto.ValueType.TEXT;
+
+import java.util.Arrays;
 import java.util.List;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.springframework.stereotype.Component;
+import pl.chrono.reportmanager.dto.ReportColumn;
+import pl.chrono.reportmanager.dto.ReportDocument;
+import pl.chrono.reportmanager.dto.ReportField;
 import pl.chrono.reportmanager.dto.TeamOvertimeEntry;
 import pl.chrono.reportmanager.dto.TeamOvertimeReport;
 
 @Component
-public class TeamOvertimeReportGenerator extends AbstractReportGenerator<TeamOvertimeReport> {
+public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOvertimeReport> {
 
-  private static final String[] HEADERS = {"ID Pracownika", "Imie i Nazwisko", "Suma Nadgodzin"};
-
-  @Override
-  protected void writeCsv(TeamOvertimeReport report, StringBuilder csv) {
-    csvRow(csv, "Zbiorczy Raport Nadgodzin Zespolu (Od - Do):", period(report));
-    csvRow(csv);
-    csvRow(csv, (Object[]) HEADERS);
-
-    for (TeamOvertimeEntry entry : report.entries()) {
-      csvRow(csv, rowValues(entry));
-    }
-  }
+  private static final List<ReportColumn> COLUMNS = List.of(
+      new ReportColumn("ID Pracownika", NUMBER),
+      new ReportColumn("Imie i Nazwisko", TEXT),
+      new ReportColumn("Suma Nadgodzin", DURATION)
+  );
 
   @Override
-  protected void writePdf(TeamOvertimeReport report, Document document) throws DocumentException {
-    addPdfTitle(document, title(report));
-    addPdfSpacer(document);
-
-    PdfPTable table = createPdfTable(HEADERS);
-    for (TeamOvertimeEntry entry : report.entries()) {
-      addPdfRow(table, rowValues(entry));
-    }
-    document.add(table);
+  public ReportDocument generate(TeamOvertimeReport report) {
+    List<ReportField> fields = List.of(ReportField.period(report.startDate(), report.endDate()));
+    List<List<Object>> rows = report.entries().stream().map(this::toRow).toList();
+    return new ReportDocument("Zbiorczy Raport Nadgodzin Zespolu", fields, COLUMNS, rows);
   }
 
-  @Override
-  protected String getSheetName() {
-    return "Nadgodziny - Zespol";
-  }
-
-  @Override
-  protected void writeXlsx(TeamOvertimeReport report, Sheet sheet) {
-    int rowIdx = writeXlsxHeader(sheet, List.of(title(report)), HEADERS);
-    for (TeamOvertimeEntry entry : report.entries()) {
-      xlsxRow(sheet, rowIdx++, rowValues(entry));
-    }
-  }
-
-  private String period(TeamOvertimeReport report) {
-    return report.startDate() + " - " + report.endDate();
-  }
-
-  private String title(TeamOvertimeReport report) {
-    return "Zbiorczy Raport Nadgodzin Zespolu: " + period(report);
-  }
-
-  private Object[] rowValues(TeamOvertimeEntry entry) {
-    return new Object[] {
+  private List<Object> toRow(TeamOvertimeEntry entry) {
+    return Arrays.asList(
         entry.employeeId(),
         entry.employeeFullName(),
-        formatSeconds(entry.totalOvertimeSeconds())
-    };
+        entry.totalOvertimeSeconds()
+    );
   }
 }

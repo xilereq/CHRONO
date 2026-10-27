@@ -1,59 +1,29 @@
 package pl.chrono.reportmanager.generator;
 
-import org.junit.jupiter.api.Test;
-import pl.chrono.reportmanager.dto.ReportFormat;
-import pl.chrono.reportmanager.dto.TeamAbsenceEntry;
-import pl.chrono.reportmanager.dto.TeamAbsencesReport;
-import pl.chrono.reportmanager.exception.ReportGenerationException;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
+import pl.chrono.reportmanager.dto.ReportDocument;
+import pl.chrono.reportmanager.dto.TeamAbsenceEntry;
+import pl.chrono.reportmanager.dto.TeamAbsencesReport;
 
 class AbsenceReportGeneratorTest {
 
   private final AbsenceReportGenerator generator = new AbsenceReportGenerator();
 
   @Test
-  void shouldGenerateCsv() {
-    TeamAbsenceEntry entry = new TeamAbsenceEntry(1, "Jan Kowalski", "HOLIDAY", "APPROVED", LocalDate.now(), LocalDate.now());
-    TeamAbsencesReport report = new TeamAbsencesReport(1, LocalDate.now(), LocalDate.now(), List.of(entry));
+  void shouldBuildAbsenceDocument() {
+    LocalDate start = LocalDate.of(2026, 10, 5);
+    LocalDate end = LocalDate.of(2026, 10, 9);
+    TeamAbsenceEntry entry = new TeamAbsenceEntry(1, "Jan Kowalski", "HOLIDAY_LEAVE", "APPROVED", start, end);
+    TeamAbsencesReport report = new TeamAbsencesReport(1, start, end, List.of(entry));
 
-    byte[] result = generator.generate(report, ReportFormat.CSV);
-    String content = new String(result, StandardCharsets.UTF_8);
+    ReportDocument document = generator.generate(report);
 
-    assertThat(result).isNotEmpty();
-    assertThat(content).contains("Jan Kowalski;HOLIDAY;APPROVED");
-  }
-
-  @Test
-  void shouldGeneratePdf() {
-    TeamAbsenceEntry entry = new TeamAbsenceEntry(1, "Jan Kowalski", "HOLIDAY", "APPROVED", LocalDate.now(), LocalDate.now());
-    TeamAbsencesReport report = new TeamAbsencesReport(1, LocalDate.now(), LocalDate.now(), List.of(entry));
-
-    byte[] result = generator.generate(report, ReportFormat.PDF);
-
-    assertThat(result).isNotEmpty();
-    assertThat(new String(result).substring(0, 5)).isEqualTo("%PDF-");
-  }
-
-  @Test
-  void shouldGenerateXlsx() {
-    TeamAbsenceEntry entry = new TeamAbsenceEntry(1, "Jan Kowalski", "HOLIDAY", "APPROVED", LocalDate.now(), LocalDate.now());
-    TeamAbsencesReport report = new TeamAbsencesReport(1, LocalDate.now(), LocalDate.now(), List.of(entry));
-
-    byte[] result = generator.generate(report, ReportFormat.XLSX);
-
-    assertThat(result).isNotEmpty();
-    assertThat(result.length).isGreaterThan(100);
-  }
-
-  @Test
-  void shouldThrowExceptionOnGenerationFailure() {
-    assertThatThrownBy(() -> generator.generate(null, ReportFormat.CSV))
-        .isInstanceOf(ReportGenerationException.Failed.class);
+    assertThat(document.title()).isEqualTo("Raport Wnioskow i Absencji");
+    assertThat(document.formatRow(document.rows().get(0)))
+        .containsExactly("Jan Kowalski", "HOLIDAY_LEAVE", "APPROVED", "2026-10-05", "2026-10-09");
   }
 }

@@ -7,12 +7,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import pl.chrono.reportmanager.dto.*;
 import pl.chrono.reportmanager.generator.*;
+import pl.chrono.reportmanager.renderer.ReportExporter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +35,7 @@ class ReportFacadeIT {
   @MockitoBean private EmployeeOvertimeReportGenerator employeeOvertimeGenerator;
   @MockitoBean private TeamOvertimeReportGenerator teamOvertimeGenerator;
   @MockitoBean private AnomalyReportGenerator anomalyGenerator;
+  @MockitoBean private ReportExporter exporter;
 
   @Test
   void shouldOrchestrateEmployeeTimesheetGeneration() {
@@ -46,13 +48,16 @@ class ReportFacadeIT {
     EmployeeTimesheetReport mockReport = new EmployeeTimesheetReport(employeeId, "Test", start, end, 0L, 0L, 0L, 0L, null);
 
     when(timesheetService.generateTimesheet(employeeId, start, end)).thenReturn(mockReport);
-    when(timesheetGenerator.generate(any(), eq(format))).thenReturn(expectedBytes);
+    ReportDocument document = new ReportDocument("Raport", List.of(), List.of(), List.of());
+    when(timesheetGenerator.generate(any())).thenReturn(document);
+    when(exporter.export(document, format)).thenReturn(expectedBytes);
 
     byte[] result = reportFacade.getEmployeeTimesheet(employeeId, start, end, format);
 
     assertThat(result).isEqualTo(expectedBytes);
     verify(timesheetService).generateTimesheet(employeeId, start, end);
-    verify(timesheetGenerator).generate(any(), eq(format));
+    verify(timesheetGenerator).generate(any());
+    verify(exporter).export(document, format);
   }
 
   @Test
@@ -66,12 +71,15 @@ class ReportFacadeIT {
     TeamWorkloadReport mockReport = new TeamWorkloadReport(managerId, start, end, null);
 
     when(workloadService.generateReport(managerId, start, end)).thenReturn(mockReport);
-    when(workloadGenerator.generate(any(), eq(format))).thenReturn(expectedBytes);
+    ReportDocument document = new ReportDocument("Raport", List.of(), List.of(), List.of());
+    when(workloadGenerator.generate(any())).thenReturn(document);
+    when(exporter.export(document, format)).thenReturn(expectedBytes);
 
     byte[] result = reportFacade.getTeamWorkload(managerId, start, end, format);
 
     assertThat(result).isEqualTo(expectedBytes);
     verify(workloadService).generateReport(managerId, start, end);
-    verify(workloadGenerator).generate(any(), eq(format));
+    verify(workloadGenerator).generate(any());
+    verify(exporter).export(document, format);
   }
 }

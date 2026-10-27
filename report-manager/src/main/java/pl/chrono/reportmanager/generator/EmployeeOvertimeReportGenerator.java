@@ -1,88 +1,45 @@
 package pl.chrono.reportmanager.generator;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PdfPTable;
-import java.util.ArrayList;
+import static pl.chrono.reportmanager.dto.ValueType.DATE;
+import static pl.chrono.reportmanager.dto.ValueType.DURATION;
+import static pl.chrono.reportmanager.dto.ValueType.TEXT;
+
+import java.util.Arrays;
 import java.util.List;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.springframework.stereotype.Component;
 import pl.chrono.reportmanager.dto.EmployeeOvertimeReport;
 import pl.chrono.reportmanager.dto.OvertimeEntry;
+import pl.chrono.reportmanager.dto.ReportColumn;
+import pl.chrono.reportmanager.dto.ReportDocument;
+import pl.chrono.reportmanager.dto.ReportField;
 
 @Component
-public class EmployeeOvertimeReportGenerator
-    extends AbstractReportGenerator<EmployeeOvertimeReport> {
+public class EmployeeOvertimeReportGenerator implements I_ReportGenerator<EmployeeOvertimeReport> {
 
-  private static final String[] HEADERS = {"Data", "Przepracowano", "Wymagano", "Nadgodziny"};
-
-  @Override
-  protected void writeCsv(EmployeeOvertimeReport report, StringBuilder csv) {
-    csvRow(csv, "Raport Nadgodzin (Od - Do):", period(report));
-    csvRow(csv, "Pracownik:", report.employeeFullName());
-    csvRow(csv, "Suma nadgodzin:", formatSeconds(report.totalOvertimeSeconds()));
-    csvRow(csv);
-    csvRow(csv, (Object[]) HEADERS);
-
-    for (OvertimeEntry entry : report.entries()) {
-      csvRow(csv, rowValues(entry));
-    }
-  }
+  private static final List<ReportColumn> COLUMNS = List.of(
+      new ReportColumn("Data", DATE),
+      new ReportColumn("Przepracowano", DURATION),
+      new ReportColumn("Wymagano", DURATION),
+      new ReportColumn("Nadgodziny", DURATION)
+  );
 
   @Override
-  protected void writePdf(EmployeeOvertimeReport report, Document document)
-      throws DocumentException {
-    addPdfTitle(document, title(report));
-    for (String line : summaryLines(report)) {
-      addPdfText(document, line);
-    }
-    addPdfSpacer(document);
-
-    PdfPTable table = createPdfTable(HEADERS);
-    for (OvertimeEntry entry : report.entries()) {
-      addPdfRow(table, rowValues(entry));
-    }
-    document.add(table);
-  }
-
-  @Override
-  protected String getSheetName() {
-    return "Nadgodziny - Pracownik";
-  }
-
-  @Override
-  protected void writeXlsx(EmployeeOvertimeReport report, Sheet sheet) {
-    List<String> titleLines = new ArrayList<>();
-    titleLines.add(title(report));
-    titleLines.addAll(summaryLines(report));
-
-    int rowIdx = writeXlsxHeader(sheet, titleLines, HEADERS);
-    for (OvertimeEntry entry : report.entries()) {
-      xlsxRow(sheet, rowIdx++, rowValues(entry));
-    }
-  }
-
-  private String period(EmployeeOvertimeReport report) {
-    return report.startDate() + " - " + report.endDate();
-  }
-
-  private String title(EmployeeOvertimeReport report) {
-    return "Raport Nadgodzin: " + period(report);
-  }
-
-  private List<String> summaryLines(EmployeeOvertimeReport report) {
-    return List.of(
-        "Pracownik: " + report.employeeFullName(),
-        "Suma nadgodzin: " + formatSeconds(report.totalOvertimeSeconds())
+  public ReportDocument generate(EmployeeOvertimeReport report) {
+    List<ReportField> fields = List.of(
+        ReportField.period(report.startDate(), report.endDate()),
+        new ReportField("Pracownik", report.employeeFullName(), TEXT),
+        new ReportField("Suma nadgodzin", report.totalOvertimeSeconds(), DURATION)
     );
+    List<List<Object>> rows = report.entries().stream().map(this::toRow).toList();
+    return new ReportDocument("Raport Nadgodzin", fields, COLUMNS, rows);
   }
 
-  private Object[] rowValues(OvertimeEntry entry) {
-    return new Object[] {
+  private List<Object> toRow(OvertimeEntry entry) {
+    return Arrays.asList(
         entry.date(),
-        formatSeconds(entry.workedSeconds()),
-        formatSeconds((long) entry.requiredSeconds()),
-        formatSeconds(entry.overtimeSeconds())
-    };
+        entry.workedSeconds(),
+        entry.requiredSeconds(),
+        entry.overtimeSeconds()
+    );
   }
 }
