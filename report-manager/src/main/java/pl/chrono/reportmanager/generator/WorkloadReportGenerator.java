@@ -1,121 +1,78 @@
 package pl.chrono.reportmanager.generator;
 
 import com.lowagie.text.Document;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
-import org.apache.poi.ss.usermodel.Row;
+import java.util.List;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
-import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.dto.TeamWorkloadEntry;
 import pl.chrono.reportmanager.dto.TeamWorkloadReport;
-import pl.chrono.reportmanager.exception.ReportGenerationException;
-
-import java.io.ByteArrayOutputStream;
 
 @Component
-public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadReport> {
+public class WorkloadReportGenerator extends AbstractReportGenerator<TeamWorkloadReport> {
+
+  private static final String[] CSV_HEADERS = {
+    "ID Pracownika", "Imie i Nazwisko", "Przepracowano", "Wymagano", "Bilans (Nadgodziny)"
+  };
+  private static final String[] PDF_HEADERS = {
+    "ID", "Imie i Nazwisko", "Przepracowano", "Wymagano", "Bilans"
+  };
+  private static final String[] XLSX_HEADERS = {
+    "ID Pracownika", "Imie i Nazwisko", "Przepracowano", "Wymagano", "Bilans"
+  };
 
   @Override
-  public byte[] generate(TeamWorkloadReport report, ReportFormat format) {
-    try {
-      return switch (format) {
-        case CSV -> generateCsv(report);
-        case PDF -> generatePdf(report);
-        case XLSX -> generateXlsx(report);
-        default -> throw new ReportGenerationException.UnsupportedFormat(format.name());
-      };
-    } catch (ReportGenerationException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ReportGenerationException.Failed(format.name(), e);
+  protected void writeCsv(TeamWorkloadReport report, StringBuilder csv) {
+    csvRow(csv, "Raport Obciazenia Zespolu (Od - Do):", period(report));
+    csvRow(csv);
+    csvRow(csv, (Object[]) CSV_HEADERS);
+
+    for (TeamWorkloadEntry entry : report.entries()) {
+      csvRow(csv, rowValues(entry));
     }
   }
 
-  private byte[] generateCsv(TeamWorkloadReport report) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Raport Obciazenia Zespolu (Od - Do):;").append(report.startDate()).append(" - ").append(report.endDate()).append("\n\n");
-    sb.append("ID Pracownika;Imie i Nazwisko;Przepracowano;Wymagano;Bilans (Nadgodziny)\n");
+  @Override
+  protected void writePdf(TeamWorkloadReport report, Document document) throws DocumentException {
+    addPdfTitle(document, title(report));
+    addPdfSpacer(document);
 
-    report.entries().forEach(e -> {
-      sb.append(e.employeeId()).append(";")
-          .append(e.employeeFullName()).append(";")
-          .append(formatSeconds(e.totalWorkSeconds())).append(";")
-          .append(formatSeconds(e.totalRequiredSeconds())).append(";")
-          .append(formatSeconds(e.totalBalanceSeconds())).append("\n");
-    });
-
-    return addUtf8Bom(sb.toString());
-  }
-
-  private byte[] generatePdf(TeamWorkloadReport report) throws Exception {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    Document document = new Document();
-    PdfWriter.getInstance(document, out);
-    document.open();
-
-    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-
-    document.add(new Paragraph("Raport Obciazenia Zespolu: " + report.startDate() + " - " + report.endDate(), titleFont));
-    document.add(new Paragraph(" "));
-
-    PdfPTable table = new PdfPTable(5);
-    table.setWidthPercentage(100);
-
-    String[] headers = {"ID", "Imie i Nazwisko", "Przepracowano", "Wymagano", "Bilans"};
-    for (String header : headers) {
-      table.addCell(new PdfPCell(new Phrase(header, headerFont)));
+    PdfPTable table = createPdfTable(PDF_HEADERS);
+    for (TeamWorkloadEntry entry : report.entries()) {
+      addPdfRow(table, rowValues(entry));
     }
-
-    for (TeamWorkloadEntry e : report.entries()) {
-      table.addCell(String.valueOf(e.employeeId()));
-      table.addCell(e.employeeFullName());
-      table.addCell(formatSeconds(e.totalWorkSeconds()));
-      table.addCell(formatSeconds(e.totalRequiredSeconds()));
-      table.addCell(formatSeconds(e.totalBalanceSeconds()));
-    }
-
     document.add(table);
-    document.close();
-    return out.toByteArray();
   }
 
-  private byte[] generateXlsx(TeamWorkloadReport report) throws Exception {
-    try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      Sheet sheet = workbook.createSheet("Obciazenie Zespolu");
+  @Override
+  protected String getSheetName() {
+    return "Obciazenie Zespolu";
+  }
 
-      sheet.createRow(0).createCell(0).setCellValue("Raport Obciazenia Zespolu: " + report.startDate() + " - " + report.endDate());
-
-      Row headerRow = sheet.createRow(2);
-      String[] headers = {"ID Pracownika", "Imie i Nazwisko", "Przepracowano", "Wymagano", "Bilans"};
-      for (int i = 0; i < headers.length; i++) {
-        headerRow.createCell(i).setCellValue(headers[i]);
-      }
-
-      int rowIdx = 3;
-      for (TeamWorkloadEntry e : report.entries()) {
-        Row row = sheet.createRow(rowIdx++);
-        row.createCell(0).setCellValue(e.employeeId());
-        row.createCell(1).setCellValue(e.employeeFullName());
-        row.createCell(2).setCellValue(formatSeconds(e.totalWorkSeconds()));
-        row.createCell(3).setCellValue(formatSeconds(e.totalRequiredSeconds()));
-        row.createCell(4).setCellValue(formatSeconds(e.totalBalanceSeconds()));
-      }
-
-      for (int i = 0; i < headers.length; i++) {
-        sheet.autoSizeColumn(i);
-      }
-
-      workbook.write(out);
-      return out.toByteArray();
+  @Override
+  protected void writeXlsx(TeamWorkloadReport report, Sheet sheet) {
+    int rowIdx = writeXlsxHeader(sheet, List.of(title(report)), XLSX_HEADERS);
+    for (TeamWorkloadEntry entry : report.entries()) {
+      xlsxRow(sheet, rowIdx++, rowValues(entry));
     }
+  }
+
+  private String title(TeamWorkloadReport report) {
+    return "Raport Obciazenia Zespolu: " + period(report);
+  }
+
+  private String period(TeamWorkloadReport report) {
+    return report.startDate() + " - " + report.endDate();
+  }
+
+  private Object[] rowValues(TeamWorkloadEntry entry) {
+    return new Object[] {
+        entry.employeeId(),
+        entry.employeeFullName(),
+        formatSeconds(entry.totalWorkSeconds()),
+        formatSeconds(entry.totalRequiredSeconds()),
+        formatSeconds(entry.totalBalanceSeconds())
+    };
   }
 }
