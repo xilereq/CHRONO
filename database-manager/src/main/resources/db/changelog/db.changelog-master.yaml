@@ -15,6 +15,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/006-create-generated-reports.yaml
   - include:
-      file: db/changelog/changes/006-create-scheduled-raports.yaml
+      file: db/changelog/changes/007-create-scheduled-raports.yaml
   - include:
-      file: db/changelog/changes/007-create-google-credential.yaml
+      file: db/changelog/changes/008-create-google-credential.yaml
