@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, UserPlus, ClipboardList } from 'lucide-react';
+import { Clock, UserPlus, ClipboardList, UserCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const ManagerSidebar = ({ activeTab, setActiveTab }) => {
@@ -31,6 +31,13 @@ const ManagerSidebar = ({ activeTab, setActiveTab }) => {
                     onClick={() => setActiveTab('team-requests')}
                 >
                     <UserPlus size={18} /> {t('manager.employeeRequestsTab', 'Wnioski za pracownika')}
+                </button>
+
+                <button
+                    className={`policies-nav-item ${activeTab === 'deputy' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('deputy')}
+                >
+                    <UserCheck size={18} /> {t('manager.deputyTab', 'Zastępstwo')}
                 </button>
 
             </nav>

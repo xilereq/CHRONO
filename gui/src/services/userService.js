@@ -5,6 +5,14 @@ const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
 });
 
+const NOT_AVAILABLE_STATUSES = [404, 405, 501];
+
+const notAvailableError = () => {
+    const error = new Error('Obsługa zastępstw nie jest jeszcze dostępna na serwerze.');
+    error.notAvailable = true;
+    return error;
+};
+
 const userService = {
     getSubordinates: async () => {
         const response = await fetch(`${API_URL}/subordinates`, { headers: getHeaders() });
@@ -94,6 +102,40 @@ const userService = {
             throw new Error(errorData.message || 'Nie udało się ustawić daty zakończenia pracy.');
         }
 
+        return true;
+    },
+
+    getMyDeputies: async () => {
+        const response = await fetch(`${API_URL}/deputy`, { headers: getHeaders() });
+        if (NOT_AVAILABLE_STATUSES.includes(response.status)) throw notAvailableError();
+        if (!response.ok) throw new Error('Nie udało się pobrać zastępstw.');
+        return response.json();
+    },
+
+    assignDeputy: async ({ deputyEmail, startDate, endDate }) => {
+        const response = await fetch(`${API_URL}/deputy`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ deputyEmail, startDate, endDate })
+        });
+        if (NOT_AVAILABLE_STATUSES.includes(response.status)) throw notAvailableError();
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Nie udało się przypisać zastępstwa.');
+        }
+        return true;
+    },
+
+    removeDeputy: async (id) => {
+        const response = await fetch(`${API_URL}/deputy/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (NOT_AVAILABLE_STATUSES.includes(response.status)) throw notAvailableError();
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Nie udało się cofnąć zastępstwa.');
+        }
         return true;
     },
 

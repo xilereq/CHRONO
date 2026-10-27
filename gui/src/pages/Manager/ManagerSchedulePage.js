@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ManagerSidebar from '../../components/manager/ManagerSidebar';
 import ScheduleChangeTab from '../../components/manager/ScheduleChangeTab';
 import ManagerRequestTab from '../../components/manager/ManagerRequestTab';
+import DeputyTab from '../../components/manager/DeputyTab';
 import ApprovalList from '../Requests/ApprovalList';
 
 import '../main.css';
@@ -24,6 +25,8 @@ const ManagerSchedulePage = () => {
                         {activeTab === 'approvals' && <ApprovalList />}
 
                         {activeTab === 'team-requests' && <ManagerRequestTab />}
+
+                        {activeTab === 'deputy' && <DeputyTab />}
                     </div>
                 </div>
 
