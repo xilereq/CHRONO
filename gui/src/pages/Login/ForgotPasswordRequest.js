@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { authService } from '../../services';
-import { Globe } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import './Login.css';
 
 const ForgotPasswordRequest = () => {
-    const { t, language, changeLanguage } = useLanguage();
+    const { t } = useLanguage();
 
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,18 +35,9 @@ const ForgotPasswordRequest = () => {
     return (
         <div className="login-page">
 
-            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                <div className="language-selector-pill">
-                    <Globe size={18} style={{ color: '#666' }} />
-                    <select
-                        className="language-selector-select"
-                        value={language}
-                        onChange={(e) => changeLanguage(e.target.value)}
-                    >
-                        <option value="pl">PL</option>
-                        <option value="en">EN</option>
-                    </select>
-                </div>
+            <div className="login-toolbar">
+                <LanguageSwitcher />
+                <ThemeToggle />
             </div>
 
             <div className="login-card" role="main">

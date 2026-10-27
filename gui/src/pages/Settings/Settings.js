@@ -3,13 +3,14 @@ import { Card, Button } from '../../components';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { authService } from '../../services';
+import { LANGUAGES } from '../../components/ui/LanguageSwitcher';
 import { Eye, EyeOff } from 'lucide-react';
 import '../main.css';
 import '../Policies/policies.css';
 
 const Settings = () => {
     const { theme, toggleTheme } = useTheme();
-    const { t } = useLanguage();
+    const { t, language, changeLanguage } = useLanguage();
 
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -59,7 +60,7 @@ const Settings = () => {
 
             <Card title={t('settings.appearance', 'Wygląd')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: 'var(--text-main)', width: '200px' }}>
+                    <span style={{ color: 'var(--text-main)', minWidth: '200px' }}>
                         {t('settings.currentTheme', 'Aktualny motyw:')} {theme === 'light' ? t('settings.light', 'Jasny') : t('settings.dark', 'Ciemny')}
                     </span>
                     <Button onClick={toggleTheme} style={{ width: 'auto' }}>
@@ -68,15 +69,34 @@ const Settings = () => {
                 </div>
             </Card>
 
+            <div style={{ marginTop: 'var(--space-5)' }}>
+                <Card title={t('settings.language', 'Język')}>
+                    <div className="language-options" role="radiogroup" aria-label={t('settings.language', 'Język')}>
+                        {LANGUAGES.map(({ code, label }) => (
+                            <button
+                                key={code}
+                                type="button"
+                                role="radio"
+                                aria-checked={language === code}
+                                className={`language-option${language === code ? ' active' : ''}`}
+                                onClick={() => changeLanguage(code)}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </Card>
+            </div>
+
             <div style={{ marginTop: '1.5rem' }}>
                 <Card title={t('settings.changePasswordTitle', 'Zmiana hasła')}>
                     {error && (
-                        <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #fecaca' }}>
+                        <div className="alert alert-error">
                             {error}
                         </div>
                     )}
                     {success && (
-                        <div style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>
+                        <div className="alert alert-success">
                             {success}
                         </div>
                     )}

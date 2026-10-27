@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, User, LogOut, Check, Globe } from 'lucide-react';
+import { Bell, User, LogOut, Check } from 'lucide-react';
 import { notificationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 import '../layout/layout.css';
 
 const Topbar = ({ userEmail, onLogout }) => {
-    const { t, language, changeLanguage } = useLanguage();
+    const { t } = useLanguage();
 
     const [notifications, setNotifications] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -57,18 +58,7 @@ const Topbar = ({ userEmail, onLogout }) => {
             <h1></h1>
             <div className="topbar-right">
 
-                <div className="language-selector-pill">
-                    <Globe size={18} style={{ color: '#666' }} />
-                    <select
-                        className="language-selector-select"
-                        value={language}
-                        onChange={(e) => changeLanguage(e.target.value)}
-                    >
-                        <option value="pl">PL</option>
-                        <option value="en">EN</option>
-                        <option value="de">DE</option>
-                    </select>
-                </div>
+                <LanguageSwitcher />
 
                 <div className="user-profile">
                     <div className="user-icon">

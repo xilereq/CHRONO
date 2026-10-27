@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../../services';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Globe } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import './Login.css';
 
 function useQuery() {
@@ -10,7 +12,7 @@ function useQuery() {
 }
 
 const ForgotPasswordReset = () => {
-    const { t, language, changeLanguage } = useLanguage();
+    const { t } = useLanguage();
 
     const query = useQuery();
     const navigate = useNavigate();
@@ -63,18 +65,9 @@ const ForgotPasswordReset = () => {
     return (
         <div className="login-page">
 
-            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                <div className="language-selector-pill">
-                    <Globe size={18} style={{ color: '#666' }} />
-                    <select
-                        className="language-selector-select"
-                        value={language}
-                        onChange={(e) => changeLanguage(e.target.value)}
-                    >
-                        <option value="pl">PL</option>
-                        <option value="en">EN</option>
-                    </select>
-                </div>
+            <div className="login-toolbar">
+                <LanguageSwitcher />
+                <ThemeToggle />
             </div>
 
             <div className="login-card" role="main">
