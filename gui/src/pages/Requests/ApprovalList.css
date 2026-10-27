@@ -1,14 +1,14 @@
 .submit-actions-row {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     flex-wrap: wrap;
 }
 
 .action-btn-approve {
-    background-color: #dcfce7;
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
+    background-color: var(--success-bg-strong);
+    color: var(--success);
+    border: 1px solid var(--success-border);
+    border-radius: var(--radius-sm);
     padding: 0.4rem 0.9rem;
     font-weight: 600;
     font-size: 0.85rem;
@@ -17,16 +17,16 @@
     transition: background-color 0.15s, color 0.15s;
 }
 .action-btn-approve:hover {
-    background-color: #16a34a;
-    color: #fff;
-    border-color: #16a34a;
+    background-color: var(--success);
+    color: var(--on-accent);
+    border-color: var(--success);
 }
 
 .action-btn-reject {
-    background-color: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
+    background-color: var(--danger-bg);
+    color: var(--danger-strong);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius-sm);
     padding: 0.4rem 0.9rem;
     font-weight: 600;
     font-size: 0.85rem;
@@ -35,9 +35,9 @@
     transition: background-color 0.15s, color 0.15s;
 }
 .action-btn-reject:hover {
-    background-color: #dc2626;
-    color: #fff;
-    border-color: #dc2626;
+    background-color: var(--danger-strong);
+    color: var(--on-accent);
+    border-color: var(--danger-strong);
 }
 
 .action-panel-td {
@@ -46,11 +46,11 @@
 }
 
 .action-panel-td.approved {
-    background-color: #f0fdf4;
+    background-color: var(--success-bg);
 }
 
 .action-panel-td.rejected {
-    background-color: #fef2f2;
+    background-color: var(--danger-bg);
 }
 
 .action-panel-container {
@@ -66,27 +66,27 @@
 }
 
 .action-panel-label.approved {
-    color: #16a34a;
+    color: var(--success);
 }
 
 .action-panel-label.rejected {
-    color: #991b1b;
+    color: var(--danger-text);
 }
 
 .action-panel-input {
     width: 300px;
     height: 36px;
     padding: 0 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
     background: var(--bg-card);
     color: var(--text-main);
 }
 
 .action-panel-btn-confirm {
-    padding: 0 1rem;
+    padding: 0 var(--space-4);
     height: 36px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border: none;
     cursor: pointer;
     font-weight: 600;
@@ -94,11 +94,11 @@
 }
 
 .action-panel-btn-confirm.approved {
-    background-color: #16a34a;
+    background-color: var(--success);
 }
 
 .action-panel-btn-confirm.rejected {
-    background-color: #ef4444;
+    background-color: var(--danger);
 }
 
 .action-panel-btn-confirm:disabled,
@@ -108,9 +108,9 @@
 }
 
 .action-panel-btn-cancel {
-    padding: 0 1rem;
+    padding: 0 var(--space-4);
     height: 36px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-weight: 500;
     background-color: transparent;
@@ -118,16 +118,140 @@
     color: var(--text-main);
 }
 
+.col-select {
+    width: 2.5rem;
+    text-align: center;
+}
+
+.col-select input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.col-select input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+}
+
+.requests-table tbody tr.row-selected > td {
+    background-color: var(--primary-soft);
+}
+
+.bulk-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius-md);
+}
+
+.bulk-bar-count {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.bulk-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    text-decoration: underline;
+}
+
+.bulk-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.bulk-bar-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-left: auto;
+}
+
+.bulk-approve-btn {
+    height: 36px;
+}
+
+.bulk-approve-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.bulk-confirm {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 15px;
+    margin-bottom: var(--space-4);
+    background-color: var(--success-bg);
+    border: 1px solid var(--success-border);
+    border-radius: var(--radius-md);
+}
+
+.bulk-result {
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid;
+    font-size: 0.9rem;
+}
+
+.bulk-result--success { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+.bulk-result--partial { background: var(--warning-bg);  border-color: var(--warning);        color: var(--warning-text); }
+.bulk-result--error   { background: var(--danger-bg);   border-color: var(--danger-border);  color: var(--danger-text); }
+
+.bulk-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.bulk-result-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: inherit;
+}
+
+.bulk-result-detail,
+.bulk-result-list {
+    margin: var(--space-2) 0 0;
+    color: var(--text-main);
+}
+
+.bulk-result-list {
+    padding-left: 1.25rem;
+}
+
+.bulk-result-list li span {
+    font-weight: 600;
+}
+
 .pagination {
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
 }
 
 .pagination span {
     padding: 0.4rem 0.8rem;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     cursor: pointer;
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -135,7 +259,7 @@
 }
 
 .pagination span.page-btn:hover { background: var(--bg-main); }
-.pagination span.page-active { background: var(--primary-color); color: #111827; }
+.pagination span.page-active { background: var(--primary-color); color: var(--on-primary); }
 .pagination span.page-disabled { opacity: 0.35; cursor: default; }
 
 
@@ -143,7 +267,7 @@
     .action-panel-container {
         flex-direction: column;
         align-items: stretch;
-        gap: 8px;
+        gap: var(--space-2);
     }
 
     .action-panel-input {
@@ -158,6 +282,20 @@
 }
 
 @media (max-width: 600px) {
+    .bulk-bar-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .bulk-bar-actions > button {
+        flex: 1;
+    }
+
+    .bulk-confirm {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .submit-actions-row {
         flex-direction: column;
     }

@@ -74,6 +74,42 @@ const applicationService = {
         return response.json();
     },
 
+    approveMany: async (applicationIds, decisionReason) => {
+        const response = await fetch(`${API_URL}/bulk-approve`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ applicationIds, decisionReason: decisionReason || '' })
+        });
+
+        if (response.ok) {
+            const body = await response.json().catch(() => ({}));
+            const approved = Array.isArray(body.approved) ? body.approved : [];
+            const failed = Array.isArray(body.failed)
+                ? body.failed.map(f => ({
+                    id: f.id,
+                    message: ERROR_MESSAGES[f.code] || f.message || 'Nie udało się zatwierdzić wniosku.'
+                }))
+                : [];
+            return { approved, failed };
+        }
+
+        if (![404, 405, 501].includes(response.status)) {
+            throw await readError(response, 'Błąd masowej akceptacji wniosków');
+        }
+
+        const approved = [];
+        const failed = [];
+        for (const id of applicationIds) {
+            try {
+                await applicationService.changeStatus(id, 'APPROVED', decisionReason);
+                approved.push(id);
+            } catch (error) {
+                failed.push({ id, message: error.message });
+            }
+        }
+        return { approved, failed };
+    },
+
     getAllApplications: async () => {
         const response = await fetch(`${API_URL}/all`, {
             headers: getHeaders()

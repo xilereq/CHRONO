@@ -14,6 +14,11 @@ const ApprovalList = () => {
     const [activeAction, setActiveAction]       = useState({ id: null, type: null });
     const [actionReason, setActionReason]       = useState('');
     const [processingId, setProcessingId]       = useState(null);
+    const [selectedIds, setSelectedIds]         = useState(() => new Set());
+    const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+    const [bulkReason, setBulkReason]           = useState('');
+    const [bulkProcessing, setBulkProcessing]   = useState(false);
+    const [bulkResult, setBulkResult]           = useState(null);
     const [currentPage, setCurrentPage]         = useState(1);
     const [itemsPerPage, setItemsPerPage]       = useState(() => window.innerWidth <= 768 ? 5 : 10);
 
@@ -75,10 +80,23 @@ const ApprovalList = () => {
         return true;
     }), [pendingRequests, filterType, filterStatus, filterEmployeeId, filterDateFrom, filterDateTo]);
 
+    const pendingFiltered = useMemo(
+        () => filteredRequests.filter(r => r.status === 'PENDING'),
+        [filteredRequests]
+    );
+
     useEffect(() => {
         setCurrentPage(1);
         setActiveAction({ id: null, type: null });
     }, [filteredRequests, itemsPerPage]);
+
+    useEffect(() => {
+        const visiblePending = new Set(pendingFiltered.map(r => r.id));
+        setSelectedIds(prev => {
+            const next = new Set([...prev].filter(id => visiblePending.has(id)));
+            return next.size === prev.size ? prev : next;
+        });
+    }, [pendingFiltered]);
 
     const initiateAction = (id, type) => {
         setActiveAction({ id, type });
@@ -96,6 +114,34 @@ const ApprovalList = () => {
             alert(t('approvals.statusError', 'Nie udało się zmienić statusu wniosku.'));
         } finally {
             setProcessingId(null);
+        }
+    };
+
+    const submitBulk = async () => {
+        const ids = [...selectedIds];
+        if (ids.length === 0) return;
+
+        const byId = new Map(pendingRequests.map(r => [r.id, r]));
+        setBulkProcessing(true);
+        setBulkResult(null);
+        try {
+            const result = await applicationService.approveMany(ids, bulkReason);
+            const failed = result.failed.map(f => {
+                const req = byId.get(f.id);
+                const label = req
+                    ? `${typeLabels[req.type] || req.type || '#' + f.id} · ${req.employeeEmail || '#' + f.id}`
+                    : `#${f.id}`;
+                return { ...f, label };
+            });
+            setBulkResult({ total: ids.length, approved: result.approved.length, failed });
+            setSelectedIds(new Set());
+            setBulkConfirmOpen(false);
+            setBulkReason('');
+            await loadRequests();
+        } catch (error) {
+            setBulkResult({ total: ids.length, approved: 0, failed: [], error: error.message });
+        } finally {
+            setBulkProcessing(false);
         }
     };
 
@@ -138,7 +184,32 @@ const ApprovalList = () => {
         currentPage * itemsPerPage
     );
     const canActOn  = (r) => r.status === 'PENDING';
-    const colSpan   = userRole === 'ADMIN' ? 7 : 6;
+    const colSpan   = userRole === 'ADMIN' ? 8 : 7;
+
+    const selectedCount     = selectedIds.size;
+    const pagePendingIds    = pageItems.filter(canActOn).map(r => r.id);
+    const allPageSelected   = pagePendingIds.length > 0 && pagePendingIds.every(id => selectedIds.has(id));
+    const somePageSelected  = pagePendingIds.some(id => selectedIds.has(id));
+
+    const toggleOne = (id) => setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+    });
+
+    const togglePage = () => setSelectedIds(prev => {
+        const next = new Set(prev);
+        pagePendingIds.forEach(id => (allPageSelected ? next.delete(id) : next.add(id)));
+        return next;
+    });
+
+    const selectAllPending = () => setSelectedIds(new Set(pendingFiltered.map(r => r.id)));
+
+    const clearSelection = () => {
+        setSelectedIds(new Set());
+        setBulkConfirmOpen(false);
+        setBulkReason('');
+    };
 
     if (!userRole || loading) {
         return <div className="table-empty-cell">{t('approvals.loadingApprovals', 'Ładowanie wniosków...')}</div>;
@@ -205,6 +276,105 @@ const ApprovalList = () => {
                     )}
                 </div>
 
+                {bulkResult && (
+                    <div
+                        className={`bulk-result ${bulkResult.error ? 'bulk-result--error' : bulkResult.failed.length ? 'bulk-result--partial' : 'bulk-result--success'}`}
+                        role="status"
+                    >
+                        <div className="bulk-result-header">
+                            <strong>
+                                {bulkResult.error
+                                    ? t('approvals.bulkError', 'Nie udało się zatwierdzić wybranych wniosków.')
+                                    : bulkResult.failed.length
+                                        ? t('approvals.bulkPartial', 'Zatwierdzono {done} z {total} wniosków.')
+                                            .replace('{done}', bulkResult.approved).replace('{total}', bulkResult.total)
+                                        : t('approvals.bulkSuccess', 'Zatwierdzono wnioski: {done}.')
+                                            .replace('{done}', bulkResult.approved)}
+                            </strong>
+                            <button
+                                type="button"
+                                className="bulk-result-close"
+                                onClick={() => setBulkResult(null)}
+                                aria-label={t('common.close', 'Zamknij')}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        {bulkResult.error && <div className="bulk-result-detail">{bulkResult.error}</div>}
+                        {bulkResult.failed.length > 0 && (
+                            <ul className="bulk-result-list">
+                                {bulkResult.failed.map(f => (
+                                    <li key={f.id}><span>{f.label}</span> — {f.message}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                )}
+
+                {selectedCount > 0 && (
+                    <div className="bulk-bar" role="region" aria-label={t('approvals.bulkBarLabel', 'Akcje zbiorcze')}>
+                        <span className="bulk-bar-count">
+                            {t('approvals.selectedCount', 'Zaznaczono: {n}').replace('{n}', selectedCount)}
+                        </span>
+                        {selectedCount < pendingFiltered.length && (
+                            <button type="button" className="bulk-link" onClick={selectAllPending} disabled={bulkProcessing}>
+                                {t('approvals.selectAllPending', 'Zaznacz wszystkie oczekujące ({n})').replace('{n}', pendingFiltered.length)}
+                            </button>
+                        )}
+                        <div className="bulk-bar-actions">
+                            <button
+                                type="button"
+                                className="action-panel-btn-cancel"
+                                onClick={clearSelection}
+                                disabled={bulkProcessing}
+                            >
+                                {t('approvals.clearSelection', 'Odznacz')}
+                            </button>
+                            <button
+                                type="button"
+                                className="action-btn-approve bulk-approve-btn"
+                                onClick={() => setBulkConfirmOpen(true)}
+                                disabled={bulkProcessing || bulkConfirmOpen}
+                            >
+                                {t('approvals.approveSelected', 'Akceptuj wybrane')} ({selectedCount})
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {selectedCount > 0 && bulkConfirmOpen && (
+                    <div className="bulk-confirm">
+                        <span className="action-panel-label approved">
+                            {t('approvals.bulkConfirmLabel', 'Zatwierdzić {n} wybranych wniosków? Uwagi (opcjonalne):').replace('{n}', selectedCount)}
+                        </span>
+                        <input
+                            type="text"
+                            className="field-input action-panel-input"
+                            value={bulkReason}
+                            onChange={(e) => setBulkReason(e.target.value)}
+                            placeholder={t('approvals.inputPlaceholder', 'Wpisz tutaj...')}
+                            disabled={bulkProcessing}
+                            autoFocus
+                        />
+                        <button
+                            type="button"
+                            className="action-panel-btn-confirm approved"
+                            onClick={submitBulk}
+                            disabled={bulkProcessing}
+                        >
+                            {bulkProcessing ? t('common.saving', 'Zapisywanie...') : t('approvals.confirmBtn', 'Potwierdź')}
+                        </button>
+                        <button
+                            type="button"
+                            className="action-panel-btn-cancel"
+                            onClick={() => setBulkConfirmOpen(false)}
+                            disabled={bulkProcessing}
+                        >
+                            {t('common.cancel', 'Anuluj')}
+                        </button>
+                    </div>
+                )}
+
                 {filteredRequests.length === 0 ? (
                     <div className="table-empty-cell">{t('approvals.noApprovals', 'Brak wniosków spełniających kryteria.')}</div>
                 ) : (
@@ -212,6 +382,16 @@ const ApprovalList = () => {
                         <table className="requests-table">
                             <thead>
                                 <tr>
+                                    <th className="col-select">
+                                        <input
+                                            type="checkbox"
+                                            checked={allPageSelected}
+                                            ref={el => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                                            onChange={togglePage}
+                                            disabled={pagePendingIds.length === 0 || bulkProcessing}
+                                            aria-label={t('approvals.selectAllOnPage', 'Zaznacz wszystkie oczekujące na tej stronie')}
+                                        />
+                                    </th>
                                     <th>{t('approvals.typeColumn', 'Typ wniosku')}</th>
                                     <th>{t('requests.periodColumn', 'Okres / Data')}</th>
                                     <th className="col-hide-mobile">{t('approvals.durationColumn', 'Czas trwania')}</th>
@@ -224,7 +404,18 @@ const ApprovalList = () => {
                             <tbody>
                                 {pageItems.map(r => (
                                     <React.Fragment key={r.id}>
-                                        <tr>
+                                        <tr className={selectedIds.has(r.id) ? 'row-selected' : undefined}>
+                                            <td className="col-select">
+                                                {canActOn(r) && (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.has(r.id)}
+                                                        onChange={() => toggleOne(r.id)}
+                                                        disabled={bulkProcessing}
+                                                        aria-label={`${t('approvals.selectRow', 'Zaznacz wniosek')}: ${r.employeeEmail || r.id}`}
+                                                    />
+                                                )}
+                                            </td>
                                             <td className="request-card-title-cell">{typeLabels[r.type] || r.type || '-'}</td>
                                             <td>{r.startDate}{r.endDate && r.endDate !== r.startDate ? ` – ${r.endDate}` : ''}</td>
                                             <td className="col-hide-mobile">{getDuration(r)}</td>
