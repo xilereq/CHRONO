@@ -39,11 +39,9 @@ public class GeneratedReport {
   @Column(name = "period_end", nullable = false)
   private LocalDate periodEnd;
 
-  // pracownik (raporty indywidualne) lub menedżer (raporty zespołowe)
   @Column(name = "subject_user_id")
   private Integer subjectUserId;
 
-  // null, gdy raport wygenerował harmonogram
   @Column(name = "requested_by_user_id")
   private Integer requestedByUserId;
 
