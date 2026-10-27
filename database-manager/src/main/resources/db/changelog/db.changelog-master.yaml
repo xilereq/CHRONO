@@ -12,3 +12,5 @@ databaseChangeLog:
       file: db/changelog/changes/004-drop-test-table.yaml
   - include:
       file: db/changelog/changes/005-holiday-unique-update.yaml
+  - include:
+      file: db/changelog/changes/006-create-generated-reports.yaml

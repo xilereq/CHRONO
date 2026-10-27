@@ -38,7 +38,7 @@ public class ReportController extends BaseController {
     Integer employeeId = extractId(token);
     byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = String.format("my_timesheet_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("my_timesheet_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
@@ -52,7 +52,7 @@ public class ReportController extends BaseController {
 
     byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = String.format("employee_%d_timesheet_%s_to_%s.%s", employeeId, startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("employee_%d_timesheet_%s_to_%s", employeeId, startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
@@ -67,7 +67,7 @@ public class ReportController extends BaseController {
     Integer employeeId = extractId(token);
     byte[] reportData = reportFacade.getEmployeeOvertime(employeeId, startDate, endDate, format);
 
-    String filename = String.format("my_overtime_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("my_overtime_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
@@ -82,7 +82,7 @@ public class ReportController extends BaseController {
     Integer managerId = extractId(token);
     byte[] reportData = reportFacade.getTeamWorkload(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_workload_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("team_workload_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
@@ -97,7 +97,7 @@ public class ReportController extends BaseController {
     Integer managerId = extractId(token);
     byte[] reportData = reportFacade.getTeamAbsences(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_absences_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("team_absences_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
@@ -112,7 +112,7 @@ public class ReportController extends BaseController {
     Integer managerId = extractId(token);
     byte[] reportData = reportFacade.getTeamOvertime(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_overtime_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("team_overtime_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
@@ -127,20 +127,14 @@ public class ReportController extends BaseController {
     Integer managerId = extractId(token);
     byte[] reportData = reportFacade.getTeamAnomalyReport(managerId, startDate, endDate, format);
 
-    String filename = String.format("team_anomalies_%s_to_%s.%s", startDate, endDate, format.name().toLowerCase());
+    String filename = format.fileName(String.format("team_anomalies_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
   }
 
   private ResponseEntity<byte[]> createResponse(byte[] fileData, String filename, ReportFormat format) {
-    MediaType mediaType = switch (format) {
-      case CSV -> MediaType.parseMediaType("text/csv; charset=UTF-8");
-      case PDF -> MediaType.APPLICATION_PDF;
-      case XLSX -> MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    };
-
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-        .contentType(mediaType)
+        .contentType(MediaType.parseMediaType(format.getMediaType()))
         .body(fileData);
   }
 }
