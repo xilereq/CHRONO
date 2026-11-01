@@ -3,6 +3,7 @@ package pl.chrono.applicationmanager.api;
 import java.util.List;
 import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
+import pl.chrono.applicationmanager.dto.response.BulkApplicationDecisionResponse;
 
 public interface I_UserApplication {
   ApplicationResponse createApplication(CreateApplicationRequest request, Integer employeeId);
@@ -20,4 +21,8 @@ public interface I_UserApplication {
   List<ApplicationResponse> getAllApplications();
 
   ApplicationResponse cancelApplication(Long applicationId, Integer userId);
+
+  BulkApplicationDecisionResponse bulkApprove(List<Long> applicationIds, Integer reviewerId, String decisionReason, Boolean isAdmin);
+
+  BulkApplicationDecisionResponse bulkReject(List<Long> applicationIds, Integer reviewerId, String decisionReason, Boolean isAdmin);
 }

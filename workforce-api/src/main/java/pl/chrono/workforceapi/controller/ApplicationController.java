@@ -1,5 +1,6 @@
 package pl.chrono.workforceapi.controller;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.chrono.applicationmanager.api.I_UserApplication;
+import pl.chrono.applicationmanager.dto.request.BulkApplicationDecisionRequest;
 import pl.chrono.applicationmanager.dto.request.ChangeApplicationStatusRequest;
 import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
+import pl.chrono.applicationmanager.dto.response.BulkApplicationDecisionResponse;
 import pl.chrono.usermanager.service.AuthService;
 
 @RestController
@@ -90,6 +93,39 @@ public class ApplicationController extends BaseController {
     ApplicationResponse updatedApplication = applicationService.changeStatus(
         applicationId, request.newStatus(), reviewerId, request.decisionReason(), isAdmin);
     return ResponseEntity.ok(updatedApplication);
+  }
+
+  @PostMapping("/bulk-approve")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  public ResponseEntity<BulkApplicationDecisionResponse> bulkApprove(
+      @RequestHeader("Authorization") String token,
+      @Valid @RequestBody BulkApplicationDecisionRequest request,
+      Authentication authentication) {
+
+    Integer reviewerId = extractId(token);
+
+    BulkApplicationDecisionResponse result = applicationService.bulkApprove(
+        request.applicationIds(), reviewerId, request.decisionReason(), isAdmin(authentication));
+    return ResponseEntity.ok(result);
+  }
+
+  @PostMapping("/bulk-reject")
+  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  public ResponseEntity<BulkApplicationDecisionResponse> bulkReject(
+      @RequestHeader("Authorization") String token,
+      @Valid @RequestBody BulkApplicationDecisionRequest request,
+      Authentication authentication) {
+
+    Integer reviewerId = extractId(token);
+
+    BulkApplicationDecisionResponse result = applicationService.bulkReject(
+        request.applicationIds(), reviewerId, request.decisionReason(), isAdmin(authentication));
+    return ResponseEntity.ok(result);
+  }
+
+  private static Boolean isAdmin(Authentication authentication) {
+    return authentication.getAuthorities().stream()
+        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
   }
 
   @GetMapping("/manager/pending")

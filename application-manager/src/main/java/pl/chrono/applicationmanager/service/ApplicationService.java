@@ -1,6 +1,8 @@
 package pl.chrono.applicationmanager.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +13,10 @@ import pl.chrono.applicationmanager.api.I_UserApplication;
 import pl.chrono.applicationmanager.event.ApplicationNotificationEvent;
 import pl.chrono.applicationmanager.dto.request.CreateApplicationRequest;
 import pl.chrono.applicationmanager.dto.response.ApplicationResponse;
+import pl.chrono.applicationmanager.dto.response.BulkApplicationDecisionResponse;
+import pl.chrono.applicationmanager.dto.response.BulkOperationFailure;
 import pl.chrono.applicationmanager.exception.ApplicationException;
+import pl.chrono.applicationmanager.exception.ApplicationManagerException;
 import pl.chrono.applicationmanager.exception.ApplicationSecurityException;
 import pl.chrono.applicationmanager.exception.ApplicationUserException;
 import pl.chrono.dbmanager.model.Application;
@@ -129,13 +134,54 @@ public class ApplicationService implements I_UserApplication {
   @LogActivity(action = "CHANGE_APPLICATION_STATUS", details = "Changing the status of an employee's application")
   public ApplicationResponse changeStatus(Long applicationId, String newStatus, Integer reviewerId, String decisionReason, Boolean isAdmin) {
     Application application = getApplicationAndValidatePending(applicationId);
-    User employee = application.getEmployee();
-
-    if (!isAdmin && (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId))) {
-        throw new ApplicationSecurityException.UnauthorizedManager();
-    }
+    validateReviewerPermission(application, reviewerId, isAdmin);
 
     return processStatusChange(application, newStatus, reviewerId, decisionReason);
+  }
+
+  @Override
+  @Transactional
+  @LogActivity(action = "BULK_APPROVE_APPLICATIONS", details = "Manager approved multiple applications at once")
+  public BulkApplicationDecisionResponse bulkApprove(List<Long> applicationIds, Integer reviewerId,
+                                                     String decisionReason, Boolean isAdmin) {
+    return bulkChangeStatus(applicationIds, ApplicationStatus.APPROVED, reviewerId, decisionReason, isAdmin);
+  }
+
+  @Override
+  @Transactional
+  @LogActivity(action = "BULK_REJECT_APPLICATIONS", details = "Manager rejected multiple applications at once")
+  public BulkApplicationDecisionResponse bulkReject(List<Long> applicationIds, Integer reviewerId,
+                                                    String decisionReason, Boolean isAdmin) {
+    return bulkChangeStatus(applicationIds, ApplicationStatus.REJECTED, reviewerId, decisionReason, isAdmin);
+  }
+
+  private BulkApplicationDecisionResponse bulkChangeStatus(List<Long> applicationIds, ApplicationStatus newStatus,
+                                                           Integer reviewerId, String decisionReason, Boolean isAdmin) {
+    userRepository.findById(reviewerId)
+        .orElseThrow(() -> new ApplicationUserException.NotFound(reviewerId));
+
+    List<ApplicationResponse> processed = new ArrayList<>();
+    List<BulkOperationFailure> failed = new ArrayList<>();
+
+    for (Long applicationId : new LinkedHashSet<>(applicationIds)) {
+      try {
+        Application application = getApplicationAndValidatePending(applicationId);
+        validateReviewerPermission(application, reviewerId, isAdmin);
+        processed.add(processStatusChange(application, newStatus.name(), reviewerId, decisionReason));
+      } catch (ApplicationManagerException ex) {
+        failed.add(new BulkOperationFailure(applicationId, ex.getErrorCode(), ex.getMessage()));
+      }
+    }
+
+    return new BulkApplicationDecisionResponse(processed, failed);
+  }
+
+  private void validateReviewerPermission(Application application, Integer reviewerId, Boolean isAdmin) {
+    User employee = application.getEmployee();
+    if (!Boolean.TRUE.equals(isAdmin)
+        && (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId))) {
+      throw new ApplicationSecurityException.UnauthorizedManager();
+    }
   }
 
   private Application getApplicationAndValidatePending(Long applicationId) {
