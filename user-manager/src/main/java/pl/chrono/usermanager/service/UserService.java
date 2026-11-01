@@ -89,6 +89,10 @@ public class UserService implements I_UserService {
   public void setEmploymentStartDate(String email, LocalDate date){
     User user = userData.findByEmail(email)
         .orElseThrow(() -> new IllegalArgumentException("Użytkownik o podanym adresie email nie istnieje."));
+    if(user.getEmploymentEndDate() != null && !user.getEmploymentEndDate().isAfter(date)){
+      throw new IllegalArgumentException(
+          "Data rozpoczęcia zatrudnienia musi być wcześniejsza niż data zakończenia.");
+    }
     user.setEmploymentStartDate(date);
 
     userData.save(user);
