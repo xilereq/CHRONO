@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ import pl.chrono.dbmanager.repository.UserRepository;
 import pl.chrono.logmanager.audit.LogActivity;
 import pl.chrono.timemanager.service.OvertimeService;
 import pl.chrono.timemanager.service.ApplicationValidationService;
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 
 
 @Service
@@ -40,6 +43,7 @@ public class ApplicationService implements I_UserApplication {
 
   private final OvertimeService overtimeService;
   private final ApplicationValidationService applicationValidationService;
+  private final I_ManagerDelegationService delegationService;
 
   @Override
   @Transactional
@@ -63,10 +67,7 @@ public class ApplicationService implements I_UserApplication {
     boolean hasGlobalAccess = manager.getRoles().stream()
         .anyMatch(role -> role.getName().equals("ROLE_HR") || role.getName().equals("ROLE_ADMIN"));
 
-    boolean isDirectManager = employee.getManager() != null
-        && employee.getManager().getUserId().equals(managerId);
-
-    if (!hasGlobalAccess && !isDirectManager) {
+    if (!hasGlobalAccess && !canActAsManagerOf(managerId, employee)) {
       throw new ApplicationSecurityException.UnauthorizedCreation();
     }
 
@@ -177,11 +178,17 @@ public class ApplicationService implements I_UserApplication {
   }
 
   private void validateReviewerPermission(Application application, Integer reviewerId, Boolean isAdmin) {
-    User employee = application.getEmployee();
-    if (!Boolean.TRUE.equals(isAdmin)
-        && (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId))) {
+    if (!Boolean.TRUE.equals(isAdmin) && !canActAsManagerOf(reviewerId, application.getEmployee())) {
       throw new ApplicationSecurityException.UnauthorizedManager();
     }
+  }
+
+  private boolean canActAsManagerOf(Integer actorId, User employee) {
+    if (employee.getManager() == null || actorId.equals(employee.getUserId())) {
+      return false;
+    }
+    Integer managerId = employee.getManager().getUserId();
+    return managerId.equals(actorId) || delegationService.isActiveDeputyOf(actorId, managerId);
   }
 
   private Application getApplicationAndValidatePending(Long applicationId) {
@@ -238,10 +245,7 @@ public class ApplicationService implements I_UserApplication {
       boolean hasGlobalAccess = requester.getRoles().stream()
           .anyMatch(role -> role.getName().equals("ROLE_HR") || role.getName().equals("ROLE_ADMIN"));
 
-      boolean isDirectManager = employee.getManager() != null
-          && employee.getManager().getUserId().equals(requesterId);
-
-      if (!hasGlobalAccess && !isDirectManager) {
+      if (!hasGlobalAccess && !canActAsManagerOf(requesterId, employee)) {
         throw new ApplicationSecurityException.UnauthorizedAccess();
       }
     }
@@ -254,18 +258,27 @@ public class ApplicationService implements I_UserApplication {
 
   @Override
   public List<ApplicationResponse> getPendingApplicationsForManager(Integer managerId) {
-    return applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, managerId)
-        .stream()
+    return withSubstitutedTeams(managerId,
+        id -> applicationRepository.findPendingByManagerId(ApplicationStatus.PENDING, id))
         .map(this::mapToResponse)
         .toList();
   }
 
   @Override
   public List<ApplicationResponse> getAllApplicationsForManager(Integer managerId) {
-    return applicationRepository.findAllByManagerId(managerId)
-        .stream()
+    return withSubstitutedTeams(managerId, applicationRepository::findAllByManagerId)
         .map(this::mapToResponse)
         .collect(Collectors.toList());
+  }
+
+  private Stream<Application> withSubstitutedTeams(Integer userId,
+                                                   Function<Integer, List<Application>> byManager) {
+    Stream<Application> ownTeam = byManager.apply(userId).stream();
+    Stream<Application> substitutedTeams = delegationService.getRepresentedManagerIds(userId).stream()
+        .filter(managerId -> !managerId.equals(userId))
+        .flatMap(managerId -> byManager.apply(managerId).stream())
+        .filter(application -> !userId.equals(application.getEmployee().getUserId()));
+    return Stream.concat(ownTeam, substitutedTeams);
   }
 
   private ApplicationResponse mapToResponse(Application application) {

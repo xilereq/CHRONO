@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-manager-delegations-table
+      author: wikikiktor1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: manager_delegations
+      changes:
+        - createTable:
+            tableName: manager_delegations
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: manager_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_delegation_manager
+                    referencedTableName: users
+                    referencedColumnNames: user_id
+              - column:
+                  name: deputy_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_delegation_deputy
+                    referencedTableName: users
+                    referencedColumnNames: user_id
+              - column:
+                  name: start_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reason
+                  type: VARCHAR(255)
+              - column:
+                  name: created_by_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_delegation_created_by
+                    referencedTableName: users
+                    referencedColumnNames: user_id
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked_at
+                  type: TIMESTAMP
+        - sql:
+            sql: ALTER TABLE manager_delegations ADD CONSTRAINT chk_delegation_dates CHECK (end_date >= start_date)
+        - sql:
+            sql: ALTER TABLE manager_delegations ADD CONSTRAINT chk_delegation_not_self CHECK (manager_id <> deputy_id)
+        - createIndex:
+            tableName: manager_delegations
+            indexName: idx_delegation_deputy
+            columns:
+              - column:
+                  name: deputy_id
+        - createIndex:
+            tableName: manager_delegations
+            indexName: idx_delegation_manager
+            columns:
+              - column:
+                  name: manager_id

@@ -18,3 +18,5 @@ databaseChangeLog:
       file: db/changelog/changes/007-create-scheduled-raports.yaml
   - include:
       file: db/changelog/changes/008-create-google-credential.yaml
+  - include:
+      file: db/changelog/changes/009-create-manager-delegations.yaml

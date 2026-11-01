@@ -1,5 +1,6 @@
 package pl.chrono.applicationmanager.service;
 
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,6 +51,9 @@ class BulkApplicationDecisionServiceTest {
 
   @Mock
   private OvertimeService overtimeService;
+
+  @Mock
+  private I_ManagerDelegationService delegationService;
 
   @InjectMocks
   private ApplicationService applicationService;

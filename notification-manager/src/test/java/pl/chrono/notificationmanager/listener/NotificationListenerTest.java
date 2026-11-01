@@ -1,5 +1,6 @@
 package pl.chrono.notificationmanager.listener;
 
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +13,7 @@ import pl.chrono.notificationmanager.service.NotificationService;
 import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 
 import java.time.LocalDate;
+import pl.chrono.usermanager.event.ManagerDelegationEvent;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -27,6 +29,9 @@ class NotificationListenerTest {
 
   @Mock
   private WorkLogRequestRepository workLogRequestRepository;
+
+  @Mock
+  private I_ManagerDelegationService delegationService;
 
   @InjectMocks
   private NotificationListener notificationListener;
@@ -188,5 +193,55 @@ class NotificationListenerTest {
     notificationListener.handleWorkLogRequestNotification(event);
 
     verify(notificationService, never()).sendNotification(any(), anyString(), anyLong(), anyString(), anyString());
+  }
+
+  @Test
+  void handleApplicationNotification_ShouldAlsoNotifyActiveDeputy_WhenCreated() {
+    ApplicationNotificationEvent event = new ApplicationNotificationEvent(
+        100L, 5, 2, "CREATED", "PENDING", null);
+    when(delegationService.findActiveDeputyId(2)).thenReturn(Optional.of(7));
+
+    notificationListener.handleApplicationNotification(event);
+
+    verify(notificationService).sendNotification(eq(2), anyString(), eq(100L),
+        eq("APPLICATION"), eq("APPLICATION_CREATED"));
+    verify(notificationService).sendNotification(eq(7), argThat(msg -> msg.contains("zastępcą")),
+        eq(100L), eq("APPLICATION"), eq("APPLICATION_CREATED"));
+  }
+
+  @Test
+  void handleApplicationNotification_ShouldNotNotifyDeputy_AboutTheirOwnApplication() {
+    ApplicationNotificationEvent event = new ApplicationNotificationEvent(
+        100L, 7, 2, "CREATED", "PENDING", null);
+    when(delegationService.findActiveDeputyId(2)).thenReturn(Optional.of(7));
+
+    notificationListener.handleApplicationNotification(event);
+
+    verify(notificationService, times(1)).sendNotification(any(), anyString(), anyLong(), anyString(), anyString());
+    verify(notificationService, never()).sendNotification(eq(7), anyString(), anyLong(), anyString(), anyString());
+  }
+
+  @Test
+  void handleManagerDelegation_ShouldNotifyDeputy_WhenCreated() {
+    ManagerDelegationEvent event = new ManagerDelegationEvent(
+        50L, 2, "Jan Kowalski", 7, "Anna Nowak",
+        LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 10), "CREATED");
+
+    notificationListener.handleManagerDelegation(event);
+
+    verify(notificationService).sendNotification(eq(7), argThat(msg -> msg.contains("Jan Kowalski")),
+        eq(50L), eq("MANAGER_DELEGATION"), eq("MANAGER_DELEGATION_CREATED"));
+  }
+
+  @Test
+  void handleManagerDelegation_ShouldNotifyDeputy_WhenRevoked() {
+    ManagerDelegationEvent event = new ManagerDelegationEvent(
+        50L, 2, "Jan Kowalski", 7, "Anna Nowak",
+        LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 10), "REVOKED");
+
+    notificationListener.handleManagerDelegation(event);
+
+    verify(notificationService).sendNotification(eq(7), anyString(),
+        eq(50L), eq("MANAGER_DELEGATION"), eq("MANAGER_DELEGATION_REVOKED"));
   }
 }

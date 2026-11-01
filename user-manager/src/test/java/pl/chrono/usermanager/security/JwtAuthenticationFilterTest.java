@@ -1,5 +1,6 @@
 package pl.chrono.usermanager.security;
 
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.security.core.GrantedAuthority;
+import pl.chrono.dbmanager.model.Role;
+import pl.chrono.dbmanager.model.User;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -27,6 +33,9 @@ class JwtAuthenticationFilterTest {
   @Mock private HttpServletRequest request;
   @Mock private HttpServletResponse response;
   @Mock private FilterChain filterChain;
+
+  @Mock
+  private I_ManagerDelegationService delegationService;
 
   @InjectMocks
   private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -89,5 +98,56 @@ class JwtAuthenticationFilterTest {
 
     assertNull(SecurityContextHolder.getContext().getAuthentication());
     verify(filterChain).doFilter(request, response);
+  }
+
+  private static User userWithRoles(Integer id, String... roleNames) {
+    User user = new User();
+    user.setUserId(id);
+    for (String roleName : roleNames) {
+      Role role = new Role();
+      role.setName(roleName);
+      user.getRoles().add(role);
+    }
+    return user;
+  }
+
+  private Set<String> authenticateAndGetAuthorities(User user) throws ServletException, IOException {
+    String token = "valid_jwt_token";
+    when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+    when(jwtService.extractUsername(token)).thenReturn("user@chrono.pl");
+    when(userDetailsService.loadUserByUsername("user@chrono.pl")).thenReturn(user);
+    when(jwtService.isTokenValid(token, user)).thenReturn(true);
+
+    jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.toSet());
+  }
+
+  @Test
+  void doFilterInternal_ShouldGrantManagerRole_WhenUserIsActingDeputy() throws Exception {
+    when(delegationService.isActingDeputy(7)).thenReturn(true);
+
+    Set<String> authorities = authenticateAndGetAuthorities(userWithRoles(7, "ROLE_EMPLOYEE"));
+
+    assertEquals(Set.of("ROLE_EMPLOYEE", "ROLE_MANAGER"), authorities);
+  }
+
+  @Test
+  void doFilterInternal_ShouldNotGrantManagerRole_WithoutActiveDelegation() throws Exception {
+    when(delegationService.isActingDeputy(7)).thenReturn(false);
+
+    Set<String> authorities = authenticateAndGetAuthorities(userWithRoles(7, "ROLE_EMPLOYEE"));
+
+    assertEquals(Set.of("ROLE_EMPLOYEE"), authorities);
+  }
+
+  @Test
+  void doFilterInternal_ShouldNotQueryDelegations_WhenUserIsAlreadyManager() throws Exception {
+    Set<String> authorities = authenticateAndGetAuthorities(userWithRoles(7, "ROLE_MANAGER"));
+
+    assertEquals(Set.of("ROLE_MANAGER"), authorities);
+    verify(delegationService, never()).isActingDeputy(any());
   }
 }

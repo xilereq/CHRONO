@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import pl.chrono.timemanager.event.WorkLogRequestNotificationEvent;
 import pl.chrono.timemanager.exception.UserException;
 import pl.chrono.timemanager.exception.WorkLogRequestException;
 import pl.chrono.timemanager.mapper.WorkLogRequestMapper;
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class WorkLogRequestService implements I_WorkLogRequestService {
   private final WorkLogRequestMapper mapper;
   private final WorkTimeCalculationService workTimeCalculationService;
   private final ApplicationEventPublisher eventPublisher;
+  private final I_ManagerDelegationService delegationService;
 
   @Transactional
   @Override
@@ -165,10 +168,15 @@ public class WorkLogRequestService implements I_WorkLogRequestService {
 
     if (isAdmin) {
       return timeData.findAllPendingWorkLogRequests().stream().map(mapper::toDto).toList();
-    } else {
-      return timeData.findPendingWorkLogRequestsForManager(reviewerId).stream().map(mapper::toDto)
-          .toList();
     }
+
+    Stream<WorkLogRequest> ownTeam = timeData.findPendingWorkLogRequestsForManager(reviewerId).stream();
+    Stream<WorkLogRequest> substitutedTeams = delegationService.getRepresentedManagerIds(reviewerId).stream()
+        .filter(managerId -> !managerId.equals(reviewerId))
+        .flatMap(managerId -> timeData.findPendingWorkLogRequestsForManager(managerId).stream())
+        .filter(request -> !reviewerId.equals(request.getEmployee().getUserId()));
+
+    return Stream.concat(ownTeam, substitutedTeams).map(mapper::toDto).toList();
   }
 
   private WorkLogRequest getPendingRequest(Long requestId) {
@@ -188,13 +196,18 @@ public class WorkLogRequestService implements I_WorkLogRequestService {
     boolean isAdmin = reviewer.getRoles().stream()
         .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
 
-    if (!isAdmin) {
-      User employee = request.getEmployee();
-      if (employee.getManager() == null || !employee.getManager().getUserId().equals(reviewerId)) {
-        throw new WorkLogRequestException.UnauthorizedManager();
-      }
+    if (!isAdmin && !canActAsManagerOf(reviewerId, request.getEmployee())) {
+      throw new WorkLogRequestException.UnauthorizedManager();
     }
     return reviewer;
+  }
+
+  private boolean canActAsManagerOf(Integer reviewerId, User employee) {
+    if (employee.getManager() == null || reviewerId.equals(employee.getUserId())) {
+      return false;
+    }
+    Integer managerId = employee.getManager().getUserId();
+    return managerId.equals(reviewerId) || delegationService.isActiveDeputyOf(reviewerId, managerId);
   }
 
   void publishNotificationEvent(WorkLogRequest request, String action, User reviewer) {

@@ -5,13 +5,16 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import pl.chrono.usermanager.service.ManagerDelegationService;
 import org.springframework.mail.javamail.JavaMailSender;
 
 @SpringBootApplication
 @EntityScan("pl.chrono.dbmanager.model")
 @EnableJpaRepositories("pl.chrono.dbmanager.repository")
 @ComponentScan(basePackages = {"pl.chrono.notificationmanager", "pl.chrono.dbmanager"})
+@Import(ManagerDelegationService.class)
 public class TestConfig {
 
   @Bean

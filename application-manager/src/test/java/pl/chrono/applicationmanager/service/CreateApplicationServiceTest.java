@@ -1,5 +1,6 @@
 package pl.chrono.applicationmanager.service;
 
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 import java.time.LocalDate;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,6 +47,9 @@ class CreateApplicationServiceTest {
 
   @Mock
   private OvertimeService overtimeService;
+
+  @Mock
+  private I_ManagerDelegationService delegationService;
 
   @InjectMocks
   private ApplicationService applicationService;

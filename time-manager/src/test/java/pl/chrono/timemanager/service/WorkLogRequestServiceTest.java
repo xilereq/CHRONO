@@ -1,5 +1,6 @@
 package pl.chrono.timemanager.service;
 
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,9 @@ class WorkLogRequestServiceTest {
   private WorkTimeCalculationService workTimeCalculationService;
   @Mock
   private ApplicationEventPublisher eventPublisher;
+  @Mock
+  private I_ManagerDelegationService delegationService;
+
   @InjectMocks
   private WorkLogRequestService requestService;
 
@@ -537,5 +541,86 @@ class WorkLogRequestServiceTest {
     assertThat(event.reviewerName()).isNull();
     assertThat(event.action()).isEqualTo("STATUS_CHANGED");
     assertThat(event.status()).isEqualTo("APPROVED");
+  }
+
+  private static final Integer DEPUTY_ID = 20;
+
+  private WorkLogRequest pendingRequestOf(Integer employeeId, User manager) {
+    User employee = new User();
+    employee.setUserId(employeeId);
+    employee.setManager(manager);
+
+    WorkLogRequest request = new WorkLogRequest();
+    request.setStatus(WorkLogRequestStatus.PENDING);
+    request.setEmployee(employee);
+    return request;
+  }
+
+  @Test
+  void rejectRequest_DeputyOfActiveDelegationCanDecide() {
+    User manager = new User();
+    manager.setUserId(MANAGER_ID);
+    User deputy = new User();
+    deputy.setUserId(DEPUTY_ID);
+    WorkLogRequest request = pendingRequestOf(EMPLOYEE_ID, manager);
+
+    when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
+    when(userData.findById(DEPUTY_ID)).thenReturn(Optional.of(deputy));
+    when(delegationService.isActiveDeputyOf(DEPUTY_ID, MANAGER_ID)).thenReturn(true);
+
+    requestService.rejectRequest(REQUEST_ID, DEPUTY_ID, new WorkLogResolveRequest("Nie"));
+
+    assertThat(request.getStatus()).isEqualTo(WorkLogRequestStatus.REJECTED);
+    assertThat(request.getManager()).isEqualTo(deputy);
+  }
+
+  @Test
+  void rejectRequest_UserWithoutDelegationCannotDecide() {
+    User manager = new User();
+    manager.setUserId(MANAGER_ID);
+    WorkLogRequest request = pendingRequestOf(EMPLOYEE_ID, manager);
+
+    when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(request));
+    when(userData.findById(DEPUTY_ID)).thenReturn(Optional.of(new User()));
+    when(delegationService.isActiveDeputyOf(DEPUTY_ID, MANAGER_ID)).thenReturn(false);
+
+    assertThatThrownBy(() -> requestService.rejectRequest(REQUEST_ID, DEPUTY_ID, null))
+        .isInstanceOf(WorkLogRequestException.UnauthorizedManager.class);
+  }
+
+  @Test
+  void rejectRequest_DeputyCannotDecideOnOwnRequest() {
+    User manager = new User();
+    manager.setUserId(MANAGER_ID);
+    WorkLogRequest ownRequest = pendingRequestOf(DEPUTY_ID, manager);
+
+    when(timeData.findWorkLogRequestById(REQUEST_ID)).thenReturn(Optional.of(ownRequest));
+    when(userData.findById(DEPUTY_ID)).thenReturn(Optional.of(new User()));
+
+    assertThatThrownBy(() -> requestService.rejectRequest(REQUEST_ID, DEPUTY_ID, null))
+        .isInstanceOf(WorkLogRequestException.UnauthorizedManager.class);
+    verify(delegationService, never()).isActiveDeputyOf(any(), any());
+    verify(timeData, never()).saveWorkLogRequest(any());
+  }
+
+  @Test
+  void getPendingRequests_DeputySeesSubstitutedTeamWithoutOwnRequests() {
+    User manager = new User();
+    manager.setUserId(MANAGER_ID);
+    WorkLogRequest teamRequest = pendingRequestOf(EMPLOYEE_ID, manager);
+    WorkLogRequest deputysOwnRequest = pendingRequestOf(DEPUTY_ID, manager);
+    WorkLogRequestDto teamDto = mock(WorkLogRequestDto.class);
+
+    when(userData.findById(DEPUTY_ID)).thenReturn(Optional.of(new User()));
+    when(timeData.findPendingWorkLogRequestsForManager(DEPUTY_ID)).thenReturn(List.of());
+    when(delegationService.getRepresentedManagerIds(DEPUTY_ID)).thenReturn(Set.of(MANAGER_ID));
+    when(timeData.findPendingWorkLogRequestsForManager(MANAGER_ID))
+        .thenReturn(List.of(teamRequest, deputysOwnRequest));
+    when(mapper.toDto(teamRequest)).thenReturn(teamDto);
+
+    List<WorkLogRequestDto> result = requestService.getPendingRequestsForReviewer(DEPUTY_ID);
+
+    assertThat(result).containsExactly(teamDto);
+    verify(mapper, never()).toDto(deputysOwnRequest);
   }
 }

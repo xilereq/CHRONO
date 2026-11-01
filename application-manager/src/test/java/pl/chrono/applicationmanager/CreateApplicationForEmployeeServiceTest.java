@@ -1,5 +1,6 @@
 package pl.chrono.applicationmanager;
 
+import pl.chrono.usermanager.api.I_ManagerDelegationService;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
@@ -46,6 +47,9 @@ class CreateApplicationForEmployeeServiceTest {
 
   @Mock
   private ApplicationValidationService applicationValidationService;
+
+  @Mock
+  private I_ManagerDelegationService delegationService;
 
   @InjectMocks
   private ApplicationService applicationService;
