@@ -41,8 +41,12 @@ public class AuthService {
         )
     );
 
-    var user = userData.findByEmail(request.email()).orElseThrow(
-        () -> new IllegalArgumentException("User not found"));
+    var user = userData.findByEmail(request.email())
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    if (!user.isEmployedOn(LocalDate.now())) {
+      throw new IllegalArgumentException("Konto użytkownika jest nieaktywne lub poza okresem zatrudnienia.");
+    }
 
     eventPublisher.publishEvent(new UserLoginEvent(user.getUserId(), user.getEmail()));
 

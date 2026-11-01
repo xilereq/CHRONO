@@ -143,6 +143,25 @@ public class User implements UserDetails {
 
   @Override
   public boolean isEnabled() {
-    return this.isActive;
+    return isEmployedOn(LocalDate.now());
+  }
+
+  public boolean isEmployedOn(LocalDate date) {
+    if (!Boolean.TRUE.equals(this.isActive)) {
+      return false;
+    }
+    if (this.employmentStartDate != null && date.isBefore(this.employmentStartDate)) {
+      return false;
+    }
+    if (this.employmentEndDate != null && date.isAfter(this.employmentEndDate)) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isEmployedWithin(LocalDate startDate, LocalDate endDate) {
+    return isEmployedOn(startDate) && isEmployedOn(endDate);
   }
 }
+
+
