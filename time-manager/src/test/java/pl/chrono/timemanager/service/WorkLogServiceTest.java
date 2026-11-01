@@ -708,7 +708,7 @@ class WorkLogServiceTest {
     when(overtimeService.getOvertimeBalance(USER_ID)).thenReturn(3600);
 
     WorkLog spyLog = spy(new WorkLog());
-    spyLog.setStartTime(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+    spyLog.setStartTime(LocalDate.now().minusDays(1).atStartOfDay());
     spyLog.setEndTime(spyLog.getStartTime().plusHours(8));
     spyLog.setUser(user);
     doReturn(8 * 3600L).when(spyLog)
