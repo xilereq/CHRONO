@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock, Coffee, Square, Home, XCircle } from 'lucide-react';
 import { Card, Button } from '../../components';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../pages/main.css';
 import './dashboard.css';
 import { workLogService, leaveLogService } from '../../services';
+
+const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+const FIFTEEN_MINUTES_MS = 900000;
 
 const formatDuration = (ms) => {
     if (!ms || ms < 0) return '00:00:00';
@@ -16,13 +19,20 @@ const formatDuration = (ms) => {
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 };
 
+const formatHM = (ms) => {
+    const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${String(m).padStart(2, '0')}m`;
+};
+
 const parseDurationToMs = (timeString) => {
     if (!timeString || typeof timeString !== 'string') return 0;
     const parts = timeString.split(':');
     if (parts.length !== 3) return 0;
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    const seconds = parseInt(parts[2], 10);
+    const hours = parseInt(parts[0], 10) || 0;
+    const minutes = parseInt(parts[1], 10) || 0;
+    const seconds = parseInt(parts[2], 10) || 0;
     return ((hours * 3600) + (minutes * 60) + seconds) * 1000;
 };
 
@@ -33,8 +43,10 @@ const TimeTracker = () => {
     const [isOnBreak, setIsOnBreak] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [startTime, setStartTime] = useState(null);
-
     const [isHO, setIsHO] = useState(false);
+
+    const boxRef = useRef(null);
+    const [perimeter, setPerimeter] = useState(0);
 
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000);
@@ -77,6 +89,14 @@ const TimeTracker = () => {
         };
         fetchStatus();
     }, []);
+
+    useEffect(() => {
+        if (isWorking && boxRef.current) {
+            const rect = boxRef.current.getBoundingClientRect();
+            const p = 2 * (rect.width + rect.height) - 16;
+            setPerimeter(p);
+        }
+    }, [isWorking]);
 
     const handleToggleWork = async () => {
         if (isLoading) return;
@@ -195,13 +215,18 @@ const TimeTracker = () => {
         second: '2-digit'
     });
 
-    const elapsedMs = startTime ? now - new Date(startTime) : 0;
+    const elapsedMs = startTime ? Math.max(0, now.getTime() - new Date(startTime).getTime()) : 0;
     const elapsedString = startTime ? formatDuration(elapsedMs) : '00:00:00';
-
-    const FIFTEEN_MINUTES_MS = 900000;
     const isCancelable = isWorking && startTime && (elapsedMs <= FIFTEEN_MINUTES_MS);
-
     const remainingCancelTimeStr = isCancelable ? formatDuration(FIFTEEN_MINUTES_MS - elapsedMs).substring(3) : '';
+
+    const ratio = EIGHT_HOURS_MS > 0 ? elapsedMs / EIGHT_HOURS_MS : 0;
+    const percent = Math.min(100, Math.max(0, Math.round(ratio * 100))) || 0;
+    const isComplete = elapsedMs >= EIGHT_HOURS_MS;
+    const remainingMs = Math.max(0, EIGHT_HOURS_MS - elapsedMs);
+    const strokeDashoffset = perimeter > 0 ? perimeter - (percent / 100) * perimeter : 0;
+
+    const frameStateClass = isOnBreak ? 'paused' : isComplete ? 'overtime' : 'active';
 
     return (
         <Card>
@@ -238,23 +263,68 @@ const TimeTracker = () => {
                     </button>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <button
-                        className={`time-display time-display-btn ${isLoading ? 'loading' : 'working'}`}
-                        onClick={handleToggleWork}
-                        disabled={isLoading}
-                    >
-                        <div className="time-header">
-                            <Square size={20} />
-                            <span className="time-header-text">
-                                {isLoading ? t('common.loadingUpper', 'ŁADOWANIE...') : t('timeTracker.endWork', 'ZAKOŃCZ PRACĘ')}
-                            </span>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <div className="work-frame-wrapper">
+                        <div className={`work-frame-box ${frameStateClass}`} ref={boxRef}>
+                            <svg className="work-frame-svg">
+                                <rect
+                                    className="work-frame-bg-stroke"
+                                    x="2"
+                                    y="2"
+                                    rx="14"
+                                    ry="14"
+                                />
+                                <rect
+                                    className="work-frame-active-stroke"
+                                    x="2"
+                                    y="2"
+                                    rx="14"
+                                    ry="14"
+                                    style={{
+                                        strokeDasharray: perimeter || 800,
+                                        strokeDashoffset: strokeDashoffset
+                                    }}
+                                />
+                            </svg>
+
+                            <div className="work-frame-content">
+                                <div className={`work-time-display ${isComplete ? 'time-overtime' : ''}`}>
+                                    {isOnBreak ? t('timeTracker.onBreak', 'W TRAKCIE PRZERWY') : elapsedString}
+                                </div>
+
+                                <span className={`work-progress-label ${isComplete ? 'label-overtime' : ''}`}>
+                                    {isComplete
+                                        ? `NADGODZINY (+${formatHM(elapsedMs - EIGHT_HOURS_MS)})`
+                                        : `POSTĘP: ${percent}%`}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    className="btn-end-work-compact"
+                                    onClick={handleToggleWork}
+                                    disabled={isLoading}
+                                >
+                                    <Square size={14} fill="currentColor" />
+                                    <span>
+                                        {isLoading ? t('common.loadingUpper', 'ŁADOWANIE...') : t('timeTracker.endWork', 'Zakończ pracę')}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="time-clock">
-                            {isOnBreak ? t('timeTracker.onBreak', 'W TRAKCIE PRZERWY') : elapsedString}
+                        <div className="battery-info-row">
+                            <div className="info-col">
+                                <span className="label">Przepracowano:</span>
+                                <span className="val">{formatHM(elapsedMs)}</span>
+                            </div>
+                            <div className="info-col">
+                                <span className="label">{isComplete ? 'Nadgodziny:' : 'Do końca:'}</span>
+                                <span className={`val ${isComplete ? 'complete' : ''}`}>
+                                    {isComplete ? formatHM(elapsedMs - EIGHT_HOURS_MS) : formatHM(remainingMs)}
+                                </span>
+                            </div>
                         </div>
-                    </button>
+                    </div>
 
                     {isCancelable && (
                         <button
@@ -262,10 +332,10 @@ const TimeTracker = () => {
                             onClick={handleCancelWork}
                             disabled={isLoading}
                             style={{
-                                marginTop: '0.8rem',
+                                marginTop: '0.6rem',
                                 backgroundColor: 'transparent',
                                 border: 'none',
-                                color: 'var(--text-muted)',
+                                color: 'var(--text-muted, #888)',
                                 textDecoration: 'underline',
                                 cursor: 'pointer',
                                 display: 'flex',
@@ -295,6 +365,6 @@ const TimeTracker = () => {
             </div>
         </Card>
     );
-}
+};
 
 export default TimeTracker;
