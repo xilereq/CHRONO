@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Clock, CalendarOff, TrendingUp, Timer, Download, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Card } from '../../components';
-import { userService, reportService } from '../../services';
+import { userService, reportService, authService } from '../../services';
+import ScheduledReports from '../../components/reports/ScheduledReports';
 import { useLanguage } from '../../context/LanguageContext';
 import '../main.css';
 import './reports.css';
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -27,8 +26,6 @@ const ABSENCE_COLORS = {
     UNEXCUSED:     '#9ca3af',
 };
 
-// ── Bar chart ────────────────────────────────────────────────────────────────
-
 const BarChart = ({ data, emptyLabel }) => {
     if (!data || !data.length) return <div className="empty">{emptyLabel || 'Brak danych.'}</div>;
     const maxRaw = Math.max(...data.map(d => Math.max(d.plan, d.przepr, 0)));
@@ -47,14 +44,12 @@ const BarChart = ({ data, emptyLabel }) => {
 
     return (
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
-            {/* Minor grid lines every 2h — dashed, very thin, skip 10h marks */}
             {[...Array(minorSteps + 1)].map((_, i) => {
                 if (i % 5 === 0) return null;
                 const y = padT + chartH - (chartH * i / minorSteps);
                 return <line key={`m${i}`} x1={padL} y1={y} x2={padL + chartW} y2={y} stroke="#f3f4f6" strokeWidth="0.4" strokeDasharray="2 4" />;
             })}
 
-            {/* Major grid lines every 10h + Y-axis labels */}
             {[...Array(ticks + 1)].map((_, i) => {
                 const val = Math.round(roundedMax * i / ticks);
                 const y = padT + chartH - (chartH * i / ticks);
@@ -66,13 +61,11 @@ const BarChart = ({ data, emptyLabel }) => {
                 );
             })}
 
-            {/* 40h reference line */}
             <line
                 x1={padL} y1={ref40Y}
                 x2={padL + chartW} y2={ref40Y}
                 stroke="#ef4444" strokeWidth="4" strokeDasharray="6 4" opacity="0.65"
             />
-            {/* Bars */}
             {data.map((d, i) => {
                 const cx = padL + groupW * i + groupW / 2;
                 const planH  = (d.plan   / roundedMax) * chartH;
@@ -88,15 +81,12 @@ const BarChart = ({ data, emptyLabel }) => {
                 );
             })}
 
-            {/* Chart border — full rectangle */}
             <line x1={padL}          y1={padT}          x2={padL}          y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
             <line x1={padL}          y1={padT + chartH} x2={padL + chartW} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
             <line x1={padL + chartW} y1={padT}          x2={padL + chartW} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
         </svg>
     );
 };
-
-// ── Format picker ─────────────────────────────────────────────────────────────
 
 const FORMATS = ['CSV', 'PDF', 'XLSX'];
 
@@ -109,8 +99,6 @@ const FormatPicker = ({ value, onChange }) => (
         ))}
     </div>
 );
-
-// ── Main component ────────────────────────────────────────────────────────────
 
 const today = new Date();
 
@@ -166,8 +154,6 @@ const Reports = () => {
 
     const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
     const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
-
-    // ── Derived data ──────────────────────────────────────────────────────────
 
     const chartData = useMemo(() => {
         if (!timesheetData?.dailyEntries?.length) return [];
@@ -259,8 +245,6 @@ const Reports = () => {
     const isManager       = userRole === 'MANAGER';
     const canViewEmployee = userRole === 'MANAGER' || userRole === 'HR' || userRole === 'ADMIN';
 
-    // ── Download handler ──────────────────────────────────────────────────────
-
     const handleDownload = async () => {
         if (!dlStartDate || !dlEndDate) { alert(t('reports.errorDateRange', 'Wybierz zakres dat.')); return; }
         if (dlStartDate > dlEndDate)    { alert(t('reports.errorDateOrder', 'Data "Od" musi być wcześniejsza niż "Do".')); return; }
@@ -290,8 +274,6 @@ const Reports = () => {
         }
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
-
     return (
         <div className="dashboard">
 
@@ -309,7 +291,6 @@ const Reports = () => {
 
             {error && <div className="login-error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
-            {/* Kafelki */}
             <div className="raporty-tiles">
                 <div className="raporty-tile">
                     <div className="tile-icon tile-icon--yellow"><Clock size={20} /></div>
@@ -356,7 +337,6 @@ const Reports = () => {
                 </div>
             </div>
 
-            {/* Wykres */}
             <Card title={t('reports.workHoursChart', 'Godziny pracy — tygodniowo')}>
                 <div className="chart-controls">
                     <div className="raporty-legend">
@@ -371,7 +351,6 @@ const Reports = () => {
                 {loading ? <div className="empty">{t('reports.loading', 'Ładowanie danych…')}</div> : <BarChart data={chartData} emptyLabel={t('reports.noDataToShow', 'Brak danych do wyświetlenia.')} />}
             </Card>
 
-            {/* Dolny rząd */}
             <div className="raporty-bottom">
                 <Card title={t('reports.absencesCardTitle', 'Nieobecności w miesiącu')}>
                     {loading ? <div className="empty">{t('reports.loadingShort', 'Ładowanie…')}</div>
@@ -421,12 +400,10 @@ const Reports = () => {
                 </Card>
             </div>
 
-            {/* Sekcja pobierania */}
             <div style={{ marginTop: '1.5rem' }}>
             <Card title={t('reports.downloadSection', 'Pobierz raport')}>
                 <div className="dl-section">
 
-                    {/* Zakładki: Moje / Pracownika / Zespołu */}
                     <div className="dl-tabs">
                         <button className={`period-tab ${dlTab === 'own' ? 'active' : ''}`}
                             onClick={() => { setDlTab('own'); setDlType('timesheet'); setDlAnomalies(false); }}>
@@ -446,7 +423,6 @@ const Reports = () => {
                         )}
                     </div>
 
-                    {/* Typ raportu */}
                     <div className="dl-type-row">
                         {dlTab === 'own' && (
                             <>
@@ -466,7 +442,6 @@ const Reports = () => {
                         )}
                     </div>
 
-                    {/* Wykrywanie anomalii — tylko MANAGER, tylko zakładka team */}
                     {dlTab === 'team' && isManager && (
                         <label className={`anomaly-toggle${dlAnomalies ? ' anomaly-toggle--active' : ''}`}>
                             <input
@@ -482,7 +457,6 @@ const Reports = () => {
                         </label>
                     )}
 
-                    {/* Wybór pracownika */}
                     {dlTab === 'employee' && (
                         <select className="filter-select" value={dlEmployeeId} onChange={e => setDlEmployeeId(e.target.value)}>
                             <option value="">{t('reports.selectEmployee', '-- Wybierz pracownika --')}</option>
@@ -492,7 +466,6 @@ const Reports = () => {
                         </select>
                     )}
 
-                    {/* Zakres dat */}
                     <div className="dl-date-row">
                         <span className="dl-label">{t('reports.dateFrom', 'Od')}</span>
                         <input type="date" className="filter-input" value={dlStartDate}
@@ -503,7 +476,6 @@ const Reports = () => {
                             onChange={e => setDlEndDate(e.target.value)} />
                     </div>
 
-                    {/* Format + przycisk */}
                     <div className="dl-footer">
                         <FormatPicker value={dlFormat} onChange={setDlFormat} />
                         <button className="report-dl-btn" onClick={handleDownload} disabled={downloading}>
@@ -514,6 +486,16 @@ const Reports = () => {
                 </div>
             </Card>
             </div>
+
+            {userRole && (
+                <div style={{ marginTop: '1.5rem' }}>
+                    <ScheduledReports
+                        role={userRole}
+                        currentUserEmail={authService.getUserEmail()}
+                        users={subordinates}
+                    />
+                </div>
+            )}
 
         </div>
     );

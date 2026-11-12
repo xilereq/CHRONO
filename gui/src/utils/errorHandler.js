@@ -62,6 +62,36 @@ export const getErrorMessage = (errorData) => {
         case 'NO_ACTIVE_LEAVE':
             return 'Nie jesteś obecnie na żadnej przerwie ani urlopie.';
 
+        case 'MISSING_DAY_OF_WEEK':
+            return 'Dla harmonogramu tygodniowego wybierz dzień tygodnia.';
+
+        case 'MISSING_DAY_OF_MONTH':
+            return 'Dla harmonogramu miesięcznego wybierz dzień miesiąca (1–28).';
+
+        case 'INVALID_CUSTOM_DATE_RANGE':
+            return 'Dla własnego okresu podaj obie daty, a data początkowa nie może być późniejsza niż końcowa.';
+
+        case 'UNAUTHORIZED_TEAM_REPORT':
+            return 'Nie masz uprawnień do planowania raportów zespołowych.';
+
+        case 'UNAUTHORIZED_TARGET_USER':
+            return 'Możesz zaplanować raport wyłącznie dla siebie.';
+
+        case 'UNAUTHORIZED_RECIPIENT_EMAIL':
+            return 'Raport możesz wysyłać wyłącznie na własny adres e-mail.';
+
+        case 'UNAUTHORIZED_MANAGER_TARGET_USERS':
+            return 'Możesz wybrać tylko siebie lub swoich bezpośrednich podwładnych.';
+
+        case 'UNAUTHORIZED_SCHEDULE_ACCESS':
+            return 'Nie masz dostępu do tego harmonogramu.';
+
+        case 'SCHEDULE_NOT_FOUND':
+            return 'Harmonogram nie istnieje (mógł zostać usunięty).';
+
+        case 'TARGET_USERS_NOT_FOUND':
+            return 'Co najmniej jeden z wybranych użytkowników nie istnieje.';
+
         default:
             return errorData?.message || 'Wystąpił nieoczekiwany błąd aplikacji. Spróbuj ponownie później.';
     }

@@ -8,3 +8,4 @@ export { default as logService } from './logService';
 export { default as notificationService } from './notificationService';
 export { default as workLogRequestService } from './workLogRequestService';
 export { default as reportService } from './reportService';
+export { default as scheduledReportService } from './scheduledReportService';
