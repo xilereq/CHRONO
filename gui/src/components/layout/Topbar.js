@@ -3,14 +3,11 @@ import { Bell, User, LogOut, Check } from 'lucide-react';
 import { notificationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
-import '../layout/layout.css';
 import UserHoverCard from './UserHoverCard';
 import './layout.css';
 
-const Topbar = ({ userEmail, onLogout }) => {
-    const { t } = useLanguage();
 const Topbar = ({ userEmail, userDetails, onLogout }) => {
-    const { t, language, changeLanguage } = useLanguage();
+    const { t } = useLanguage();
 
     const [notifications, setNotifications] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -57,7 +54,7 @@ const Topbar = ({ userEmail, userDetails, onLogout }) => {
         }
     };
 
-     const hoverUserData = {
+    const hoverUserData = {
         name: userDetails?.name || (userEmail ? userEmail.split('@')[0] : 'Użytkownik'),
         position: userDetails?.position || 'Pracownik',
         email: userEmail || '',
