@@ -4,9 +4,13 @@ import { notificationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import '../layout/layout.css';
+import UserHoverCard from './UserHoverCard';
+import './layout.css';
 
 const Topbar = ({ userEmail, onLogout }) => {
     const { t } = useLanguage();
+const Topbar = ({ userEmail, userDetails, onLogout }) => {
+    const { t, language, changeLanguage } = useLanguage();
 
     const [notifications, setNotifications] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -53,6 +57,14 @@ const Topbar = ({ userEmail, onLogout }) => {
         }
     };
 
+     const hoverUserData = {
+        name: userDetails?.name || (userEmail ? userEmail.split('@')[0] : 'Użytkownik'),
+        position: userDetails?.position || 'Pracownik',
+        email: userEmail || '',
+        department: userDetails?.department || 'Zespół',
+        avatarUrl: userDetails?.avatarUrl || null
+    };
+
     return (
         <header className="topbar">
             <h1></h1>
@@ -61,12 +73,16 @@ const Topbar = ({ userEmail, onLogout }) => {
                 <LanguageSwitcher />
 
                 <div className="user-profile">
-                    <div className="user-icon">
-                        <User size={16} />
-                    </div>
-                    <span className="user-email" title={userEmail || t('topbar.userLoggedIn', 'Zalogowany')}>
-                        {userEmail || t('topbar.userLoggedIn', 'Zalogowany')}
-                    </span>
+                    <UserHoverCard user={hoverUserData} placement="bottom">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <div className="user-icon">
+                                <User size={16} />
+                            </div>
+                            <span className="user-email" title={userEmail || t('topbar.userLoggedIn', 'Zalogowany')}>
+                                {userEmail || t('topbar.userLoggedIn', 'Zalogowany')}
+                            </span>
+                        </div>
+                    </UserHoverCard>
 
                     <div
                         className="notification-bell"
@@ -115,6 +131,6 @@ const Topbar = ({ userEmail, onLogout }) => {
             </div>
         </header>
     );
-}
+};
 
 export default Topbar;

@@ -359,3 +359,172 @@
 .language-selector-pill:hover {
     box-shadow: var(--shadow-md);
 }
+
+/* =========================================
+   USER HOVER CARD (WIZYTÓWKA PRACOWNIKA)
+========================================= */
+.hover-card-trigger-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.hover-card-trigger {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-main, #111827);
+    border-bottom: 1px dotted rgba(0, 0, 0, 0.25);
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.hover-card-trigger:hover {
+    color: #b48300;
+    border-bottom-color: #f5b800;
+}
+
+/* Okienko wizytówki */
+.hover-card-popover {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 240px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+/* Pozycjonowanie góra / dół */
+.hover-card-popover.placement-top {
+    bottom: calc(100% + 8px);
+}
+
+.hover-card-popover.placement-bottom {
+    top: calc(100% + 8px);
+}
+
+/* Subtelny dzióbek/strzałka */
+.hover-card-popover::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+}
+
+.hover-card-popover.placement-top::after {
+    top: 100%;
+    border-color: #ffffff transparent transparent transparent;
+}
+
+.hover-card-popover.placement-bottom::after {
+    bottom: 100%;
+    border-color: transparent transparent #ffffff transparent;
+}
+
+/* Nagłówek wizytówki (awatar + imię + stanowisko) */
+.hover-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.hover-card-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.hover-card-avatar.initials {
+    background: #fff8e1;
+    color: #b48300;
+    border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.hover-card-name-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hover-card-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hover-card-position {
+    font-size: 0.75rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Treść wizytówki (e-mail, dział) */
+.hover-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hover-card-info-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: #4b5563;
+}
+
+.hover-card-info-row .info-icon {
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.hover-card-email {
+    color: #2563eb;
+    text-decoration: none;
+    word-break: break-all;
+    transition: color 0.15s ease;
+}
+
+.hover-card-email:hover {
+    text-decoration: underline;
+    color: #1d4ed8;
+}
+
+.hover-card-dept {
+    color: #4b5563;
+    font-weight: 500;
+}
+
+@keyframes popoverFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 4px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
