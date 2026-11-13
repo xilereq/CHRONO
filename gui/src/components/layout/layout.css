@@ -356,6 +356,17 @@
     border-radius: var(--radius-xs);
 }
 
+.topbar-prefs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-right: var(--space-4);
+}
+
+.topbar-prefs .language-selector-pill {
+    margin-right: 0;
+}
+
 .language-selector-pill:hover {
     box-shadow: var(--shadow-md);
 }

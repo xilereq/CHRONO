@@ -3,6 +3,7 @@ import { Bell, User, LogOut, Check } from 'lucide-react';
 import { notificationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
+import ThemeToggle from '../ui/ThemeToggle';
 import UserHoverCard from './UserHoverCard';
 import './layout.css';
 
@@ -67,7 +68,10 @@ const Topbar = ({ userEmail, userDetails, onLogout }) => {
             <h1></h1>
             <div className="topbar-right">
 
-                <LanguageSwitcher />
+                <div className="topbar-prefs">
+                    <LanguageSwitcher />
+                    <ThemeToggle />
+                </div>
 
                 <div className="user-profile">
                     <UserHoverCard user={hoverUserData} placement="bottom">
