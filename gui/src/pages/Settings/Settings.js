@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { authService } from '../../services';
 import { LANGUAGES } from '../../components/ui/LanguageSwitcher';
+import GoogleCalendarCard from '../../components/settings/GoogleCalendarCard';
 import { Eye, EyeOff } from 'lucide-react';
 import '../main.css';
 import '../Policies/policies.css';
@@ -86,6 +87,10 @@ const Settings = () => {
                         ))}
                     </div>
                 </Card>
+            </div>
+
+            <div style={{ marginTop: 'var(--space-5)' }}>
+                <GoogleCalendarCard />
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>

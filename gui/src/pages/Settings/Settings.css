@@ -1,0 +1,47 @@
+.gcal-description {
+    margin: 0 0 var(--space-4);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.gcal-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.gcal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-main);
+}
+
+.gcal-status--connected {
+    color: var(--success);
+    background: var(--success-bg-strong);
+}
+
+.gcal-status--error {
+    color: var(--danger-text);
+    background: var(--danger-bg);
+}
+
+.gcal-hint {
+    margin: var(--space-3) 0 0;
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+    .gcal-row > button {
+        width: 100% !important;
+    }
+}
