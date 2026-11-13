@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
 import { Grafik, Dashboard, Requests, RequestDetail, Policies, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Settings, Logs, UserManagementPage, ManagerSchedulePage } from './pages';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { authService, userService } from './services';
+import { authService, userService, delegationService } from './services';
 import ChangePasswordModal from './components/ui/ChangePasswordModal';
 import './index.css';
+
+const checkActingDeputy = async (role) => {
+    if (role === 'ROLE_MANAGER' || role === 'ROLE_ADMIN') return false;
+    return (await delegationService.getActiveReceived()).length > 0;
+};
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -13,6 +18,7 @@ const App = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isHr, setIsHr] = useState(false);
     const [isManager, setIsManager] = useState(false);
+    const [isActingDeputy, setIsActingDeputy] = useState(false);
     const [forcePasswordChange, setForcePasswordChange] = useState(false);
 
     useEffect(() => {
@@ -28,6 +34,7 @@ const App = () => {
                     setIsHr(response.role === "ROLE_HR");
                     setIsAdmin(response.role === "ROLE_ADMIN");
                     setIsManager(response.role === "ROLE_MANAGER");
+                    setIsActingDeputy(await checkActingDeputy(response.role));
                 } catch (error) {
                     console.error("Błąd weryfikacji roli:", error);
                 }
@@ -47,6 +54,7 @@ const App = () => {
             setIsAdmin(response.role === "ROLE_ADMIN");
             setIsHr(response.role === "ROLE_HR");
             setIsManager(response.role === "ROLE_MANAGER");
+            setIsActingDeputy(await checkActingDeputy(response.role));
         } catch (error) {
             console.error("Błąd weryfikacji roli po logowaniu:", error);
         }
@@ -59,6 +67,7 @@ const App = () => {
         setIsAdmin(false);
         setIsHr(false);
         setIsManager(false);
+        setIsActingDeputy(false);
         setForcePasswordChange(false);
     };
 
@@ -93,7 +102,7 @@ const App = () => {
                             {(isHr || isAdmin ) && (
                                 <Route path="/users" element={<UserManagementPage />} />
                             )}
-                            {(isManager || isAdmin) && (
+                            {(isManager || isAdmin || isActingDeputy) && (
                                 <Route path="/manager" element={<ManagerSchedulePage />} />
                             )}
                             {isAdmin && (

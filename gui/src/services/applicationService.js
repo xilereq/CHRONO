@@ -16,7 +16,10 @@ const ERROR_MESSAGES = {
     INSUFFICIENT_LEAVE_BALANCE:         'Niewystarczające saldo urlopu. Sprawdź liczbę dostępnych dni urlopowych.',
     APPLICATION_DAILY_LIMIT_EXCEEDED:   'Wniosek odrzucony — suma godzin pracy i nadgodzin przekroczyłaby dzienny limit.',
     REQUESTED_TIME_EXCEEDS_SCHEDULED:   'Żądana liczba godzin przekracza zaplanowany czas pracy na ten dzień.',
+    APPLICATION_DATES_OVERLAP:          'Pracownik ma już w tym terminie inny wniosek (oczekujący lub zatwierdzony), który się z nim wyklucza.',
 };
+
+const BULK_LIMIT = 100;
 
 const readError = async (response, fallback) => {
     const body = await response.json().catch(() => null);
@@ -75,38 +78,33 @@ const applicationService = {
     },
 
     approveMany: async (applicationIds, decisionReason) => {
-        const response = await fetch(`${API_URL}/bulk-approve`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ applicationIds, decisionReason: decisionReason || '' })
-        });
-
-        if (response.ok) {
-            const body = await response.json().catch(() => ({}));
-            const approved = Array.isArray(body.approved) ? body.approved : [];
-            const failed = Array.isArray(body.failed)
-                ? body.failed.map(f => ({
-                    id: f.id,
-                    message: ERROR_MESSAGES[f.code] || f.message || 'Nie udało się zatwierdzić wniosku.'
-                }))
-                : [];
-            return { approved, failed };
-        }
-
-        if (![404, 405, 501].includes(response.status)) {
-            throw await readError(response, 'Błąd masowej akceptacji wniosków');
-        }
-
         const approved = [];
         const failed = [];
-        for (const id of applicationIds) {
+
+        for (let i = 0; i < applicationIds.length; i += BULK_LIMIT) {
+            const chunk = applicationIds.slice(i, i + BULK_LIMIT);
+            let body;
             try {
-                await applicationService.changeStatus(id, 'APPROVED', decisionReason);
-                approved.push(id);
+                const response = await fetch(`${API_URL}/bulk-approve`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ applicationIds: chunk, decisionReason: decisionReason || '' })
+                });
+                if (!response.ok) throw await readError(response, 'Błąd masowej akceptacji wniosków');
+                body = await response.json().catch(() => ({}));
             } catch (error) {
-                failed.push({ id, message: error.message });
+                if (approved.length === 0 && failed.length === 0 && i + BULK_LIMIT >= applicationIds.length) throw error;
+                chunk.forEach(id => failed.push({ id, message: error.message }));
+                continue;
             }
+
+            (body.processed || []).forEach(a => approved.push(a.id));
+            (body.failed || []).forEach(f => failed.push({
+                id: f.applicationId,
+                message: ERROR_MESSAGES[f.errorCode] || f.message || 'Nie udało się zatwierdzić wniosku.'
+            }));
         }
+
         return { approved, failed };
     },
 

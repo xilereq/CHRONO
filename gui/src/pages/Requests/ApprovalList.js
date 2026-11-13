@@ -110,8 +110,8 @@ const ApprovalList = () => {
             setActiveAction({ id: null, type: null });
             setActionReason('');
             loadRequests();
-        } catch {
-            alert(t('approvals.statusError', 'Nie udało się zmienić statusu wniosku.'));
+        } catch (error) {
+            alert(error?.message || t('approvals.statusError', 'Nie udało się zmienić statusu wniosku.'));
         } finally {
             setProcessingId(null);
         }

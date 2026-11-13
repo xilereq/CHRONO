@@ -1,0 +1,7 @@
+# Lokalne nadpisanie docker-compose.yml (nie wysyłać do gita).
+# Backend działa po HTTP (ssl wyłączony w application-local.properties),
+# więc frontend (nginx) musi łączyć się z nim po HTTP, a nie HTTPS.
+services:
+  frontend:
+    volumes:
+      - ./docs/nginx-http.conf:/etc/nginx/conf.d/default.conf:ro

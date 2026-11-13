@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, LayoutGrid, FileText, BarChart2, Settings, Shield, Terminal, Users, Calendar  } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { userService } from '../../services';
+import { userService, delegationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
 import './layout.css';
 
@@ -18,6 +18,10 @@ const Sidebar = () => {
                 if (response.role === "ROLE_ADMIN") setIsAdmin(true);
                 if (response.role === "ROLE_HR") setIsHr(true);
                 if (response.role === "ROLE_MANAGER") setIsManager(true);
+                else if (response.role !== "ROLE_ADMIN") {
+                    const active = await delegationService.getActiveReceived();
+                    if (active.length > 0) setIsManager(true);
+                }
             } catch (error) {
                 console.error(t('errors.failedToFetchRole', "Nie udało się pobrać roli"), error);
             }

@@ -1,81 +1,104 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { UserCheck } from 'lucide-react';
-import { userService } from '../../services';
+import { userService, delegationService } from '../../services';
 import { Button } from '../../components';
 import { useLanguage } from '../../context/LanguageContext';
 import '../requests/requests.css';
 import './manager.css';
 
 const todayIso = () => new Date().toLocaleDateString('sv-SE');
+const OPEN_STATUSES = ['ACTIVE', 'SCHEDULED'];
+const EMPTY_FORM = { managerId: '', deputyId: '', startDate: '', endDate: '', reason: '' };
 
-const getStatus = (deputy, today) => {
-    if (deputy.endDate < today) return 'ended';
-    if (deputy.startDate > today) return 'planned';
-    return 'active';
-};
+const userLabel = (u) => `${u.name || ''} ${u.surname || ''}`.trim() + (u.email ? ` (${u.email})` : '');
 
-const DeputyTab = () => {
+const DeputyTab = ({ isAdmin = false }) => {
     const { t } = useLanguage();
     const [candidates, setCandidates] = useState([]);
-    const [deputies, setDeputies] = useState([]);
-    const [formData, setFormData] = useState({ deputyEmail: '', startDate: '', endDate: '' });
+    const [managers, setManagers] = useState([]);
+    const [delegations, setDelegations] = useState([]);
+    const [formData, setFormData] = useState(EMPTY_FORM);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [confirmRemoveId, setConfirmRemoveId] = useState(null);
-    const [removingId, setRemovingId] = useState(null);
+    const [confirmRevokeId, setConfirmRevokeId] = useState(null);
+    const [revokingId, setRevokingId] = useState(null);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
-    const [listNotice, setListNotice] = useState('');
+    const [listError, setListError] = useState('');
 
     const today = todayIso();
 
-    const loadDeputies = useCallback(async () => {
-        try {
-            const data = await userService.getMyDeputies();
-            setDeputies([...(data || [])].sort((a, b) => a.startDate.localeCompare(b.startDate)));
-            setListNotice('');
-        } catch (err) {
-            setDeputies([]);
-            setListNotice(err.notAvailable
-                ? t('manager.deputyUnavailable', 'Obsługa zastępstw nie jest jeszcze dostępna na serwerze.')
-                : t('manager.deputyLoadError', 'Nie udało się pobrać listy zastępstw.'));
-        }
+    const errorMessage = useCallback((err, fallbackKey, fallback) => {
+        const byCode = {
+            DELEGATION_OVERLAPPING: t('manager.deputyOverlapError', 'W tym okresie jest już przypisane zastępstwo.'),
+            DELEGATION_INVALID_PERIOD: t('manager.deputyPeriodError', 'Nieprawidłowy okres zastępstwa (data w przeszłości lub koniec przed początkiem).'),
+            DELEGATION_INVALID_DEPUTY: t('manager.deputyInvalidError', 'Wybrana osoba nie może zastępować (to ten sam menedżer albo nie jest zatrudniona przez cały okres).'),
+            DELEGATION_NOT_A_MANAGER: t('manager.deputyNotManagerError', 'Wybrany użytkownik nie jest menedżerem.'),
+            DELEGATION_FORBIDDEN: t('manager.deputyForbiddenError', 'Brak uprawnień do tej operacji.'),
+            DELEGATION_ALREADY_FINISHED: t('manager.deputyFinishedError', 'To zastępstwo zostało już cofnięte lub wygasło.'),
+            DELEGATION_NOT_FOUND: t('manager.deputyNotFoundError', 'Nie znaleziono zastępstwa.'),
+        };
+        return byCode[err?.code] || t(fallbackKey, fallback);
     }, [t]);
+
+    const loadDelegations = useCallback(async () => {
+        try {
+            const data = isAdmin ? await delegationService.getAll() : await delegationService.getGiven();
+            setDelegations([...(data || [])].sort((a, b) => b.startDate.localeCompare(a.startDate)));
+            setListError('');
+        } catch (err) {
+            setDelegations([]);
+            setListError(errorMessage(err, 'manager.deputyLoadError', 'Nie udało się pobrać listy zastępstw.'));
+        }
+    }, [isAdmin, errorMessage]);
 
     useEffect(() => {
         const init = async () => {
             try {
-                const { role } = await userService.getMyRole();
-                const data = role === 'ROLE_ADMIN'
-                    ? await userService.getAllUsers()
-                    : await userService.getSubordinates();
-                setCandidates(data || []);
+                if (isAdmin) {
+                    const [allUsers, allManagers] = await Promise.all([userService.getAllUsers(), userService.getManagers()]);
+                    setCandidates(allUsers || []);
+                    setManagers(allManagers || []);
+                } else {
+                    setCandidates((await userService.getSubordinates()) || []);
+                }
             } catch (err) {
                 console.error(t('manager.fetchSubordinatesError', 'Błąd podczas pobierania podwładnych:'), err);
             }
-            await loadDeputies();
+            await loadDelegations();
             setLoading(false);
         };
         init();
-    }, [t, loadDeputies]);
+    }, [isAdmin, t, loadDelegations]);
+
+    const deputyOptions = useMemo(() => {
+        if (!isAdmin) return candidates;
+        const managerId = Number(formData.managerId);
+        return candidates.filter(c => c.userID !== managerId);
+    }, [candidates, formData.managerId, isAdmin]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => {
             const next = { ...prev, [name]: value };
             if (name === 'startDate' && next.endDate && value > next.endDate) next.endDate = '';
+            if (name === 'managerId' && String(prev.deputyId) === value) next.deputyId = '';
             return next;
         });
     };
 
     const validate = () => {
-        const { deputyEmail, startDate, endDate } = formData;
-        if (!deputyEmail) return t('manager.deputySelectError', 'Wybierz osobę zastępującą.');
+        const { managerId, deputyId, startDate, endDate } = formData;
+        if (isAdmin && !managerId) return t('manager.deputyManagerSelectError', 'Wybierz menedżera.');
+        if (!deputyId) return t('manager.deputySelectError', 'Wybierz osobę zastępującą.');
         if (!startDate || !endDate) return t('manager.deputyDatesError', 'Podaj daty rozpoczęcia i zakończenia zastępstwa.');
         if (endDate < startDate) return t('manager.dateOrderError', 'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.');
         if (startDate < today) return t('manager.deputyPastError', 'Zastępstwo nie może zaczynać się w przeszłości.');
-        const overlaps = deputies.some(d => getStatus(d, today) !== 'ended' && !(endDate < d.startDate || startDate > d.endDate));
-        if (overlaps) return t('manager.deputyOverlapError', 'W tym okresie masz już przypisane zastępstwo.');
+        const overlaps = delegations.some(d =>
+            OPEN_STATUSES.includes(d.status)
+            && (!isAdmin || d.managerId === Number(managerId))
+            && !(endDate < d.startDate || startDate > d.endDate));
+        if (overlaps) return t('manager.deputyOverlapError', 'W tym okresie jest już przypisane zastępstwo.');
         return '';
     };
 
@@ -92,46 +115,47 @@ const DeputyTab = () => {
 
         setSaving(true);
         try {
-            await userService.assignDeputy(formData);
+            await delegationService.create({ ...formData, managerId: isAdmin ? formData.managerId : null });
             setMessage(t('manager.deputySuccess', 'Zastępstwo zostało przypisane.'));
-            setFormData({ deputyEmail: '', startDate: '', endDate: '' });
-            await loadDeputies();
+            setFormData(EMPTY_FORM);
+            await loadDelegations();
         } catch (err) {
-            setError(err.notAvailable
-                ? t('manager.deputyUnavailable', 'Obsługa zastępstw nie jest jeszcze dostępna na serwerze.')
-                : (err.message || t('manager.deputySaveError', 'Nie udało się przypisać zastępstwa.')));
+            setError(errorMessage(err, 'manager.deputySaveError', 'Nie udało się przypisać zastępstwa.'));
         } finally {
             setSaving(false);
         }
     };
 
-    const handleRemove = async (id) => {
+    const handleRevoke = async (id) => {
         setError('');
         setMessage('');
-        setRemovingId(id);
+        setRevokingId(id);
         try {
-            await userService.removeDeputy(id);
+            await delegationService.revoke(id);
             setMessage(t('manager.deputyRemoved', 'Zastępstwo zostało cofnięte.'));
-            await loadDeputies();
+            await loadDelegations();
         } catch (err) {
-            setError(err.message || t('manager.deputyRemoveError', 'Nie udało się cofnąć zastępstwa.'));
+            setError(errorMessage(err, 'manager.deputyRemoveError', 'Nie udało się cofnąć zastępstwa.'));
         } finally {
-            setRemovingId(null);
-            setConfirmRemoveId(null);
+            setRevokingId(null);
+            setConfirmRevokeId(null);
         }
     };
 
     const statusLabels = {
-        active: t('manager.deputyStatusActive', 'Trwa'),
-        planned: t('manager.deputyStatusPlanned', 'Zaplanowane'),
-        ended: t('manager.deputyStatusEnded', 'Zakończone'),
+        ACTIVE: t('manager.deputyStatusActive', 'Trwa'),
+        SCHEDULED: t('manager.deputyStatusPlanned', 'Zaplanowane'),
+        EXPIRED: t('manager.deputyStatusEnded', 'Zakończone'),
+        REVOKED: t('manager.deputyStatusRevoked', 'Cofnięte'),
     };
 
     return (
         <div className="policy-section">
             <h2 className="section-title">{t('manager.deputyTitle', 'Zastępstwo na czas urlopu')}</h2>
             <p className="section-subtitle mb-3">
-                {t('manager.deputySubtitle', 'Wskaż osobę, która na wybrany okres tymczasowo przejmie Twoje uprawnienia do rozpatrywania wniosków zespołu.')}
+                {isAdmin
+                    ? t('manager.deputySubtitleAdmin', 'Wskaż menedżera i osobę, która na wybrany okres tymczasowo przejmie jego uprawnienia do rozpatrywania wniosków zespołu.')
+                    : t('manager.deputySubtitle', 'Wskaż osobę, która na wybrany okres tymczasowo przejmie Twoje uprawnienia do rozpatrywania wniosków zespołu.')}
             </p>
 
             {error && <div className="manager-alert-error" role="alert">{error}</div>}
@@ -139,24 +163,41 @@ const DeputyTab = () => {
 
             <form onSubmit={handleSubmit} className="request-form" style={{ marginTop: 'var(--space-5)' }}>
                 <div className="request-form-grid">
+                    {isAdmin && (
+                        <label className="field field-full-width">
+                            <span className="field-label">{t('manager.deputyManagerLabel', 'Menedżer *')}</span>
+                            <select
+                                className="field-input"
+                                name="managerId"
+                                value={formData.managerId}
+                                onChange={handleChange}
+                                disabled={saving}
+                                required
+                            >
+                                <option value="">{t('manager.deputyManagerPlaceholder', '-- Wybierz menedżera --')}</option>
+                                {managers.map(m => (
+                                    <option key={m.userID} value={m.userID}>{userLabel(m)}</option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
+
                     <label className="field field-full-width">
                         <span className="field-label">{t('manager.deputyPersonLabel', 'Osoba zastępująca *')}</span>
                         <select
                             className="field-input"
-                            name="deputyEmail"
-                            value={formData.deputyEmail}
+                            name="deputyId"
+                            value={formData.deputyId}
                             onChange={handleChange}
                             disabled={saving}
                             required
                         >
                             <option value="">{t('manager.deputySelectPlaceholder', '-- Wybierz osobę --')}</option>
-                            {candidates.map(c => (
-                                <option key={c.userID ?? c.email} value={c.email}>
-                                    {c.name} {c.surname} ({c.email})
-                                </option>
+                            {deputyOptions.map(c => (
+                                <option key={c.userID} value={c.userID}>{userLabel(c)}</option>
                             ))}
                         </select>
-                        {!loading && candidates.length === 0 && (
+                        {!loading && deputyOptions.length === 0 && (
                             <span className="deputy-hint">
                                 {t('manager.deputyNoCandidates', 'Brak osób w zespole, które mogą Cię zastąpić.')}
                             </span>
@@ -191,6 +232,19 @@ const DeputyTab = () => {
                             />
                         </label>
                     </div>
+
+                    <label className="field field-full-width">
+                        <span className="field-label">{t('manager.deputyReasonLabel', 'Powód (opcjonalnie)')}</span>
+                        <input
+                            className="field-input"
+                            name="reason"
+                            value={formData.reason}
+                            onChange={handleChange}
+                            maxLength={255}
+                            placeholder={t('manager.deputyReasonPlaceholder', 'np. urlop wypoczynkowy')}
+                            disabled={saving}
+                        />
+                    </label>
                 </div>
 
                 <div className="policies-footer">
@@ -212,49 +266,54 @@ const DeputyTab = () => {
 
             {loading ? (
                 <div className="manager-loading-state">{t('common.loading_data', 'Ładowanie danych...')}</div>
-            ) : listNotice ? (
+            ) : listError ? (
                 <div className="manager-empty-state">
-                    <p className="manager-empty-text">{listNotice}</p>
+                    <p className="manager-empty-text">{listError}</p>
                 </div>
-            ) : deputies.length === 0 ? (
+            ) : delegations.length === 0 ? (
                 <div className="manager-empty-state">
                     <UserCheck size={40} className="manager-empty-icon" />
                     <p className="manager-empty-text">{t('manager.deputyListEmpty', 'Nie masz przypisanych zastępstw.')}</p>
                 </div>
             ) : (
                 <div className="manager-request-list">
-                    {deputies.map(d => {
-                        const status = getStatus(d, today);
-                        const isConfirming = confirmRemoveId === d.id;
+                    {delegations.map(d => {
+                        const status = d.status;
+                        const canRevoke = OPEN_STATUSES.includes(status);
+                        const isConfirming = confirmRevokeId === d.id;
                         return (
-                            <div key={d.id} className={`manager-request-card deputy-card deputy-card--${status}`}>
+                            <div key={d.id} className={`manager-request-card deputy-card deputy-card--${status.toLowerCase()}`}>
                                 <div>
                                     <h4 className="manager-request-title">
-                                        {[d.deputyName, d.deputySurname].filter(Boolean).join(' ') || d.deputyEmail}
+                                        {isAdmin
+                                            ? `${d.managerName} → ${d.deputyName}`
+                                            : d.deputyName}
                                     </h4>
                                     <div className="manager-request-details">
-                                        <span>{d.deputyEmail}</span>
                                         <span>{d.startDate} – {d.endDate}</span>
+                                        {d.reason && <span>{d.reason}</span>}
                                     </div>
                                 </div>
                                 <div className="manager-actions">
-                                    <span className={`deputy-badge deputy-badge--${status}`}>{statusLabels[status]}</span>
-                                    {status !== 'ended' && (
+                                    <span className={`deputy-badge deputy-badge--${status.toLowerCase()}`}>
+                                        {statusLabels[status] || status}
+                                    </span>
+                                    {canRevoke && (
                                         isConfirming ? (
                                             <>
                                                 <button
                                                     type="button"
                                                     className="btn-reject deputy-remove-confirm"
-                                                    onClick={() => handleRemove(d.id)}
-                                                    disabled={removingId === d.id}
+                                                    onClick={() => handleRevoke(d.id)}
+                                                    disabled={revokingId === d.id}
                                                 >
                                                     {t('manager.deputyRemoveConfirm', 'Potwierdź cofnięcie')}
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="action-panel-btn-cancel"
-                                                    onClick={() => setConfirmRemoveId(null)}
-                                                    disabled={removingId === d.id}
+                                                    onClick={() => setConfirmRevokeId(null)}
+                                                    disabled={revokingId === d.id}
                                                 >
                                                     {t('common.cancel', 'Anuluj')}
                                                 </button>
@@ -263,7 +322,7 @@ const DeputyTab = () => {
                                             <button
                                                 type="button"
                                                 className="btn-reject"
-                                                onClick={() => setConfirmRemoveId(d.id)}
+                                                onClick={() => setConfirmRevokeId(d.id)}
                                             >
                                                 {t('manager.deputyRemove', 'Cofnij')}
                                             </button>

@@ -137,7 +137,8 @@
     color: var(--danger-text);
 }
 
-.deputy-card--ended {
+.deputy-card--expired,
+.deputy-card--revoked {
     opacity: 0.6;
 }
 
@@ -151,9 +152,20 @@
     white-space: nowrap;
 }
 
-.deputy-badge--active  { background: var(--success-bg-strong); color: var(--success); }
-.deputy-badge--planned { background: var(--warning-bg-strong); color: var(--warning-text); }
-.deputy-badge--ended   { background: var(--bg-main);           color: var(--text-muted); }
+.deputy-badge--active    { background: var(--success-bg-strong); color: var(--success); }
+.deputy-badge--scheduled { background: var(--warning-bg-strong); color: var(--warning-text); }
+.deputy-badge--expired   { background: var(--bg-main);           color: var(--text-muted); }
+.deputy-badge--revoked   { background: var(--danger-bg);         color: var(--danger-text); }
+
+.deputy-banner {
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--primary-color);
+    background: var(--primary-soft);
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
 
 .deputy-remove-confirm {
     background: var(--danger-bg);
