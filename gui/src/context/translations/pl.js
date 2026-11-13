@@ -716,4 +716,8 @@ export const pl = {
         placeholderMin8: 'Minimum 8 znaków',
         placeholderRepeat: 'Powtórz nowe hasło',
     },
+    userHoverCard: {
+        noData: 'Brak danych',
+        noPosition: 'Stanowisko nieokreślone'
+    }
 };

@@ -535,10 +535,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
-    box-shadow: inset 0 0 0 1px #f3f4f6, 0 1px 3px rgba(0, 0, 0, 0.05);
+    background: var(--frame-bg);
+    box-shadow: inset 0 0 0 1px var(--frame-border), 0 1px 3px rgba(0, 0, 0, 0.05);
     box-sizing: border-box;
     overflow: hidden;
+    --frame-bg: #ffffff;
+    --frame-border: #f3f4f6;
+    --frame-track: #f1f3f5;
     --stroke-color: #f5b800; /* Zgodne z żółtym motywem strony */
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
@@ -549,8 +552,9 @@
 
 .work-frame-box.overtime {
     --stroke-color: #ea580c; /* Wyrazisty bursztyn przy nadgodzinach */
-    background: #fffaf5;
-    box-shadow: inset 0 0 0 1px #ffedd5, 0 2px 6px rgba(234, 88, 12, 0.08);
+    --frame-bg: #fffaf5;
+    --frame-border: #ffedd5;
+    box-shadow: inset 0 0 0 1px var(--frame-border), 0 2px 6px rgba(234, 88, 12, 0.08);
 }
 
 .work-frame-svg {
@@ -565,7 +569,7 @@
     width: calc(100% - 4px);
     height: calc(100% - 4px);
     fill: transparent;
-    stroke: #f1f3f5;
+    stroke: var(--frame-track);
     stroke-width: 4px;
 }
 
@@ -577,6 +581,15 @@
     stroke-width: 4px;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.8s ease, stroke 0.3s;
+}
+
+.work-frame-ticks {
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    fill: transparent;
+    stroke: var(--frame-bg);
+    stroke-width: 10px;
+    pointer-events: none;
 }
 
 .work-frame-content {
@@ -593,7 +606,7 @@
 .work-time-display {
     font-size: 2.4rem;
     font-weight: 800;
-    color: #1f2937;
+    color: var(--text-main);
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.5px;
     transition: color 0.3s ease;
@@ -621,9 +634,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    color: #374151;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
     padding: 6px 16px;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -654,7 +667,7 @@
     width: 100%;
     margin-top: 1rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #f1f3f5;
+    border-top: 1px solid var(--border-color);
 }
 
 .info-col {
@@ -666,16 +679,68 @@
 
 .info-col .label {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-muted);
     margin-bottom: 2px;
 }
 
 .info-col .val {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--text-main);
 }
 
 .info-col .val.complete {
     color: #ea580c;
+}
+
+/* ===== Tryb ciemny: ramka czasu pracy ===== */
+[data-theme="dark"] .work-frame-box {
+    --frame-bg: #1f2937;
+    --frame-border: #374151;
+    --frame-track: #374151;
+    box-shadow: inset 0 0 0 1px var(--frame-border), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .work-frame-box.overtime {
+    --frame-bg: #2b2220;
+    --frame-border: #7c2d12;
+    --stroke-color: #fb923c;
+    box-shadow: inset 0 0 0 1px var(--frame-border), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .work-frame-box.active {
+    --stroke-color: #facc15;
+}
+
+[data-theme="dark"] .work-frame-box.paused {
+    --stroke-color: #fb923c;
+}
+
+[data-theme="dark"] .work-time-display.time-overtime {
+    color: #fdba74;
+}
+
+[data-theme="dark"] .work-progress-label {
+    color: #facc15;
+}
+
+[data-theme="dark"] .work-progress-label.label-overtime {
+    color: #fb923c;
+}
+
+[data-theme="dark"] .btn-end-work-compact {
+    background: #374151;
+    border-color: #4b5563;
+    color: var(--text-main);
+    box-shadow: none;
+}
+
+[data-theme="dark"] .btn-end-work-compact:hover {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+}
+
+[data-theme="dark"] .info-col .val.complete {
+    color: #fb923c;
 }

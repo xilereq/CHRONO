@@ -8,6 +8,8 @@ import { workLogService, leaveLogService } from '../../services';
 
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
 const FIFTEEN_MINUTES_MS = 900000;
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const TICK_WIDTH_PX = 5;
 
 const formatDuration = (ms) => {
     if (!ms || ms < 0) return '00:00:00';
@@ -46,6 +48,7 @@ const TimeTracker = () => {
     const [isHO, setIsHO] = useState(false);
 
     const boxRef = useRef(null);
+    const activeRectRef = useRef(null);
     const [perimeter, setPerimeter] = useState(0);
 
     useEffect(() => {
@@ -91,11 +94,21 @@ const TimeTracker = () => {
     }, []);
 
     useEffect(() => {
-        if (isWorking && boxRef.current) {
-            const rect = boxRef.current.getBoundingClientRect();
-            const p = 2 * (rect.width + rect.height) - 16;
-            setPerimeter(p);
-        }
+        if (!isWorking || !activeRectRef.current) return undefined;
+        const el = activeRectRef.current;
+        const measure = () => {
+            try {
+                setPerimeter(el.getTotalLength());
+            } catch {
+                const rect = boxRef.current?.getBoundingClientRect();
+                if (rect) setPerimeter(2 * (rect.width + rect.height) - 16);
+            }
+        };
+        measure();
+        if (typeof ResizeObserver === 'undefined' || !boxRef.current) return undefined;
+        const observer = new ResizeObserver(measure);
+        observer.observe(boxRef.current);
+        return () => observer.disconnect();
     }, [isWorking]);
 
     const handleToggleWork = async () => {
@@ -226,6 +239,8 @@ const TimeTracker = () => {
     const remainingMs = Math.max(0, EIGHT_HOURS_MS - elapsedMs);
     const strokeDashoffset = perimeter > 0 ? perimeter - (percent / 100) * perimeter : 0;
 
+    const hourTicks = Math.round(EIGHT_HOURS_MS / ONE_HOUR_MS);
+
     const frameStateClass = isOnBreak ? 'paused' : isComplete ? 'overtime' : 'active';
 
     return (
@@ -275,6 +290,7 @@ const TimeTracker = () => {
                                     ry="14"
                                 />
                                 <rect
+                                    ref={activeRectRef}
                                     className="work-frame-active-stroke"
                                     x="2"
                                     y="2"
@@ -285,6 +301,19 @@ const TimeTracker = () => {
                                         strokeDashoffset: strokeDashoffset
                                     }}
                                 />
+                                {perimeter > 0 && hourTicks > 0 && (
+                                    <rect
+                                        className="work-frame-ticks"
+                                        x="2"
+                                        y="2"
+                                        rx="14"
+                                        ry="14"
+                                        style={{
+                                            strokeDasharray: `${TICK_WIDTH_PX} ${perimeter / hourTicks - TICK_WIDTH_PX}`,
+                                            strokeDashoffset: TICK_WIDTH_PX / 2
+                                        }}
+                                    />
+                                )}
                             </svg>
 
                             <div className="work-frame-content">
