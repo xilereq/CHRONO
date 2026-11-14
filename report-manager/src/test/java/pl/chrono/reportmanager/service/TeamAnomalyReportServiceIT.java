@@ -58,7 +58,7 @@ class TeamAnomalyReportServiceIT {
 
     assertThat(report.entries()).hasSize(2);
     assertThat(report.entries()).anyMatch(e -> e.anomalyType().equals("ZNACZNE NADGODZINY"));
-    assertThat(report.entries()).anyMatch(e -> e.anomalyType().equals("POWAZNY NIEDOBOR"));
+    assertThat(report.entries()).anyMatch(e -> e.anomalyType().equals("POWAŻNY NIEDOBÓR"));
   }
 
   @Test

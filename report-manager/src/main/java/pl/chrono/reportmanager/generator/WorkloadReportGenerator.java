@@ -18,7 +18,7 @@ public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadRe
 
   private static final List<ReportColumn> COLUMNS = List.of(
       new ReportColumn("ID Pracownika", NUMBER),
-      new ReportColumn("Imie i Nazwisko", TEXT),
+      new ReportColumn("Imię i Nazwisko", TEXT),
       new ReportColumn("Przepracowano", DURATION),
       new ReportColumn("Wymagano", DURATION),
       new ReportColumn("Bilans", DURATION)
@@ -28,7 +28,7 @@ public class WorkloadReportGenerator implements I_ReportGenerator<TeamWorkloadRe
   public ReportDocument generate(TeamWorkloadReport report) {
     List<ReportField> fields = List.of(ReportField.period(report.startDate(), report.endDate()));
     List<List<Object>> rows = report.entries().stream().map(this::toRow).toList();
-    return new ReportDocument("Raport Obciazenia Zespolu", fields, COLUMNS, rows);
+    return new ReportDocument("Raport Obciążenia Zespołu", fields, COLUMNS, rows);
   }
 
   private List<Object> toRow(TeamWorkloadEntry entry) {

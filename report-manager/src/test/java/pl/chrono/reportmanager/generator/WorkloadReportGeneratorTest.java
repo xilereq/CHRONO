@@ -21,7 +21,7 @@ class WorkloadReportGeneratorTest {
 
     ReportDocument document = generator.generate(report);
 
-    assertThat(document.title()).isEqualTo("Raport Obciazenia Zespolu");
+    assertThat(document.title()).isEqualTo("Raport Obciążenia Zespołu");
     assertThat(document.formatRow(document.rows().get(0)))
         .containsExactly("3", "Janina Kowal", "40:00", "40:00", "0:00");
   }

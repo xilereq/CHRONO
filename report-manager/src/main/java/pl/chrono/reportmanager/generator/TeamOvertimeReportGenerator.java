@@ -18,7 +18,7 @@ public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOverti
 
   private static final List<ReportColumn> COLUMNS = List.of(
       new ReportColumn("ID Pracownika", NUMBER),
-      new ReportColumn("Imie i Nazwisko", TEXT),
+      new ReportColumn("Imię i Nazwisko", TEXT),
       new ReportColumn("Suma Nadgodzin", DURATION)
   );
 
@@ -26,7 +26,7 @@ public class TeamOvertimeReportGenerator implements I_ReportGenerator<TeamOverti
   public ReportDocument generate(TeamOvertimeReport report) {
     List<ReportField> fields = List.of(ReportField.period(report.startDate(), report.endDate()));
     List<List<Object>> rows = report.entries().stream().map(this::toRow).toList();
-    return new ReportDocument("Zbiorczy Raport Nadgodzin Zespolu", fields, COLUMNS, rows);
+    return new ReportDocument("Zbiorczy Raport Nadgodzin Zespołu", fields, COLUMNS, rows);
   }
 
   private List<Object> toRow(TeamOvertimeEntry entry) {

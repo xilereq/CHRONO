@@ -21,8 +21,8 @@ class TeamOvertimeReportGeneratorTest {
 
     ReportDocument document = generator.generate(report);
 
-    assertThat(document.title()).isEqualTo("Zbiorczy Raport Nadgodzin Zespolu");
-    assertThat(document.headers()).containsExactly("ID Pracownika", "Imie i Nazwisko", "Suma Nadgodzin");
+    assertThat(document.title()).isEqualTo("Zbiorczy Raport Nadgodzin Zespołu");
+    assertThat(document.headers()).containsExactly("ID Pracownika", "Imię i Nazwisko", "Suma Nadgodzin");
     assertThat(document.formatRow(document.rows().get(0))).containsExactly("7", "Michał Anioł", "2:00");
   }
 }
