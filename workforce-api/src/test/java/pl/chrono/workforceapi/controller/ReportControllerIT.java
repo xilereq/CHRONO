@@ -271,6 +271,55 @@ class ReportControllerIT {
     }
   }
 
+  @Test
+  @WithMockUser(roles = "MANAGER")
+  void operationalTeamReportsReturnFilesTest() throws Exception {
+    LocalDate start = LocalDate.of(2026, 11, 1);
+    LocalDate end = LocalDate.of(2026, 11, 30);
+    when(reportFacade.getTeamMatrix(USER_ID, start, end, ReportFormat.PDF)).thenReturn(new byte[]{1});
+    when(reportFacade.getTeamDailyOvertime(USER_ID, start, end, ReportFormat.PDF)).thenReturn(new byte[]{2});
+    when(reportFacade.getTeamNightHours(USER_ID, start, end, ReportFormat.PDF)).thenReturn(new byte[]{3});
+
+    for (String path : List.of("/matrix/team", "/overtime/team/daily", "/night-hours/team")) {
+      mockMvc.perform(get("/api/reports" + path)
+              .header("Authorization", BEARER_TOKEN)
+              .param("startDate", start.toString())
+              .param("endDate", end.toString())
+              .param("format", "PDF"))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_PDF));
+    }
+  }
+
+  @Test
+  @WithMockUser(roles = "MANAGER")
+  void operationalTeamReportsReturnDocumentsTest() throws Exception {
+    LocalDate start = LocalDate.of(2026, 11, 1);
+    LocalDate end = LocalDate.of(2026, 11, 30);
+    when(reportFacade.getTeamMatrixDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+    when(reportFacade.getTeamDailyOvertimeDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+    when(reportFacade.getTeamNightHoursDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+
+    for (String path : List.of("/matrix/team/data", "/overtime/team/daily/data", "/night-hours/team/data")) {
+      mockMvc.perform(get("/api/reports" + path)
+              .header("Authorization", BEARER_TOKEN)
+              .param("startDate", start.toString())
+              .param("endDate", end.toString()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.title").value("Raport Okresowy"));
+    }
+  }
+
+  @Test
+  @WithMockUser(roles = "EMPLOYEE")
+  void operationalTeamReportsAreForbiddenForEmployeeTest() throws Exception {
+    mockMvc.perform(get("/api/reports/matrix/team/data")
+            .header("Authorization", BEARER_TOKEN)
+            .param("startDate", "2026-11-01")
+            .param("endDate", "2026-11-30"))
+        .andExpect(status().isForbidden());
+  }
+
   private ReportDocument sampleDocument() {
     return new ReportDocument(
         "Raport Okresowy",

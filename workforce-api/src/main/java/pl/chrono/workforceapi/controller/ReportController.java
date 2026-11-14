@@ -211,6 +211,81 @@ public class ReportController extends BaseController {
     return reportFacade.getTeamAnomalyDocument(extractId(token), startDate, endDate);
   }
 
+  @GetMapping("/matrix/team")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<byte[]> getTeamMatrixReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer managerId = extractId(token);
+    byte[] reportData = reportFacade.getTeamMatrix(managerId, startDate, endDate, format);
+
+    String filename = format.fileName(String.format("team_matrix_%s_to_%s", startDate, endDate));
+    return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/matrix/team/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamMatrixData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamMatrixDocument(extractId(token), startDate, endDate);
+  }
+
+  @GetMapping("/overtime/team/daily")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<byte[]> getTeamDailyOvertimeReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer managerId = extractId(token);
+    byte[] reportData = reportFacade.getTeamDailyOvertime(managerId, startDate, endDate, format);
+
+    String filename = format.fileName(String.format("team_daily_overtime_%s_to_%s", startDate, endDate));
+    return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/overtime/team/daily/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamDailyOvertimeData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamDailyOvertimeDocument(extractId(token), startDate, endDate);
+  }
+
+  @GetMapping("/night-hours/team")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ResponseEntity<byte[]> getTeamNightHoursReport(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(defaultValue = "CSV") ReportFormat format) {
+
+    Integer managerId = extractId(token);
+    byte[] reportData = reportFacade.getTeamNightHours(managerId, startDate, endDate, format);
+
+    String filename = format.fileName(String.format("team_night_hours_%s_to_%s", startDate, endDate));
+    return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/night-hours/team/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamNightHoursData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamNightHoursDocument(extractId(token), startDate, endDate);
+  }
+
   private ResponseEntity<byte[]> createResponse(byte[] fileData, String filename, ReportFormat format) {
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
