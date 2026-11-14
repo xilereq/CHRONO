@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.chrono.reportmanager.api.I_ReportAccessPolicy;
 import pl.chrono.reportmanager.api.I_ReportFacade;
+import pl.chrono.reportmanager.dto.ReportDocument;
 import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.usermanager.service.AuthService;
 
@@ -21,10 +23,13 @@ import pl.chrono.usermanager.service.AuthService;
 public class ReportController extends BaseController {
 
   private final I_ReportFacade reportFacade;
+  private final I_ReportAccessPolicy accessPolicy;
 
-  public ReportController(AuthService authService, I_ReportFacade reportFacade) {
+  public ReportController(AuthService authService, I_ReportFacade reportFacade,
+                          I_ReportAccessPolicy accessPolicy) {
     super(authService);
     this.reportFacade = reportFacade;
+    this.accessPolicy = accessPolicy;
   }
 
   @GetMapping("/timesheet/me")
@@ -42,18 +47,43 @@ public class ReportController extends BaseController {
     return createResponse(reportData, filename, format);
   }
 
+  @GetMapping("/timesheet/me/data")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
+  public ReportDocument getMyTimesheetData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getEmployeeTimesheetDocument(extractId(token), startDate, endDate);
+  }
+
   @GetMapping("/timesheet/employee/{employeeId}")
   @PreAuthorize("hasAnyRole('MANAGER', 'HR', 'ADMIN')")
   public ResponseEntity<byte[]> getEmployeeTimesheetReport(
+      @RequestHeader("Authorization") String token,
       @PathVariable Integer employeeId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
       @RequestParam(defaultValue = "CSV") ReportFormat format) {
 
+    accessPolicy.checkCanViewEmployee(extractId(token), employeeId);
     byte[] reportData = reportFacade.getEmployeeTimesheet(employeeId, startDate, endDate, format);
 
-    String filename = format.fileName(String.format("employee_%d_timesheet_%s_to_%s", employeeId, startDate, endDate));
+    String filename = format.fileName(
+        String.format("employee_%d_timesheet_%s_to_%s", employeeId, startDate, endDate));
     return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/timesheet/employee/{employeeId}/data")
+  @PreAuthorize("hasAnyRole('MANAGER', 'HR', 'ADMIN')")
+  public ReportDocument getEmployeeTimesheetData(
+      @RequestHeader("Authorization") String token,
+      @PathVariable Integer employeeId,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    accessPolicy.checkCanViewEmployee(extractId(token), employeeId);
+    return reportFacade.getEmployeeTimesheetDocument(employeeId, startDate, endDate);
   }
 
   @GetMapping("/overtime/me")
@@ -71,6 +101,16 @@ public class ReportController extends BaseController {
     return createResponse(reportData, filename, format);
   }
 
+  @GetMapping("/overtime/me/data")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR', 'ADMIN')")
+  public ReportDocument getMyOvertimeData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getEmployeeOvertimeDocument(extractId(token), startDate, endDate);
+  }
+
   @GetMapping("/workload/team")
   @PreAuthorize("hasRole('MANAGER')")
   public ResponseEntity<byte[]> getTeamWorkloadReport(
@@ -84,6 +124,16 @@ public class ReportController extends BaseController {
 
     String filename = format.fileName(String.format("team_workload_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/workload/team/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamWorkloadData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamWorkloadDocument(extractId(token), startDate, endDate);
   }
 
   @GetMapping("/absences/team")
@@ -101,6 +151,16 @@ public class ReportController extends BaseController {
     return createResponse(reportData, filename, format);
   }
 
+  @GetMapping("/absences/team/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamAbsencesData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamAbsencesDocument(extractId(token), startDate, endDate);
+  }
+
   @GetMapping("/overtime/team")
   @PreAuthorize("hasRole('MANAGER')")
   public ResponseEntity<byte[]> getTeamOvertimeReport(
@@ -116,6 +176,16 @@ public class ReportController extends BaseController {
     return createResponse(reportData, filename, format);
   }
 
+  @GetMapping("/overtime/team/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamOvertimeData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamOvertimeDocument(extractId(token), startDate, endDate);
+  }
+
   @GetMapping("/anomalies/team")
   @PreAuthorize("hasRole('MANAGER')")
   public ResponseEntity<byte[]> getTeamAnomalyReport(
@@ -129,6 +199,16 @@ public class ReportController extends BaseController {
 
     String filename = format.fileName(String.format("team_anomalies_%s_to_%s", startDate, endDate));
     return createResponse(reportData, filename, format);
+  }
+
+  @GetMapping("/anomalies/team/data")
+  @PreAuthorize("hasRole('MANAGER')")
+  public ReportDocument getTeamAnomalyData(
+      @RequestHeader("Authorization") String token,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return reportFacade.getTeamAnomalyDocument(extractId(token), startDate, endDate);
   }
 
   private ResponseEntity<byte[]> createResponse(byte[] fileData, String filename, ReportFormat format) {

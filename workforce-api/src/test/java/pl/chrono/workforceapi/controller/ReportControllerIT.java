@@ -1,11 +1,16 @@
 package pl.chrono.workforceapi.controller;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -21,11 +26,18 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import pl.chrono.reportmanager.api.I_ReportAccessPolicy;
 import pl.chrono.reportmanager.api.I_ReportFacade;
+import pl.chrono.reportmanager.dto.ReportColumn;
+import pl.chrono.reportmanager.dto.ReportDocument;
+import pl.chrono.reportmanager.dto.ReportField;
 import pl.chrono.reportmanager.dto.ReportFormat;
+import pl.chrono.reportmanager.dto.ValueType;
 import pl.chrono.reportmanager.exception.ReportException;
+import pl.chrono.reportmanager.exception.ReportUserException;
 import pl.chrono.usermanager.security.JwtService;
 import pl.chrono.usermanager.service.AuthService;
 import pl.chrono.workforceapi.TestApiConfig;
@@ -43,6 +55,9 @@ class ReportControllerIT {
 
   @MockitoBean
   private I_ReportFacade reportFacade;
+
+  @MockitoBean
+  private I_ReportAccessPolicy accessPolicy;
 
   @MockitoBean
   private AuthService authService;
@@ -177,5 +192,90 @@ class ReportControllerIT {
             .param("startDate", "2026-04-01")
             .param("endDate", "2026-04-30"))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  @WithMockUser(roles = "EMPLOYEE")
+  void getMyTimesheetDataReturnsDocumentAsJsonTest() throws Exception {
+    LocalDate start = LocalDate.of(2026, 10, 1);
+    LocalDate end = LocalDate.of(2026, 10, 31);
+    when(reportFacade.getEmployeeTimesheetDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+
+    mockMvc.perform(get("/api/reports/timesheet/me/data")
+            .header("Authorization", BEARER_TOKEN)
+            .param("startDate", start.toString())
+            .param("endDate", end.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.title").value("Raport Okresowy"))
+        .andExpect(jsonPath("$.fields[0].label").value("Pracownik"))
+        .andExpect(jsonPath("$.fields[0].value").value("Jan Kowalski"))
+        .andExpect(jsonPath("$.columns[0].label").value("Data"))
+        .andExpect(jsonPath("$.columns[0].type").value("DATE"))
+        .andExpect(jsonPath("$.columns[1].type").value("DURATION"))
+        .andExpect(jsonPath("$.rows[0][0]").value("2026-10-01"))
+        .andExpect(jsonPath("$.rows[0][1]").value(28800));
+  }
+
+  @Test
+  @WithMockUser(roles = "MANAGER")
+  void getEmployeeTimesheetDataChecksAccessTest() throws Exception {
+    LocalDate start = LocalDate.of(2026, 10, 1);
+    LocalDate end = LocalDate.of(2026, 10, 31);
+    when(reportFacade.getEmployeeTimesheetDocument(5, start, end)).thenReturn(sampleDocument());
+
+    mockMvc.perform(get("/api/reports/timesheet/employee/{employeeId}/data", 5)
+            .header("Authorization", BEARER_TOKEN)
+            .param("startDate", start.toString())
+            .param("endDate", end.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.title").value("Raport Okresowy"));
+
+    verify(accessPolicy).checkCanViewEmployee(USER_ID, 5);
+  }
+
+  @Test
+  @WithMockUser(roles = "MANAGER")
+  void getEmployeeTimesheetReportForbiddenForEmployeeOutsideTeamTest() throws Exception {
+    doThrow(new ReportUserException.AccessDenied(7)).when(accessPolicy).checkCanViewEmployee(USER_ID, 7);
+
+    mockMvc.perform(get("/api/reports/timesheet/employee/{employeeId}", 7)
+            .header("Authorization", BEARER_TOKEN)
+            .param("startDate", "2026-10-01")
+            .param("endDate", "2026-10-31"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("REPORT_ACCESS_DENIED"));
+
+    verify(reportFacade, never()).getEmployeeTimesheet(any(), any(), any(), any());
+  }
+
+  @Test
+  @WithMockUser(roles = {"EMPLOYEE", "MANAGER"})
+  void dataEndpointsReturnDocumentsTest() throws Exception {
+    LocalDate start = LocalDate.of(2026, 10, 1);
+    LocalDate end = LocalDate.of(2026, 10, 31);
+    when(reportFacade.getEmployeeOvertimeDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+    when(reportFacade.getTeamWorkloadDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+    when(reportFacade.getTeamAbsencesDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+    when(reportFacade.getTeamOvertimeDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+    when(reportFacade.getTeamAnomalyDocument(USER_ID, start, end)).thenReturn(sampleDocument());
+
+    for (String path : List.of("/overtime/me/data", "/workload/team/data", "/absences/team/data",
+        "/overtime/team/data", "/anomalies/team/data")) {
+      mockMvc.perform(get("/api/reports" + path)
+              .header("Authorization", BEARER_TOKEN)
+              .param("startDate", start.toString())
+              .param("endDate", end.toString()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.title").value("Raport Okresowy"));
+    }
+  }
+
+  private ReportDocument sampleDocument() {
+    return new ReportDocument(
+        "Raport Okresowy",
+        List.of(new ReportField("Pracownik", "Jan Kowalski", ValueType.TEXT)),
+        List.of(new ReportColumn("Data", ValueType.DATE), new ReportColumn("Czas", ValueType.DURATION)),
+        List.of(Arrays.asList(LocalDate.of(2026, 10, 1), 28800L)));
   }
 }
