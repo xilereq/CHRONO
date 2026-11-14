@@ -32,6 +32,10 @@ class ReportFacadeTest {
   @Mock private TeamAnomalyReportService anomalyService;
   @Mock private AnomalyReportGenerator anomalyGenerator;
   @Mock private ReportExporter exporter;
+  @Mock private TeamOperationalReportService operationalService;
+  @Mock private TeamMatrixReportGenerator matrixGenerator;
+  @Mock private TeamDailyOvertimeReportGenerator dailyOvertimeGenerator;
+  @Mock private TeamNightHoursReportGenerator nightHoursGenerator;
 
   @InjectMocks private ReportFacade reportFacade;
 
@@ -165,5 +169,50 @@ class ReportFacadeTest {
     verify(anomalyService).generateReport(managerId, start, end);
     verify(anomalyGenerator).generate(reportData);
     verify(exporter).export(document, format);
+  }
+
+  @Test
+  void shouldGetTeamMatrix() {
+    LocalDate start = LocalDate.of(2026, 11, 1);
+    LocalDate end = LocalDate.of(2026, 11, 30);
+    TeamMatrixReport reportData = mock(TeamMatrixReport.class);
+    ReportDocument document = new ReportDocument("Raport", List.of(), List.of(), List.of());
+    byte[] expectedBytes = {19};
+
+    when(operationalService.generateMatrix(1, start, end)).thenReturn(reportData);
+    when(matrixGenerator.generate(reportData)).thenReturn(document);
+    when(exporter.export(document, ReportFormat.PDF)).thenReturn(expectedBytes);
+
+    assertThat(reportFacade.getTeamMatrix(1, start, end, ReportFormat.PDF)).isEqualTo(expectedBytes);
+  }
+
+  @Test
+  void shouldGetTeamDailyOvertime() {
+    LocalDate start = LocalDate.of(2026, 11, 1);
+    LocalDate end = LocalDate.of(2026, 11, 30);
+    TeamDailyOvertimeReport reportData = mock(TeamDailyOvertimeReport.class);
+    ReportDocument document = new ReportDocument("Raport", List.of(), List.of(), List.of());
+    byte[] expectedBytes = {20};
+
+    when(operationalService.generateDailyOvertime(1, start, end)).thenReturn(reportData);
+    when(dailyOvertimeGenerator.generate(reportData)).thenReturn(document);
+    when(exporter.export(document, ReportFormat.CSV)).thenReturn(expectedBytes);
+
+    assertThat(reportFacade.getTeamDailyOvertime(1, start, end, ReportFormat.CSV)).isEqualTo(expectedBytes);
+  }
+
+  @Test
+  void shouldGetTeamNightHours() {
+    LocalDate start = LocalDate.of(2026, 11, 1);
+    LocalDate end = LocalDate.of(2026, 11, 30);
+    TeamNightHoursReport reportData = mock(TeamNightHoursReport.class);
+    ReportDocument document = new ReportDocument("Raport", List.of(), List.of(), List.of());
+    byte[] expectedBytes = {21};
+
+    when(operationalService.generateNightHours(1, start, end)).thenReturn(reportData);
+    when(nightHoursGenerator.generate(reportData)).thenReturn(document);
+    when(exporter.export(document, ReportFormat.XLSX)).thenReturn(expectedBytes);
+
+    assertThat(reportFacade.getTeamNightHours(1, start, end, ReportFormat.XLSX)).isEqualTo(expectedBytes);
   }
 }

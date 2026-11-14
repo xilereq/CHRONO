@@ -9,6 +9,9 @@ import pl.chrono.reportmanager.dto.ReportFormat;
 import pl.chrono.reportmanager.generator.AbsenceReportGenerator;
 import pl.chrono.reportmanager.generator.AnomalyReportGenerator;
 import pl.chrono.reportmanager.generator.EmployeeOvertimeReportGenerator;
+import pl.chrono.reportmanager.generator.TeamDailyOvertimeReportGenerator;
+import pl.chrono.reportmanager.generator.TeamMatrixReportGenerator;
+import pl.chrono.reportmanager.generator.TeamNightHoursReportGenerator;
 import pl.chrono.reportmanager.generator.TeamOvertimeReportGenerator;
 import pl.chrono.reportmanager.generator.TimesheetReportGenerator;
 import pl.chrono.reportmanager.generator.WorkloadReportGenerator;
@@ -23,6 +26,7 @@ public class ReportFacade implements I_ReportFacade {
   private final TeamAbsenceReportService absenceService;
   private final OvertimeReportService overtimeService;
   private final TeamAnomalyReportService anomalyService;
+  private final TeamOperationalReportService operationalService;
 
   private final TimesheetReportGenerator timesheetGenerator;
   private final WorkloadReportGenerator workloadGenerator;
@@ -30,6 +34,9 @@ public class ReportFacade implements I_ReportFacade {
   private final EmployeeOvertimeReportGenerator employeeOvertimeGenerator;
   private final TeamOvertimeReportGenerator teamOvertimeGenerator;
   private final AnomalyReportGenerator anomalyGenerator;
+  private final TeamMatrixReportGenerator matrixGenerator;
+  private final TeamDailyOvertimeReportGenerator dailyOvertimeGenerator;
+  private final TeamNightHoursReportGenerator nightHoursGenerator;
 
   private final ReportExporter exporter;
 
@@ -64,6 +71,21 @@ public class ReportFacade implements I_ReportFacade {
   }
 
   @Override
+  public byte[] getTeamMatrix(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format) {
+    return exporter.export(getTeamMatrixDocument(managerId, startDate, endDate), format);
+  }
+
+  @Override
+  public byte[] getTeamDailyOvertime(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format) {
+    return exporter.export(getTeamDailyOvertimeDocument(managerId, startDate, endDate), format);
+  }
+
+  @Override
+  public byte[] getTeamNightHours(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format) {
+    return exporter.export(getTeamNightHoursDocument(managerId, startDate, endDate), format);
+  }
+
+  @Override
   public ReportDocument getEmployeeTimesheetDocument(Integer employeeId, LocalDate startDate, LocalDate endDate) {
     return timesheetGenerator.generate(timesheetService.generateTimesheet(employeeId, startDate, endDate));
   }
@@ -92,5 +114,21 @@ public class ReportFacade implements I_ReportFacade {
   @Override
   public ReportDocument getTeamAnomalyDocument(Integer managerId, LocalDate startDate, LocalDate endDate) {
     return anomalyGenerator.generate(anomalyService.generateReport(managerId, startDate, endDate));
+  }
+
+  @Override
+  public ReportDocument getTeamMatrixDocument(Integer managerId, LocalDate startDate, LocalDate endDate) {
+    return matrixGenerator.generate(operationalService.generateMatrix(managerId, startDate, endDate));
+  }
+
+  @Override
+  public ReportDocument getTeamDailyOvertimeDocument(Integer managerId, LocalDate startDate, LocalDate endDate) {
+    return dailyOvertimeGenerator.generate(
+        operationalService.generateDailyOvertime(managerId, startDate, endDate));
+  }
+
+  @Override
+  public ReportDocument getTeamNightHoursDocument(Integer managerId, LocalDate startDate, LocalDate endDate) {
+    return nightHoursGenerator.generate(operationalService.generateNightHours(managerId, startDate, endDate));
   }
 }

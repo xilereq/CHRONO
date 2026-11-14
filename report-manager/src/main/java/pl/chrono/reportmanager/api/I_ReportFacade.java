@@ -18,6 +18,12 @@ public interface I_ReportFacade {
 
   byte[] getTeamAnomalyReport(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
 
+  byte[] getTeamMatrix(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
+
+  byte[] getTeamDailyOvertime(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
+
+  byte[] getTeamNightHours(Integer managerId, LocalDate startDate, LocalDate endDate, ReportFormat format);
+
   ReportDocument getEmployeeTimesheetDocument(Integer employeeId, LocalDate startDate, LocalDate endDate);
 
   ReportDocument getTeamWorkloadDocument(Integer managerId, LocalDate startDate, LocalDate endDate);
@@ -29,4 +35,10 @@ public interface I_ReportFacade {
   ReportDocument getTeamOvertimeDocument(Integer managerId, LocalDate startDate, LocalDate endDate);
 
   ReportDocument getTeamAnomalyDocument(Integer managerId, LocalDate startDate, LocalDate endDate);
+
+  ReportDocument getTeamMatrixDocument(Integer managerId, LocalDate startDate, LocalDate endDate);
+
+  ReportDocument getTeamDailyOvertimeDocument(Integer managerId, LocalDate startDate, LocalDate endDate);
+
+  ReportDocument getTeamNightHoursDocument(Integer managerId, LocalDate startDate, LocalDate endDate);
 }
