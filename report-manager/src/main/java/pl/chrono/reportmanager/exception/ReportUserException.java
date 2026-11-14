@@ -13,4 +13,12 @@ public class ReportUserException extends ReportException {
       super(ErrorCodes.USER_NOT_FOUND, "User with ID " + userId + " not found.", HttpStatus.NOT_FOUND);
     }
   }
+
+  public static class AccessDenied extends ReportUserException {
+    public AccessDenied(Integer employeeId) {
+      super(ErrorCodes.REPORT_ACCESS_DENIED,
+          "You are not allowed to view reports of user with ID " + employeeId + ".",
+          HttpStatus.FORBIDDEN);
+    }
+  }
 }
