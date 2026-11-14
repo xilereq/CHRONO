@@ -33,7 +33,7 @@ public class TeamAnomalyReportService {
       long threshold = (long) (required * 0.10);
 
       if (Math.abs(balance) > threshold) {
-        String type = balance > 0 ? "ZNACZNE NADGODZINY" : "POWAZNY NIEDOBOR";
+        String type = balance > 0 ? "ZNACZNE NADGODZINY" : "POWAŻNY NIEDOBÓR";
 
         anomalies.add(new TeamAnomalyEntry(
             user.getUserId(),

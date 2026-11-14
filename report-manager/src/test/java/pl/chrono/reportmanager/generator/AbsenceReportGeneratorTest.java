@@ -22,7 +22,7 @@ class AbsenceReportGeneratorTest {
 
     ReportDocument document = generator.generate(report);
 
-    assertThat(document.title()).isEqualTo("Raport Wnioskow i Absencji");
+    assertThat(document.title()).isEqualTo("Raport Wniosków i Absencji");
     assertThat(document.formatRow(document.rows().get(0)))
         .containsExactly("Jan Kowalski", "HOLIDAY_LEAVE", "APPROVED", "2026-10-05", "2026-10-09");
   }

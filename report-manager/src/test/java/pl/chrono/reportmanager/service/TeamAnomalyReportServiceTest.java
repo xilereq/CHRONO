@@ -60,6 +60,6 @@ class TeamAnomalyReportServiceTest {
     assertThat(report.entries().get(0).anomalyType()).isEqualTo("ZNACZNE NADGODZINY");
 
     assertThat(report.entries().get(1).employeeId()).isEqualTo(30);
-    assertThat(report.entries().get(1).anomalyType()).isEqualTo("POWAZNY NIEDOBOR");
+    assertThat(report.entries().get(1).anomalyType()).isEqualTo("POWAŻNY NIEDOBÓR");
   }
 }

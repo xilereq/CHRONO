@@ -27,7 +27,7 @@ public class AbsenceReportGenerator implements I_ReportGenerator<TeamAbsencesRep
   public ReportDocument generate(TeamAbsencesReport report) {
     List<ReportField> fields = List.of(ReportField.period(report.startDate(), report.endDate()));
     List<List<Object>> rows = report.entries().stream().map(this::toRow).toList();
-    return new ReportDocument("Raport Wnioskow i Absencji", fields, COLUMNS, rows);
+    return new ReportDocument("Raport Wniosków i Absencji", fields, COLUMNS, rows);
   }
 
   private List<Object> toRow(TeamAbsenceEntry entry) {
