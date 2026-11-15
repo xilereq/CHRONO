@@ -6,7 +6,10 @@ import { useLanguage } from '../../context/LanguageContext';
 import './scheduledReports.css';
 
 const EMPLOYEE_TYPES = ['EMPLOYEE_TIMESHEET', 'EMPLOYEE_OVERTIME'];
-const TEAM_TYPES = ['TEAM_WORKLOAD', 'TEAM_ABSENCES', 'TEAM_OVERTIME', 'TEAM_ANOMALY'];
+const TEAM_TYPES = [
+    'TEAM_WORKLOAD', 'TEAM_ABSENCES', 'TEAM_OVERTIME', 'TEAM_ANOMALY',
+    'TEAM_MATRIX', 'TEAM_DAILY_OVERTIME', 'TEAM_NIGHT_HOURS',
+];
 const FORMATS = ['CSV', 'PDF', 'XLSX'];
 const FREQUENCIES = ['DAILY', 'WEEKLY', 'MONTHLY'];
 const PERIODS = [
@@ -21,6 +24,9 @@ const DEFAULT_LABELS = {
     TEAM_ABSENCES:      'Nieobecności w zespole',
     TEAM_OVERTIME:      'Nadgodziny w zespole',
     TEAM_ANOMALY:       'Anomalie czasu pracy w zespole',
+    TEAM_MATRIX:        'Miesięczna macierz zespołu',
+    TEAM_DAILY_OVERTIME: 'Nadgodziny zespołu wg dnia',
+    TEAM_NIGHT_HOURS:   'Godziny nocne w zespole',
     DAILY:   'Codziennie',
     WEEKLY:  'Co tydzień',
     MONTHLY: 'Co miesiąc',
