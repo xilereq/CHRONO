@@ -6,10 +6,12 @@ public enum ScheduledReportType {
   TEAM_WORKLOAD,
   TEAM_ABSENCES,
   TEAM_OVERTIME,
-  TEAM_ANOMALY;
+  TEAM_ANOMALY,
+  TEAM_MATRIX,
+  TEAM_DAILY_OVERTIME,
+  TEAM_NIGHT_HOURS;
 
   public boolean isTeamReport() {
-    return this == TEAM_WORKLOAD || this == TEAM_ABSENCES
-        || this == TEAM_OVERTIME || this == TEAM_ANOMALY;
+    return this != EMPLOYEE_TIMESHEET && this != EMPLOYEE_OVERTIME;
   }
 }

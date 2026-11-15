@@ -203,8 +203,8 @@ public class ScheduledReportService implements I_ScheduledReportService {
     LocalDate endDate = dateRange[1];
 
     ReportFormat format = ReportFormat.valueOf(schedule.getReportFormat());
-    String extension = resolveFileExtension(format);
-    String contentType = resolveContentType(format);
+    String extension = format.getExtension();
+    String contentType = format.getMediaType();
 
     List<ReportAttachmentDto> attachments = new ArrayList<>();
 
@@ -272,6 +272,10 @@ public class ScheduledReportService implements I_ScheduledReportService {
       case TEAM_ABSENCES -> reportFacade.getTeamAbsences(userId, startDate, endDate, format);
       case TEAM_OVERTIME -> reportFacade.getTeamOvertime(userId, startDate, endDate, format);
       case TEAM_ANOMALY -> reportFacade.getTeamAnomalyReport(userId, startDate, endDate, format);
+      case TEAM_MATRIX -> reportFacade.getTeamMatrix(userId, startDate, endDate, format);
+      case TEAM_DAILY_OVERTIME ->
+          reportFacade.getTeamDailyOvertime(userId, startDate, endDate, format);
+      case TEAM_NIGHT_HOURS -> reportFacade.getTeamNightHours(userId, startDate, endDate, format);
     };
   }
 
@@ -416,21 +420,5 @@ public class ScheduledReportService implements I_ScheduledReportService {
   private boolean hasRole(User user, String roleName) {
     return user.getAuthorities().stream()
         .anyMatch(a -> Objects.equals(a.getAuthority(), roleName));
-  }
-
-  private String resolveFileExtension(ReportFormat format) {
-    return switch (format) {
-      case PDF -> "pdf";
-      case XLSX -> "xlsx";
-      case CSV -> "csv";
-    };
-  }
-
-  private String resolveContentType(ReportFormat format) {
-    return switch (format) {
-      case PDF -> "application/pdf";
-      case XLSX -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      case CSV -> "text/csv";
-    };
   }
 }

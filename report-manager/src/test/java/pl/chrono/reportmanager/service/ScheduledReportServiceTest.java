@@ -716,7 +716,8 @@ class ScheduledReportServiceTest {
     ReportFormat format = switch (reportType) {
       case EMPLOYEE_TIMESHEET, EMPLOYEE_OVERTIME -> ReportFormat.CSV;
       case TEAM_WORKLOAD, TEAM_ABSENCES -> ReportFormat.XLSX;
-      case TEAM_OVERTIME, TEAM_ANOMALY -> ReportFormat.PDF;
+      case TEAM_OVERTIME, TEAM_ANOMALY, TEAM_MATRIX -> ReportFormat.PDF;
+      case TEAM_DAILY_OVERTIME, TEAM_NIGHT_HOURS -> ReportFormat.CSV;
     };
 
     ScheduledReport schedule = new ScheduledReport();
