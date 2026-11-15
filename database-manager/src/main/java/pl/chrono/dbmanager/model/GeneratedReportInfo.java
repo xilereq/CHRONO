@@ -2,12 +2,12 @@ package pl.chrono.dbmanager.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import pl.chrono.dbmanager.model.enums.ReportType;
+import pl.chrono.dbmanager.model.enums.ScheduledReportType;
 
 public interface GeneratedReportInfo {
   Long getId();
 
-  ReportType getReportType();
+  ScheduledReportType getReportType();
 
   String getFormat();
 

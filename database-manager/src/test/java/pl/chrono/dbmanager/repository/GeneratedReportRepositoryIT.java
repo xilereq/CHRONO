@@ -12,7 +12,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import pl.chrono.dbmanager.model.GeneratedReport;
 import pl.chrono.dbmanager.model.GeneratedReportInfo;
 import pl.chrono.dbmanager.model.User;
-import pl.chrono.dbmanager.model.enums.ReportType;
+import pl.chrono.dbmanager.model.enums.ScheduledReportType;
 
 @DataJpaTest
 class GeneratedReportRepositoryIT {
@@ -27,7 +27,8 @@ class GeneratedReportRepositoryIT {
   void savesAndLoadsFileContent() {
     User user = persistUser("report-owner@chrono.pl");
     byte[] content = "Data;Start\n2026-10-01;08:00\n".getBytes(StandardCharsets.UTF_8);
-    GeneratedReport report = persistReport(user, ReportType.TIMESHEET, content, LocalDateTime.now());
+    GeneratedReport report = persistReport(user, ScheduledReportType.EMPLOYEE_TIMESHEET, content,
+        LocalDateTime.now());
     em.flush();
     em.clear();
 
@@ -35,7 +36,7 @@ class GeneratedReportRepositoryIT {
 
     assertThat(loaded.getContent()).isEqualTo(content);
     assertThat(loaded.getFileSize()).isEqualTo(content.length);
-    assertThat(loaded.getReportType()).isEqualTo(ReportType.TIMESHEET);
+    assertThat(loaded.getReportType()).isEqualTo(ScheduledReportType.EMPLOYEE_TIMESHEET);
     assertThat(loaded.getSubjectUserId()).isEqualTo(user.getUserId());
     assertThat(loaded.getRequestedByUserId()).isNull();
   }
@@ -45,22 +46,22 @@ class GeneratedReportRepositoryIT {
     User user = persistUser("history@chrono.pl");
     User other = persistUser("other@chrono.pl");
     byte[] content = {1, 2, 3};
-    GeneratedReport older = persistReport(user, ReportType.TIMESHEET, content,
+    GeneratedReport older = persistReport(user, ScheduledReportType.EMPLOYEE_TIMESHEET, content,
         LocalDateTime.of(2026, 9, 1, 6, 0));
-    GeneratedReport newer = persistReport(user, ReportType.EMPLOYEE_OVERTIME, content,
+    GeneratedReport newer = persistReport(user, ScheduledReportType.EMPLOYEE_OVERTIME, content,
         LocalDateTime.of(2026, 10, 1, 6, 0));
-    persistReport(other, ReportType.TIMESHEET, content, LocalDateTime.of(2026, 10, 2, 6, 0));
+    persistReport(other, ScheduledReportType.EMPLOYEE_TIMESHEET, content, LocalDateTime.of(2026, 10, 2, 6, 0));
     em.flush();
 
     List<GeneratedReportInfo> history = repository.findBySubjectUserIdOrderByCreatedAtDesc(user.getUserId());
 
     assertThat(history).extracting(GeneratedReportInfo::getId)
         .containsExactly(newer.getId(), older.getId());
-    assertThat(history.getFirst().getReportType()).isEqualTo(ReportType.EMPLOYEE_OVERTIME);
+    assertThat(history.getFirst().getReportType()).isEqualTo(ScheduledReportType.EMPLOYEE_OVERTIME);
     assertThat(history.getFirst().getFileName()).isEqualTo("report.csv");
   }
 
-  private GeneratedReport persistReport(User subject, ReportType type, byte[] content,
+  private GeneratedReport persistReport(User subject, ScheduledReportType type, byte[] content,
                                         LocalDateTime createdAt) {
     GeneratedReport report = new GeneratedReport();
     report.setReportType(type);

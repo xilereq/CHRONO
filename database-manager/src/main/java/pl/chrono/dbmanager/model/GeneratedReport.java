@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
-import pl.chrono.dbmanager.model.enums.ReportType;
+import pl.chrono.dbmanager.model.enums.ScheduledReportType;
 
 @Entity
 @Table(name = "generated_reports", indexes = {
@@ -28,7 +28,7 @@ public class GeneratedReport {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "report_type", nullable = false, length = 50)
-  private ReportType reportType;
+  private ScheduledReportType reportType;
 
   @Column(name = "format", nullable = false, length = 10)
   private String format;
