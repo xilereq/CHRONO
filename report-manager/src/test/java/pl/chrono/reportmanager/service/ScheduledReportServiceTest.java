@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import pl.chrono.dbmanager.model.GeneratedReport;
 import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.ScheduledReport;
 import pl.chrono.dbmanager.model.User;
@@ -39,6 +41,7 @@ import pl.chrono.dbmanager.model.enums.ReportPeriod;
 import pl.chrono.dbmanager.model.enums.ScheduleFrequency;
 import pl.chrono.dbmanager.model.enums.ScheduleRunStatus;
 import pl.chrono.dbmanager.model.enums.ScheduledReportType;
+import pl.chrono.dbmanager.ports.I_GeneratedReportData;
 import pl.chrono.dbmanager.ports.I_ScheduledReportData;
 import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.reportmanager.api.I_ReportFacade;
@@ -59,12 +62,15 @@ class ScheduledReportServiceTest {
   private I_ScheduledReportData scheduledReportData;
 
   @Mock
+  private I_GeneratedReportData generatedReportData;
+
+  @Mock
   private I_UserData userData;
 
   @Mock
   private ScheduledReportMapper scheduledReportMapper;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_SMART_NULLS)
   private I_ReportFacade reportFacade;
 
   @Mock
@@ -694,6 +700,34 @@ class ScheduledReportServiceTest {
     assertThat(eventCaptor.getValue().recipientEmails()).containsExactly("jan@chrono.pl", "hr@chrono.pl");
   }
 
+  @Test
+  void triggerScheduleNowSavesGeneratedFileToHistoryTest() {
+    User creator = createUser(1, "Jan", "Kowalski", "jan@chrono.pl", "ROLE_ADMIN");
+    ScheduledReport schedule = getScheduledReport(ReportPeriod.CUSTOM, creator);
+    byte[] content = {1, 2, 3};
+
+    when(userData.findById(1)).thenReturn(Optional.of(creator));
+    when(scheduledReportData.findScheduledReportById(1L)).thenReturn(Optional.of(schedule));
+    when(reportFacade.getEmployeeTimesheet(any(), any(), any(), eq(ReportFormat.PDF)))
+        .thenReturn(content);
+
+    scheduledReportService.triggerScheduleNow(1, 1L);
+
+    ArgumentCaptor<GeneratedReport> reportCaptor = ArgumentCaptor.forClass(GeneratedReport.class);
+    verify(generatedReportData).saveGeneratedReport(reportCaptor.capture());
+    GeneratedReport saved = reportCaptor.getValue();
+    assertEquals(ScheduledReportType.EMPLOYEE_TIMESHEET, saved.getReportType());
+    assertEquals("PDF", saved.getFormat());
+    assertEquals(LocalDate.of(2026, 1, 1), saved.getPeriodStart());
+    assertEquals(LocalDate.of(2026, 1, 31), saved.getPeriodEnd());
+    assertEquals(1, saved.getSubjectUserId());
+    assertEquals(1, saved.getRequestedByUserId());
+    assertEquals("EMPLOYEE_TIMESHEET_Jan_Kowalski_2026-01-01_2026-01-31.pdf", saved.getFileName());
+    assertEquals("application/pdf", saved.getContentType());
+    assertEquals(3, saved.getFileSize());
+    assertThat(saved.getContent()).isEqualTo(content);
+  }
+
   private static @NonNull ScheduledReport getScheduledReport(ReportPeriod period, User creator) {
     ScheduledReport schedule = new ScheduledReport();
     schedule.setScheduleId(1L);
@@ -796,6 +830,7 @@ class ScheduledReportServiceTest {
     assertEquals(ScheduleRunStatus.FAILED, schedule.getLastRunStatus());
     assertEquals(initialNextRun, schedule.getNextRunAt());
     verify(eventPublisher, never()).publishEvent(any(ScheduledReportFailureEvent.class));
+    verify(generatedReportData, never()).saveGeneratedReport(any());
 
     schedule.setRetryCount(4);
     scheduledReportService.processSingleScheduleExecution(schedule, initialNextRun);

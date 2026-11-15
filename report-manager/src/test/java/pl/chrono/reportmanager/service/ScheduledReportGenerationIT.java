@@ -14,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.GeneratedReport;
+import pl.chrono.dbmanager.model.GeneratedReportInfo;
 import pl.chrono.dbmanager.model.Role;
 import pl.chrono.dbmanager.model.ScheduledReport;
 import pl.chrono.dbmanager.model.User;
@@ -21,6 +23,7 @@ import pl.chrono.dbmanager.model.enums.ReportPeriod;
 import pl.chrono.dbmanager.model.enums.ScheduleFrequency;
 import pl.chrono.dbmanager.model.enums.ScheduleRunStatus;
 import pl.chrono.dbmanager.model.enums.ScheduledReportType;
+import pl.chrono.dbmanager.repository.GeneratedReportRepository;
 import pl.chrono.dbmanager.repository.RoleRepository;
 import pl.chrono.dbmanager.repository.ScheduledReportRepository;
 import pl.chrono.dbmanager.repository.UserRepository;
@@ -36,6 +39,7 @@ class ScheduledReportGenerationIT {
 
   @Autowired private I_ScheduledReportService scheduledReportService;
   @Autowired private ScheduledReportRepository scheduledReportRepository;
+  @Autowired private GeneratedReportRepository generatedReportRepository;
   @Autowired private UserRepository userRepository;
   @Autowired private RoleRepository roleRepository;
   @Autowired private ApplicationEvents events;
@@ -73,6 +77,27 @@ class ScheduledReportGenerationIT {
         .isEqualTo("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     assertThat(new String(attachment.content(), 0, 2)).isEqualTo("PK");
     assertThat(lastRunStatus(schedule)).isEqualTo(ScheduleRunStatus.SUCCESS);
+  }
+
+  @Test
+  void dueScheduleSavesGeneratedFileToHistory() {
+    persistDueSchedule(ScheduledReportType.TEAM_MATRIX, "PDF");
+
+    scheduledReportService.processDueSchedules();
+
+    ReportAttachmentDto attachment = singleSentAttachment();
+    List<GeneratedReportInfo> history =
+        generatedReportRepository.findBySubjectUserIdOrderByCreatedAtDesc(manager.getUserId());
+    assertThat(history).hasSize(1);
+    GeneratedReport saved =
+        generatedReportRepository.findById(history.getFirst().getId()).orElseThrow();
+    assertThat(saved.getReportType()).isEqualTo(ScheduledReportType.TEAM_MATRIX);
+    assertThat(saved.getFormat()).isEqualTo("PDF");
+    assertThat(saved.getRequestedByUserId()).isEqualTo(manager.getUserId());
+    assertThat(saved.getFileName()).isEqualTo(attachment.fileName());
+    assertThat(saved.getContentType()).isEqualTo(attachment.contentType());
+    assertThat(saved.getFileSize()).isEqualTo(attachment.content().length);
+    assertThat(saved.getContent()).isEqualTo(attachment.content());
   }
 
   private ReportAttachmentDto singleSentAttachment() {

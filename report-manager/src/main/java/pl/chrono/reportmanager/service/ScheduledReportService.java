@@ -18,12 +18,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.chrono.dbmanager.model.GeneratedReport;
 import pl.chrono.dbmanager.model.ScheduledReport;
 import pl.chrono.dbmanager.model.User;
 import pl.chrono.dbmanager.model.enums.ReportPeriod;
 import pl.chrono.dbmanager.model.enums.ScheduleFrequency;
 import pl.chrono.dbmanager.model.enums.ScheduleRunStatus;
 import pl.chrono.dbmanager.model.enums.ScheduledReportType;
+import pl.chrono.dbmanager.ports.I_GeneratedReportData;
 import pl.chrono.dbmanager.ports.I_ScheduledReportData;
 import pl.chrono.dbmanager.ports.I_UserData;
 import pl.chrono.logmanager.audit.LogActivity;
@@ -48,6 +50,7 @@ public class ScheduledReportService implements I_ScheduledReportService {
   private static final int MAX_RETRY_ATTEMPTS = 5;
 
   private final I_ScheduledReportData scheduledReportData;
+  private final I_GeneratedReportData generatedReportData;
   private final I_UserData userData;
   private final ScheduledReportMapper scheduledReportMapper;
   private final I_ReportFacade reportFacade;
@@ -207,6 +210,7 @@ public class ScheduledReportService implements I_ScheduledReportService {
     String contentType = format.getMediaType();
 
     List<ReportAttachmentDto> attachments = new ArrayList<>();
+    List<GeneratedReport> history = new ArrayList<>();
 
     for (User targetUser : schedule.getTargetUsers()) {
       byte[] reportBytes = invokeFacade(
@@ -228,7 +232,10 @@ public class ScheduledReportService implements I_ScheduledReportService {
       );
 
       attachments.add(new ReportAttachmentDto(fileName, reportBytes, contentType));
+      history.add(toGeneratedReport(
+          schedule, targetUser, startDate, endDate, format, fileName, reportBytes));
     }
+    history.forEach(generatedReportData::saveGeneratedReport);
 
     String[] recipients = Arrays.stream(schedule.getRecipientEmails().split(","))
         .map(String::trim)
@@ -259,6 +266,23 @@ public class ScheduledReportService implements I_ScheduledReportService {
 
     eventPublisher.publishEvent(
         new ScheduledReportEmailEvent(recipients, subject, body, attachments));
+  }
+
+  private GeneratedReport toGeneratedReport(ScheduledReport schedule, User targetUser,
+                                            LocalDate startDate, LocalDate endDate,
+                                            ReportFormat format, String fileName, byte[] content) {
+    GeneratedReport report = new GeneratedReport();
+    report.setReportType(schedule.getReportType());
+    report.setFormat(format.name());
+    report.setPeriodStart(startDate);
+    report.setPeriodEnd(endDate);
+    report.setSubjectUserId(targetUser.getUserId());
+    report.setRequestedByUserId(schedule.getCreator().getUserId());
+    report.setFileName(fileName);
+    report.setContentType(format.getMediaType());
+    report.setFileSize(content.length);
+    report.setContent(content);
+    return report;
   }
 
   private byte[] invokeFacade(ScheduledReportType type, Integer userId,
