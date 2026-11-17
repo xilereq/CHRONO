@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.ports;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import pl.chrono.dbmanager.model.LeaveLog;
@@ -40,6 +41,9 @@ public interface I_TimeData {
 
   List<WorkLog> findWorkLogsByUserAndDate(Integer userId, LocalDateTime startOfDay,
                                           LocalDateTime endOfDay);
+
+  List<WorkLog> findWorkLogsByUsersAndPeriod(Collection<Integer> userIds, LocalDateTime from,
+                                             LocalDateTime to);
 
   List<WorkLogRequest> findAllPendingWorkLogRequests();
 

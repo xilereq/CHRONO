@@ -33,6 +33,9 @@ public final class ErrorCodes {
   public static final String UNAUTHORIZED_MANAGER = "UNAUTHORIZED_MANAGER";
   public static final String INSUFFICIENT_REQUEST_TIME = "INSUFFICIENT_REQUEST_TIME";
 
+  public static final String INVALID_MANAGER_ID = "INVALID_MANAGER_ID";
+  public static final String DASHBOARD_DATE_OUT_OF_RANGE = "DASHBOARD_DATE_OUT_OF_RANGE";
+
   public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
 
   public static final String APPLICATION_DAILY_LIMIT_EXCEEDED = "APPLICATION_DAILY_LIMIT_EXCEEDED";

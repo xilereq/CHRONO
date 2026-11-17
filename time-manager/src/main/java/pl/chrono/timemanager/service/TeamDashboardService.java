@@ -5,8 +5,10 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,8 @@ import pl.chrono.usermanager.api.I_ManagerDelegationService;
 @RequiredArgsConstructor
 public class TeamDashboardService implements I_TeamDashboardService {
 
+  static final int MAX_DAYS_FROM_TODAY = 365;
+
   private static final Set<String> PRIVILEGED_ROLES = Set.of("ROLE_ADMIN", "ROLE_HR");
   private static final Set<ApplicationType> LEAVE_TYPES =
       EnumSet.of(ApplicationType.HOLIDAY_LEAVE, ApplicationType.SICK_LEAVE);
@@ -46,15 +50,44 @@ public class TeamDashboardService implements I_TeamDashboardService {
     Integer targetManagerId = managerId != null ? managerId : requesterId;
     LocalDate targetDate = date != null ? date : LocalDate.now();
 
+    validateInput(targetManagerId, targetDate);
     validateAccess(requesterId, targetManagerId);
 
-    List<TeamMemberStatusDto> members = userData.getSubordinatesForManager(targetManagerId).stream()
+    List<User> team = userData.getSubordinatesForManager(targetManagerId).stream()
         .filter(employee -> employee.isEmployedOn(targetDate))
-        .map(employee -> resolveStatus(employee, targetDate))
+        .toList();
+    if (team.isEmpty()) {
+      return new TeamDashboardDto(targetManagerId, targetDate, summarize(List.of()), List.of());
+    }
+
+    // Two batched queries for the whole team instead of two queries per employee.
+    Set<Integer> teamIds = team.stream().map(User::getUserId).collect(Collectors.toSet());
+    Map<Integer, List<WorkLog>> workLogsByUser = loadWorkLogsOverlappingDay(teamIds, targetDate);
+    Map<Integer, List<Application>> applicationsByUser = applicationData
+        .findApprovedApplicationsByEmployeesAndDate(teamIds, targetDate).stream()
+        .collect(Collectors.groupingBy(app -> app.getEmployee().getUserId()));
+
+    List<TeamMemberStatusDto> members = team.stream()
+        .map(employee -> resolveStatus(
+            employee,
+            workLogsByUser.getOrDefault(employee.getUserId(), List.of()),
+            applicationsByUser.getOrDefault(employee.getUserId(), List.of())))
         .sorted(Comparator.comparing(TeamMemberStatusDto::fullName, String.CASE_INSENSITIVE_ORDER))
         .toList();
 
     return new TeamDashboardDto(targetManagerId, targetDate, summarize(members), members);
+  }
+
+  private void validateInput(Integer managerId, LocalDate date) {
+    if (managerId == null || managerId <= 0) {
+      throw new TeamDashboardException.InvalidManagerId(managerId);
+    }
+    LocalDate today = LocalDate.now();
+    LocalDate min = today.minusDays(MAX_DAYS_FROM_TODAY);
+    LocalDate max = today.plusDays(MAX_DAYS_FROM_TODAY);
+    if (date.isBefore(min) || date.isAfter(max)) {
+      throw new TeamDashboardException.DateOutOfRange(date, min, max);
+    }
   }
 
   private void validateAccess(Integer requesterId, Integer managerId) {
@@ -75,13 +108,25 @@ public class TeamDashboardService implements I_TeamDashboardService {
     }
   }
 
-  private TeamMemberStatusDto resolveStatus(User employee, LocalDate date) {
-    Integer employeeId = employee.getUserId();
-    String fullName = employee.getName() + " " + employee.getSurname();
-
+  /**
+   * Loads logs that overlap the given day, including overnight sessions started the day before
+   * that were still running at (or after) midnight.
+   */
+  private Map<Integer, List<WorkLog>> loadWorkLogsOverlappingDay(Set<Integer> userIds, LocalDate date) {
     LocalDateTime startOfDay = date.atStartOfDay();
     LocalDateTime endOfDay = date.plusDays(1).atStartOfDay().minusNanos(1);
-    List<WorkLog> workLogs = timeData.findWorkLogsByUserAndDate(employeeId, startOfDay, endOfDay);
+
+    return timeData.findWorkLogsByUsersAndPeriod(userIds, startOfDay.minusDays(1), endOfDay).stream()
+        .filter(log -> !log.getStartTime().isBefore(startOfDay)
+            || log.getEndTime() == null
+            || !log.getEndTime().isBefore(startOfDay))
+        .collect(Collectors.groupingBy(log -> log.getUser().getUserId()));
+  }
+
+  private TeamMemberStatusDto resolveStatus(User employee, List<WorkLog> workLogs,
+                                            List<Application> approvedApplications) {
+    Integer employeeId = employee.getUserId();
+    String fullName = employee.getName() + " " + employee.getSurname();
 
     // Actual registered work has priority over what was planned in applications.
     if (!workLogs.isEmpty()) {
@@ -94,9 +139,7 @@ public class TeamDashboardService implements I_TeamDashboardService {
           workLogs.get(0).getStartTime(), null);
     }
 
-    List<Application> approved = applicationData.findApprovedApplicationsByEmployeeAndDate(employeeId, date);
-
-    Optional<ApplicationType> leaveType = approved.stream()
+    Optional<ApplicationType> leaveType = approvedApplications.stream()
         .map(Application::getType)
         .filter(LEAVE_TYPES::contains)
         .findFirst();
@@ -105,7 +148,7 @@ public class TeamDashboardService implements I_TeamDashboardService {
           leaveType.get());
     }
 
-    boolean plannedHomeOffice = approved.stream()
+    boolean plannedHomeOffice = approvedApplications.stream()
         .anyMatch(app -> app.getType() == ApplicationType.HOME_OFFICE);
     TeamPresenceStatus status = plannedHomeOffice
         ? TeamPresenceStatus.HOME_OFFICE

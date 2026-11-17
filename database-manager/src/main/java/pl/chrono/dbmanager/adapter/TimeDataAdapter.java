@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.adapter;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -102,6 +103,15 @@ public class TimeDataAdapter implements I_TimeData {
                                                  LocalDateTime endOfDay) {
     return workLogRepository.findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
         userId, startOfDay, endOfDay);
+  }
+
+  @Override
+  public List<WorkLog> findWorkLogsByUsersAndPeriod(Collection<Integer> userIds, LocalDateTime from,
+                                                    LocalDateTime to) {
+    if (userIds == null || userIds.isEmpty()) {
+      return List.of();
+    }
+    return workLogRepository.findByUserIdsAndStartTimeBetween(userIds, from, to);
   }
 
   @Override

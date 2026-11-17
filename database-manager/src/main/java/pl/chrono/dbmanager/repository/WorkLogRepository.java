@@ -32,6 +32,12 @@ public interface WorkLogRepository extends JpaRepository<WorkLog, Integer> {
   List<WorkLog> findByUser_UserIdAndPendingCorrectionFalseAndStartTimeBetweenOrderByStartTimeAsc(
       Integer userId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
+  @Query("SELECT w FROM WorkLog w WHERE w.user.userId IN :userIds AND w.pendingCorrection = false "
+      + "AND w.startTime BETWEEN :from AND :to ORDER BY w.startTime ASC")
+  List<WorkLog> findByUserIdsAndStartTimeBetween(@Param("userIds") Collection<Integer> userIds,
+                                                 @Param("from") LocalDateTime from,
+                                                 @Param("to") LocalDateTime to);
+
   @Query("SELECT w FROM WorkLog w WHERE w.user.userId = ?1 AND w.startTime BETWEEN ?2 AND ?3 AND w.pendingCorrection = false")
   Optional<WorkLog> findByUserUserIdAndStartTimeBetween(Integer userId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 }

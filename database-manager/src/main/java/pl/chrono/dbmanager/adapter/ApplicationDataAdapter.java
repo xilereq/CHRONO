@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.adapter;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,15 @@ public class ApplicationDataAdapter implements I_ApplicationData {
   public List<Application> findApprovedApplicationsByEmployeeAndDate(
       Integer employeeId, LocalDate date) {
     return applicationRepository.findApprovedByEmployeeAndDate(employeeId, date);
+  }
+
+  @Override
+  public List<Application> findApprovedApplicationsByEmployeesAndDate(
+      Collection<Integer> employeeIds, LocalDate date) {
+    if (employeeIds == null || employeeIds.isEmpty()) {
+      return List.of();
+    }
+    return applicationRepository.findApprovedByEmployeesAndDate(employeeIds, date);
   }
 
   @Override

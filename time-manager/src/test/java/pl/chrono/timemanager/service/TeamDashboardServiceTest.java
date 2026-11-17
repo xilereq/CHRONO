@@ -3,9 +3,12 @@ package pl.chrono.timemanager.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -39,7 +42,7 @@ class TeamDashboardServiceTest {
 
   private static final Integer MANAGER_ID = 10;
   private static final Integer OTHER_ID = 99;
-  private static final LocalDate DATE = LocalDate.of(2026, 11, 17);
+  private static final LocalDate DATE = LocalDate.now();
 
   @Mock
   private I_UserData userData;
@@ -62,15 +65,12 @@ class TeamDashboardServiceTest {
     User missing = employee(5, "Ewa", "Brak");
     when(userData.getSubordinatesForManager(MANAGER_ID))
         .thenReturn(List.of(office, home, leave, plannedHome, missing));
-
-    when(timeData.findWorkLogsByUserAndDate(eq(1), any(), any()))
-        .thenReturn(List.of(workLog(office, WorkLocationType.OFFICE, 8, null)));
-    when(timeData.findWorkLogsByUserAndDate(eq(2), any(), any()))
-        .thenReturn(List.of(workLog(home, WorkLocationType.HOME_OFFICE, 9, 17)));
-    when(applicationData.findApprovedApplicationsByEmployeeAndDate(3, DATE))
-        .thenReturn(List.of(application(ApplicationType.HOLIDAY_LEAVE)));
-    when(applicationData.findApprovedApplicationsByEmployeeAndDate(4, DATE))
-        .thenReturn(List.of(application(ApplicationType.HOME_OFFICE)));
+    when(timeData.findWorkLogsByUsersAndPeriod(any(), any(), any())).thenReturn(List.of(
+        workLog(office, WorkLocationType.OFFICE, DATE.atTime(8, 0), null),
+        workLog(home, WorkLocationType.HOME_OFFICE, DATE.atTime(9, 0), DATE.atTime(17, 0))));
+    when(applicationData.findApprovedApplicationsByEmployeesAndDate(any(), eq(DATE))).thenReturn(List.of(
+        application(leave, ApplicationType.HOLIDAY_LEAVE),
+        application(plannedHome, ApplicationType.HOME_OFFICE)));
 
     TeamDashboardDto result = service.getTeamDashboard(MANAGER_ID, null, DATE);
 
@@ -97,19 +97,72 @@ class TeamDashboardServiceTest {
   }
 
   @Test
-  void activeWorkLogLocationWinsOverEarlierOne() {
-    User employee = employee(1, "Anna", "Zmiana");
-    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of(employee));
-    when(timeData.findWorkLogsByUserAndDate(eq(1), any(), any())).thenReturn(List.of(
-        workLog(employee, WorkLocationType.OFFICE, 8, 12),
-        workLog(employee, WorkLocationType.HOME_OFFICE, 13, null)));
+  void queriesWholeTeamInSingleBatchPerSource() {
+    User a = employee(1, "Anna", "A");
+    User b = employee(2, "Bartek", "B");
+    User c = employee(3, "Celina", "C");
+    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of(a, b, c));
+
+    service.getTeamDashboard(MANAGER_ID, null, DATE);
+
+    verify(timeData, times(1)).findWorkLogsByUsersAndPeriod(
+        eq(Set.of(1, 2, 3)), eq(DATE.minusDays(1).atStartOfDay()), any());
+    verify(applicationData, times(1)).findApprovedApplicationsByEmployeesAndDate(Set.of(1, 2, 3), DATE);
+    verify(timeData, never()).findWorkLogsByUserAndDate(anyInt(), any(), any());
+    verify(applicationData, never()).findApprovedApplicationsByEmployeeAndDate(anyInt(), any());
+  }
+
+  @Test
+  void emptyTeamSkipsPresenceQueries() {
+    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of());
 
     TeamDashboardDto result = service.getTeamDashboard(MANAGER_ID, null, DATE);
 
-    TeamMemberStatusDto status = result.members().get(0);
+    assertThat(result.members()).isEmpty();
+    assertThat(result.summary().total()).isZero();
+    verifyNoInteractions(timeData, applicationData);
+  }
+
+  @Test
+  void activeWorkLogLocationWinsOverEarlierOne() {
+    User employee = employee(1, "Anna", "Zmiana");
+    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of(employee));
+    when(timeData.findWorkLogsByUsersAndPeriod(any(), any(), any())).thenReturn(List.of(
+        workLog(employee, WorkLocationType.OFFICE, DATE.atTime(8, 0), DATE.atTime(12, 0)),
+        workLog(employee, WorkLocationType.HOME_OFFICE, DATE.atTime(13, 0), null)));
+
+    TeamMemberStatusDto status = service.getTeamDashboard(MANAGER_ID, null, DATE).members().get(0);
+
     assertThat(status.status()).isEqualTo(TeamPresenceStatus.HOME_OFFICE);
     assertThat(status.currentlyWorking()).isTrue();
     assertThat(status.firstStartTime()).isEqualTo(DATE.atTime(8, 0));
+  }
+
+  @Test
+  void overnightShiftFromPreviousDayCountsAsPresent() {
+    User nightShift = employee(1, "Nocna", "Zmiana");
+    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of(nightShift));
+    LocalDateTime yesterday22 = DATE.minusDays(1).atTime(22, 0);
+    when(timeData.findWorkLogsByUsersAndPeriod(any(), any(), any())).thenReturn(List.of(
+        workLog(nightShift, WorkLocationType.OFFICE, yesterday22, DATE.atTime(6, 0))));
+
+    TeamMemberStatusDto status = service.getTeamDashboard(MANAGER_ID, null, DATE).members().get(0);
+
+    assertThat(status.status()).isEqualTo(TeamPresenceStatus.OFFICE);
+    assertThat(status.firstStartTime()).isEqualTo(yesterday22);
+  }
+
+  @Test
+  void workLogClosedBeforeMidnightIsIgnored() {
+    User employee = employee(1, "Anna", "Wczoraj");
+    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of(employee));
+    when(timeData.findWorkLogsByUsersAndPeriod(any(), any(), any())).thenReturn(List.of(
+        workLog(employee, WorkLocationType.OFFICE,
+            DATE.minusDays(1).atTime(8, 0), DATE.minusDays(1).atTime(16, 0))));
+
+    TeamMemberStatusDto status = service.getTeamDashboard(MANAGER_ID, null, DATE).members().get(0);
+
+    assertThat(status.status()).isEqualTo(TeamPresenceStatus.NOT_CHECKED_IN);
   }
 
   @Test
@@ -121,7 +174,41 @@ class TeamDashboardServiceTest {
     TeamDashboardDto result = service.getTeamDashboard(MANAGER_ID, null, DATE);
 
     assertThat(result.members()).isEmpty();
-    assertThat(result.summary().total()).isZero();
+    verifyNoInteractions(timeData, applicationData);
+  }
+
+  @Test
+  void rejectsNonPositiveManagerId() {
+    assertThatThrownBy(() -> service.getTeamDashboard(MANAGER_ID, 0, DATE))
+        .isInstanceOf(TeamDashboardException.InvalidManagerId.class);
+    assertThatThrownBy(() -> service.getTeamDashboard(MANAGER_ID, -5, DATE))
+        .isInstanceOf(TeamDashboardException.InvalidManagerId.class);
+    verifyNoInteractions(userData);
+  }
+
+  @Test
+  void rejectsDateTooFarInPast() {
+    LocalDate tooEarly = LocalDate.now().minusDays(TeamDashboardService.MAX_DAYS_FROM_TODAY + 1);
+
+    assertThatThrownBy(() -> service.getTeamDashboard(MANAGER_ID, null, tooEarly))
+        .isInstanceOf(TeamDashboardException.DateOutOfRange.class);
+    verifyNoInteractions(userData);
+  }
+
+  @Test
+  void rejectsDateTooFarInFuture() {
+    LocalDate tooLate = LocalDate.now().plusDays(TeamDashboardService.MAX_DAYS_FROM_TODAY + 1);
+
+    assertThatThrownBy(() -> service.getTeamDashboard(MANAGER_ID, null, tooLate))
+        .isInstanceOf(TeamDashboardException.DateOutOfRange.class);
+  }
+
+  @Test
+  void acceptsDateOnRangeBoundary() {
+    LocalDate boundary = LocalDate.now().plusDays(TeamDashboardService.MAX_DAYS_FROM_TODAY);
+    when(userData.getSubordinatesForManager(MANAGER_ID)).thenReturn(List.of());
+
+    assertThat(service.getTeamDashboard(MANAGER_ID, null, boundary).date()).isEqualTo(boundary);
   }
 
   @Test
@@ -179,17 +266,19 @@ class TeamDashboardServiceTest {
     return user;
   }
 
-  private static WorkLog workLog(User user, WorkLocationType location, int startHour, Integer endHour) {
+  private static WorkLog workLog(User user, WorkLocationType location, LocalDateTime start,
+                                 LocalDateTime end) {
     WorkLog log = new WorkLog();
     log.setUser(user);
     log.setLocationType(location);
-    log.setStartTime(DATE.atTime(startHour, 0));
-    log.setEndTime(endHour != null ? DATE.atTime(endHour, 0) : null);
+    log.setStartTime(start);
+    log.setEndTime(end);
     return log;
   }
 
-  private static Application application(ApplicationType type) {
+  private static Application application(User employee, ApplicationType type) {
     Application app = new Application();
+    app.setEmployee(employee);
     app.setType(type);
     return app;
   }

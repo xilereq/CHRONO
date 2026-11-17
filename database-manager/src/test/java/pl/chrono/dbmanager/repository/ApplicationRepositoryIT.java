@@ -119,6 +119,24 @@ class ApplicationRepositoryIT {
         .containsExactlyInAnyOrder(app1.getId(), app2.getId());
   }
 
+  @Test
+  void findApprovedByEmployeesAndDate_returnsOnlyApprovedCoveringDateForGivenEmployees() {
+    LocalDate date = LocalDate.of(2026, 6, 12);
+    Application covering = persistApplicationWithDates(
+        employee, ApplicationStatus.APPROVED, date.minusDays(2), date.plusDays(2));
+    Application otherCovering = persistApplicationWithDates(
+        otherEmployee, ApplicationStatus.APPROVED, date, date);
+    persistApplicationWithDates(employee, ApplicationStatus.PENDING, date, date);
+    persistApplicationWithDates(employee, ApplicationStatus.APPROVED, date.plusDays(1), date.plusDays(3));
+    persistApplicationWithDates(manager, ApplicationStatus.APPROVED, date, date);
+    em.flush();
+
+    List<Application> result = repository.findApprovedByEmployeesAndDate(
+        List.of(employee.getUserId(), otherEmployee.getUserId()), date);
+
+    assertThat(result).extracting(Application::getId)
+        .containsExactlyInAnyOrder(covering.getId(), otherCovering.getId());
+  }
 
   private User buildUser(String name) {
     User user = new User();

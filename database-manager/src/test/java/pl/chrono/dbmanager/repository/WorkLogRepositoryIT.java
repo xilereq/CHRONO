@@ -1,6 +1,7 @@
 package pl.chrono.dbmanager.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,6 +100,41 @@ class WorkLogRepositoryIT {
     );
 
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  void findByUserIdsAndStartTimeBetween_returnsLogsOfAllGivenUsersOrderedByStart() {
+    User secondEmployee = new User();
+    secondEmployee.setName("Second");
+    secondEmployee.setSurname("User");
+    secondEmployee.setEmail("second@test.com");
+    secondEmployee.setPasswordHash("hash");
+    secondEmployee = em.persistAndFlush(secondEmployee);
+
+    User outsider = new User();
+    outsider.setName("Outsider");
+    outsider.setSurname("User");
+    outsider.setEmail("outsider@test.com");
+    outsider.setPasswordHash("hash");
+    outsider = em.persistAndFlush(outsider);
+
+    WorkLog later = em.persist(buildWorkLog(employee, LocalDateTime.of(2026, 6, 18, 10, 0)));
+    WorkLog earlier = em.persist(buildWorkLog(secondEmployee, LocalDateTime.of(2026, 6, 18, 7, 0)));
+    WorkLog pending = buildWorkLog(employee, LocalDateTime.of(2026, 6, 18, 12, 0));
+    pending.setPendingCorrection(true);
+    em.persist(pending);
+    em.persist(buildWorkLog(employee, LocalDateTime.of(2026, 6, 19, 8, 0)));
+    em.persist(buildWorkLog(outsider, LocalDateTime.of(2026, 6, 18, 8, 0)));
+    em.flush();
+
+    List<WorkLog> result = repository.findByUserIdsAndStartTimeBetween(
+        List.of(employee.getUserId(), secondEmployee.getUserId()),
+        LocalDateTime.of(2026, 6, 18, 0, 0),
+        LocalDateTime.of(2026, 6, 18, 23, 59)
+    );
+
+    assertThat(result).extracting(WorkLog::getWorkLogId)
+        .containsExactly(earlier.getWorkLogId(), later.getWorkLogId());
   }
 
   private WorkLog buildWorkLog(User user, LocalDateTime startTime) {
