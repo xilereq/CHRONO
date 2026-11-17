@@ -19,6 +19,7 @@ import pl.chrono.applicationmanager.exception.ApplicationManagerException;
 import pl.chrono.reportmanager.exception.ReportException;
 import pl.chrono.timemanager.exception.TimeManagerException;
 import pl.chrono.usermanager.exception.ManagerDelegationException;
+import pl.chrono.usermanager.exception.TeamHierarchyException;
 
 @RestControllerAdvice
 @SuppressWarnings("unused")
@@ -36,6 +37,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(ManagerDelegationException.class)
   public ResponseEntity<Object> handleManagerDelegationException(ManagerDelegationException ex) {
+    return buildErrorResponse(ex.getErrorCode(), ex.getMessage(), ex.getStatus());
+  }
+
+  @ExceptionHandler(TeamHierarchyException.class)
+  public ResponseEntity<Object> handleTeamHierarchyException(TeamHierarchyException ex) {
     return buildErrorResponse(ex.getErrorCode(), ex.getMessage(), ex.getStatus());
   }
 

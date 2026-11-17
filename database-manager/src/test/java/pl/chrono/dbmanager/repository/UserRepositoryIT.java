@@ -74,6 +74,22 @@ class UserRepositoryIT {
   }
 
   @Test
+  void findAllByManagerUserIdInTest() {
+    User managerA = persistUser("manager.a@chrono.pl", true, null);
+    User managerB = persistUser("manager.b@chrono.pl", true, null);
+    User managerC = persistUser("manager.c@chrono.pl", true, null);
+    User empA = persistUser("emp.a@chrono.pl", true, managerA);
+    User empB = persistUser("emp.b@chrono.pl", true, managerB);
+    persistUser("emp.c@chrono.pl", true, managerC);
+    em.flush();
+
+    List<User> subordinates = repository.findAllByManager_UserIdIn(
+        List.of(managerA.getUserId(), managerB.getUserId()));
+
+    assertThat(subordinates).containsExactlyInAnyOrder(empA, empB);
+  }
+
+  @Test
   void findByIsActiveFalseAndEmploymentEndDateBeforeTest() {
     LocalDate cutoffDate = LocalDate.now().minusYears(10);
 

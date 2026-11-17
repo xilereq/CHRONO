@@ -10,6 +10,8 @@ public interface I_UserData {
 
   List<User> getSubordinatesForManager(Integer managerId);
 
+  List<User> getSubordinatesForManagers(Collection<Integer> managerIds);
+
   List<User> findByRoles_Name(String role);
 
   List<User> findAll();

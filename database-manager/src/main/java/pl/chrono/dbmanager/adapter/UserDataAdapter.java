@@ -24,6 +24,14 @@ public class UserDataAdapter implements I_UserData {
   }
 
   @Override
+  public List<User> getSubordinatesForManagers(Collection<Integer> managerIds) {
+    if (managerIds == null || managerIds.isEmpty()) {
+      return List.of();
+    }
+    return userRepository.findAllByManager_UserIdIn(managerIds);
+  }
+
+  @Override
   public List<User> findByRoles_Name(String role) {
     return userRepository.findByRoles_Name(role);
   }

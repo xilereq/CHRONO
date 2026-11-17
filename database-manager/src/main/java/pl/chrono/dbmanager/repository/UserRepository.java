@@ -2,6 +2,7 @@ package pl.chrono.dbmanager.repository;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +23,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
   Optional<User> findBySurname(String surname);
 
   List<User> findAllByManager_UserId(Integer managerId);
+
+  List<User> findAllByManager_UserIdIn(Collection<Integer> managerIds);
 
   List<User> findByRoles_Name(String role);
 
