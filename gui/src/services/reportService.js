@@ -4,47 +4,43 @@ const getHeaders = () => ({
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
 });
 
-const parseTime = (str) => {
-    if (!str || str.trim() === '-') return 0;
-    const s = str.trim();
-    const neg = s.startsWith('-');
-    const [h, m] = s.replace('-', '').split(':').map(Number);
-    return neg ? -(h * 3600 + (m || 0) * 60) : (h * 3600 + (m || 0) * 60);
+const readError = async (response, fallback) => {
+    const body = await response.json().catch(() => null);
+    const error = new Error(body?.message || fallback);
+    error.code = body?.code;
+    return error;
 };
 
-const parseTimesheetCsv = (text) => {
-    const clean = text.startsWith('﻿') ? text.slice(1) : text;
-    const lines = clean.split('\n');
-    const col = (line) => line.split(';');
+const fetchReportData = async (path, startDate, endDate) => {
+    const response = await fetch(
+        `${API_URL}/${path}/data?startDate=${startDate}&endDate=${endDate}`,
+        { headers: getHeaders() }
+    );
+    if (!response.ok) throw await readError(response, 'Nie udało się pobrać danych raportu');
+    return response.json();
+};
 
-    const totalWork     = parseTime(col(lines[2])[1]);
-    const totalRequired = parseTime(col(lines[3])[1]);
-    const totalBalance  = parseTime(col(lines[4])[1]);
-    const totalNight    = parseTime(col(lines[5])[1]);
+const fieldValue = (document, label) => document.fields?.find(f => f.label === label)?.value ?? 0;
 
-    const headerIdx = lines.findIndex(l => l.startsWith('Data;'));
-    const dailyEntries = [];
-
-    if (headerIdx >= 0) {
-        for (let i = headerIdx + 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            const c = line.split(';');
-            if (c.length < 7 || !c[0]) continue;
-            dailyEntries.push({
-                date:            c[0],
-                start:           c[1] !== '-' ? c[1] : null,
-                end:             c[2] !== '-' ? c[2] : null,
-                workSeconds:     parseTime(c[3]),
-                requiredSeconds: parseTime(c[4]),
-                balanceSeconds:  parseTime(c[5]),
-                nightSeconds:    parseTime(c[6]),
-                applicationType: c[7]?.trim() || null,
-            });
-        }
-    }
-
-    return { totalWork, totalRequired, totalBalance, totalNight, dailyEntries };
+const toTimesheetSummary = (document) => {
+    const index = Object.fromEntries((document.columns || []).map((c, i) => [c.label, i]));
+    const cell = (row, label) => (index[label] === undefined ? null : row[index[label]]);
+    return {
+        totalWork:     fieldValue(document, 'Przepracowano'),
+        totalRequired: fieldValue(document, 'Wymagano'),
+        totalBalance:  fieldValue(document, 'Bilans'),
+        totalNight:    fieldValue(document, 'Godziny Nocne'),
+        dailyEntries: (document.rows || []).map(row => ({
+            date:            cell(row, 'Data'),
+            start:           cell(row, 'Start'),
+            end:             cell(row, 'Koniec'),
+            workSeconds:     cell(row, 'Efektywny Czas') || 0,
+            requiredSeconds: cell(row, 'Wymagany Czas') || 0,
+            balanceSeconds:  cell(row, 'Bilans') || 0,
+            nightSeconds:    cell(row, 'Godziny Nocne') || 0,
+            applicationType: cell(row, 'Wniosek'),
+        })),
+    };
 };
 
 const triggerDownload = (blob, filename) => {
@@ -70,14 +66,20 @@ const fetchAndDownload = async (url, filename) => {
 };
 
 const reportService = {
-    fetchMyTimesheetData: async (startDate, endDate) => {
-        const response = await fetch(
-            `${API_URL}/timesheet/me?startDate=${startDate}&endDate=${endDate}&format=CSV`,
-            { headers: getHeaders() }
-        );
-        if (!response.ok) throw new Error('Nie udało się pobrać danych raportu');
-        return parseTimesheetCsv(await response.text());
-    },
+    fetchMyTimesheetData: async (startDate, endDate) =>
+        toTimesheetSummary(await fetchReportData('timesheet/me', startDate, endDate)),
+
+    getMyTimesheetData:       (startDate, endDate) => fetchReportData('timesheet/me', startDate, endDate),
+    getMyOvertimeData:        (startDate, endDate) => fetchReportData('overtime/me', startDate, endDate),
+    getEmployeeTimesheetData: (employeeId, startDate, endDate) =>
+        fetchReportData(`timesheet/employee/${employeeId}`, startDate, endDate),
+    getTeamWorkloadData:      (startDate, endDate) => fetchReportData('workload/team', startDate, endDate),
+    getTeamAbsencesData:      (startDate, endDate) => fetchReportData('absences/team', startDate, endDate),
+    getTeamOvertimeData:      (startDate, endDate) => fetchReportData('overtime/team', startDate, endDate),
+    getTeamAnomaliesData:     (startDate, endDate) => fetchReportData('anomalies/team', startDate, endDate),
+    getTeamMatrixData:        (startDate, endDate) => fetchReportData('matrix/team', startDate, endDate),
+    getTeamDailyOvertimeData: (startDate, endDate) => fetchReportData('overtime/team/daily', startDate, endDate),
+    getTeamNightHoursData:    (startDate, endDate) => fetchReportData('night-hours/team', startDate, endDate),
 
     downloadMyTimesheet: (startDate, endDate, format) =>
         fetchAndDownload(
@@ -119,6 +121,24 @@ const reportService = {
         fetchAndDownload(
             `${API_URL}/anomalies/team?startDate=${startDate}&endDate=${endDate}&format=${format}`,
             `anomalie_zespolu_${startDate}_${endDate}.${EXT[format]}`
+        ),
+
+    downloadTeamMatrix: (startDate, endDate, format) =>
+        fetchAndDownload(
+            `${API_URL}/matrix/team?startDate=${startDate}&endDate=${endDate}&format=${format}`,
+            `macierz_zespolu_${startDate}_${endDate}.${EXT[format]}`
+        ),
+
+    downloadTeamDailyOvertime: (startDate, endDate, format) =>
+        fetchAndDownload(
+            `${API_URL}/overtime/team/daily?startDate=${startDate}&endDate=${endDate}&format=${format}`,
+            `nadgodziny_dzienne_zespolu_${startDate}_${endDate}.${EXT[format]}`
+        ),
+
+    downloadTeamNightHours: (startDate, endDate, format) =>
+        fetchAndDownload(
+            `${API_URL}/night-hours/team?startDate=${startDate}&endDate=${endDate}&format=${format}`,
+            `godziny_nocne_zespolu_${startDate}_${endDate}.${EXT[format]}`
         ),
 };
 

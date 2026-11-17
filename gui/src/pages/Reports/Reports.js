@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clock, CalendarOff, TrendingUp, Timer, Download, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Clock, CalendarOff, TrendingUp, Timer, Download, ChevronLeft, ChevronRight, Table2 } from 'lucide-react';
 import { Card } from '../../components';
 import { userService, reportService, authService } from '../../services';
 import ScheduledReports from '../../components/reports/ScheduledReports';
+import ReportTable from '../../components/reports/ReportTable';
 import { useLanguage } from '../../context/LanguageContext';
 import '../main.css';
 import './reports.css';
@@ -121,8 +122,8 @@ const Reports = () => {
     const [dlStartDate,  setDlStartDate]  = useState(`${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`);
     const [dlEndDate,    setDlEndDate]    = useState(`${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`);
     const [dlEmployeeId, setDlEmployeeId] = useState('');
-    const [dlAnomalies,  setDlAnomalies]  = useState(false);
     const [downloading,  setDownloading]  = useState(false);
+    const [preview,      setPreview]      = useState(null);
 
     useEffect(() => {
         userService.getMyRole().then(r => {
@@ -245,32 +246,84 @@ const Reports = () => {
     const isManager       = userRole === 'MANAGER';
     const canViewEmployee = userRole === 'MANAGER' || userRole === 'HR' || userRole === 'ADMIN';
 
+    const REPORTS = {
+        own: [
+            { key: 'timesheet', label: t('reports.timesheet', 'Karta pracy'),
+              data: reportService.getMyTimesheetData, download: reportService.downloadMyTimesheet },
+            { key: 'overtime', label: t('reports.overtime', 'Nadgodziny'),
+              data: reportService.getMyOvertimeData, download: reportService.downloadMyOvertime },
+        ],
+        employee: [
+            { key: 'timesheet', label: t('reports.timesheet', 'Karta pracy'), needsEmployee: true,
+              data: (from, to) => reportService.getEmployeeTimesheetData(dlEmployeeId, from, to),
+              download: (from, to, format) => reportService.downloadEmployeeTimesheet(dlEmployeeId, from, to, format) },
+        ],
+        team: [
+            { key: 'workload', label: t('reports.workload', 'Obciążenie'),
+              data: reportService.getTeamWorkloadData, download: reportService.downloadTeamWorkload },
+            { key: 'absences', label: t('reports.absencesType', 'Absencje'),
+              data: reportService.getTeamAbsencesData, download: reportService.downloadTeamAbsences },
+            { key: 'overtime', label: t('reports.overtime', 'Nadgodziny'),
+              data: reportService.getTeamOvertimeData, download: reportService.downloadTeamOvertime },
+            { key: 'dailyOvertime', label: t('reports.dailyOvertime', 'Nadgodziny wg dni'),
+              data: reportService.getTeamDailyOvertimeData, download: reportService.downloadTeamDailyOvertime },
+            { key: 'nightHours', label: t('reports.nightHours', 'Godziny nocne'),
+              data: reportService.getTeamNightHoursData, download: reportService.downloadTeamNightHours },
+            { key: 'matrix', label: t('reports.teamMatrix', 'Macierz zespołu'),
+              data: reportService.getTeamMatrixData, download: reportService.downloadTeamMatrix },
+            { key: 'anomalies', label: t('reports.anomalyDetection', 'Wykrywanie anomalii'),
+              hint: t('reports.anomalyHint', 'Raport pracowników z odchyleniem bilansu >10% od planu'),
+              data: reportService.getTeamAnomaliesData, download: reportService.downloadTeamAnomalies },
+        ],
+    };
+
+    const availableReports = REPORTS[dlTab] || [];
+    const selectedReport = availableReports.find(r => r.key === dlType) || availableReports[0];
+
+    useEffect(() => {
+        setPreview(null);
+    }, [dlTab, dlType, dlEmployeeId, dlStartDate, dlEndDate]);
+
+    const selectTab = (tab) => {
+        setDlTab(tab);
+        setDlType(REPORTS[tab][0].key);
+    };
+
+    const validateSelection = () => {
+        if (!dlStartDate || !dlEndDate) return t('reports.errorDateRange', 'Wybierz zakres dat.');
+        if (dlStartDate > dlEndDate) return t('reports.errorDateOrder', 'Data "Od" musi być wcześniejsza niż "Do".');
+        if (selectedReport?.needsEmployee && !dlEmployeeId) return t('reports.errorNoEmployee', 'Wybierz pracownika.');
+        return '';
+    };
+
     const handleDownload = async () => {
-        if (!dlStartDate || !dlEndDate) { alert(t('reports.errorDateRange', 'Wybierz zakres dat.')); return; }
-        if (dlStartDate > dlEndDate)    { alert(t('reports.errorDateOrder', 'Data "Od" musi być wcześniejsza niż "Do".')); return; }
+        const validationError = validateSelection();
+        if (validationError) { alert(validationError); return; }
         setDownloading(true);
         try {
-            if (dlTab === 'own') {
-                if (dlType === 'timesheet') await reportService.downloadMyTimesheet(dlStartDate, dlEndDate, dlFormat);
-                else                        await reportService.downloadMyOvertime(dlStartDate, dlEndDate, dlFormat);
-            } else if (dlTab === 'employee') {
-                if (!dlEmployeeId) { alert(t('reports.errorNoEmployee', 'Wybierz pracownika.')); return; }
-                await reportService.downloadEmployeeTimesheet(dlEmployeeId, dlStartDate, dlEndDate, dlFormat);
-            } else if (dlTab === 'team') {
-                if (dlAnomalies) {
-                    await reportService.downloadTeamAnomalies(dlStartDate, dlEndDate, dlFormat);
-                } else if (dlType === 'workload') {
-                    await reportService.downloadTeamWorkload(dlStartDate, dlEndDate, dlFormat);
-                } else if (dlType === 'absences') {
-                    await reportService.downloadTeamAbsences(dlStartDate, dlEndDate, dlFormat);
-                } else {
-                    await reportService.downloadTeamOvertime(dlStartDate, dlEndDate, dlFormat);
-                }
-            }
+            await selectedReport.download(dlStartDate, dlEndDate, dlFormat);
         } catch (e) {
             alert(e.message || t('reports.errorDownloading', 'Błąd podczas pobierania raportu.'));
         } finally {
             setDownloading(false);
+        }
+    };
+
+    const handlePreview = async () => {
+        const validationError = validateSelection();
+        if (validationError) {
+            setPreview({ report: null, loading: false, error: validationError });
+            return;
+        }
+        setPreview({ report: null, loading: true, error: '' });
+        try {
+            const report = await selectedReport.data(dlStartDate, dlEndDate);
+            setPreview({ report, loading: false, error: '' });
+        } catch (e) {
+            const message = e.code === 'REPORT_ACCESS_DENIED'
+                ? t('reports.errorAccessDenied', 'Nie masz dostępu do tego raportu.')
+                : e.message || t('reports.errorPreview', 'Nie udało się wyświetlić raportu.');
+            setPreview({ report: null, loading: false, error: message });
         }
     };
 
@@ -401,61 +454,38 @@ const Reports = () => {
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>
-            <Card title={t('reports.downloadSection', 'Pobierz raport')}>
+            <Card title={t('reports.detailsSection', 'Raporty szczegółowe')}>
                 <div className="dl-section">
 
                     <div className="dl-tabs">
-                        <button className={`period-tab ${dlTab === 'own' ? 'active' : ''}`}
-                            onClick={() => { setDlTab('own'); setDlType('timesheet'); setDlAnomalies(false); }}>
+                        <button className={`period-tab ${dlTab === 'own' ? 'active' : ''}`} onClick={() => selectTab('own')}>
                             {t('reports.myReports', 'Moje raporty')}
                         </button>
                         {canViewEmployee && (
-                            <button className={`period-tab ${dlTab === 'employee' ? 'active' : ''}`}
-                                onClick={() => { setDlTab('employee'); setDlType('timesheet'); setDlAnomalies(false); }}>
+                            <button className={`period-tab ${dlTab === 'employee' ? 'active' : ''}`} onClick={() => selectTab('employee')}>
                                 {t('reports.employeeReport', 'Raport pracownika')}
                             </button>
                         )}
                         {isManager && (
-                            <button className={`period-tab ${dlTab === 'team' ? 'active' : ''}`}
-                                onClick={() => { setDlTab('team'); setDlType('workload'); }}>
+                            <button className={`period-tab ${dlTab === 'team' ? 'active' : ''}`} onClick={() => selectTab('team')}>
                                 {t('reports.teamReports', 'Raporty zespołu')}
                             </button>
                         )}
                     </div>
 
                     <div className="dl-type-row">
-                        {dlTab === 'own' && (
-                            <>
-                                <button className={`period-tab ${dlType === 'timesheet' ? 'active' : ''}`} onClick={() => setDlType('timesheet')}>{t('reports.timesheet', 'Karta pracy')}</button>
-                                <button className={`period-tab ${dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}>{t('reports.overtime', 'Nadgodziny')}</button>
-                            </>
-                        )}
-                        {dlTab === 'employee' && (
-                            <button className="period-tab active">{t('reports.timesheet', 'Karta pracy')}</button>
-                        )}
-                        {dlTab === 'team' && (
-                            <>
-                                <button className={`period-tab ${!dlAnomalies && dlType === 'workload'  ? 'active' : ''}`} onClick={() => setDlType('workload')}  disabled={dlAnomalies} style={{ opacity: dlAnomalies ? 0.4 : 1 }}>{t('reports.workload', 'Obciążenie')}</button>
-                                <button className={`period-tab ${!dlAnomalies && dlType === 'absences'  ? 'active' : ''}`} onClick={() => setDlType('absences')} disabled={dlAnomalies} style={{ opacity: dlAnomalies ? 0.4 : 1 }}>{t('reports.absencesType', 'Absencje')}</button>
-                                <button className={`period-tab ${!dlAnomalies && dlType === 'overtime'  ? 'active' : ''}`} onClick={() => setDlType('overtime')}  disabled={dlAnomalies} style={{ opacity: dlAnomalies ? 0.4 : 1 }}>{t('reports.overtime', 'Nadgodziny')}</button>
-                            </>
-                        )}
+                        {availableReports.map(r => (
+                            <button
+                                key={r.key}
+                                className={`period-tab ${selectedReport?.key === r.key ? 'active' : ''}`}
+                                onClick={() => setDlType(r.key)}
+                            >
+                                {r.label}
+                            </button>
+                        ))}
                     </div>
 
-                    {dlTab === 'team' && isManager && (
-                        <label className={`anomaly-toggle${dlAnomalies ? ' anomaly-toggle--active' : ''}`}>
-                            <input
-                                type="checkbox"
-                                checked={dlAnomalies}
-                                onChange={e => setDlAnomalies(e.target.checked)}
-                            />
-                            <AlertTriangle size={14} />
-                            {t('reports.anomalyDetection', 'Wykrywanie anomalii')}
-                            <span style={{ fontWeight: 400, fontSize: '0.78rem', marginLeft: '0.25rem' }}>
-                                — {t('reports.anomalyHint', 'Raport pracowników z odchyleniem bilansu >10% od planu')}
-                            </span>
-                        </label>
-                    )}
+                    {selectedReport?.hint && <p className="dl-hint">{selectedReport.hint}</p>}
 
                     {dlTab === 'employee' && (
                         <select className="filter-select" value={dlEmployeeId} onChange={e => setDlEmployeeId(e.target.value)}>
@@ -477,12 +507,22 @@ const Reports = () => {
                     </div>
 
                     <div className="dl-footer">
-                        <FormatPicker value={dlFormat} onChange={setDlFormat} />
-                        <button className="report-dl-btn" onClick={handleDownload} disabled={downloading}>
-                            <Download size={16} />
-                            {downloading ? t('reports.generating', 'Generowanie…') : t('reports.downloadBtn', 'Pobierz raport')}
+                        <button className="report-preview-btn" onClick={handlePreview} disabled={preview?.loading}>
+                            <Table2 size={16} />
+                            {preview?.loading ? t('reports.loadingShort', 'Ładowanie…') : t('reports.previewBtn', 'Pokaż w tabeli')}
                         </button>
+                        <div className="dl-download-group">
+                            <FormatPicker value={dlFormat} onChange={setDlFormat} />
+                            <button className="report-dl-btn" onClick={handleDownload} disabled={downloading}>
+                                <Download size={16} />
+                                {downloading ? t('reports.generating', 'Generowanie…') : t('reports.downloadBtn', 'Pobierz raport')}
+                            </button>
+                        </div>
                     </div>
+
+                    {preview && (
+                        <ReportTable report={preview.report} loading={preview.loading} error={preview.error} />
+                    )}
                 </div>
             </Card>
             </div>
