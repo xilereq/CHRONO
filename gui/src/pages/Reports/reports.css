@@ -414,7 +414,6 @@
 .report-preview-btn:hover { background: var(--bg-main); border-color: var(--primary-color); }
 .report-preview-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* --- Tabela raportu --- */
 .report-table {
     display: flex;
     flex-direction: column;
