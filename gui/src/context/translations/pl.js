@@ -51,6 +51,7 @@ export const pl = {
         adminPanel: 'Panel Administratora',
         systemLogs: 'Logi Systemowe',
         settings: 'Ustawienia',
+        teamStructure: 'Struktura zespołu',
     },
 
     // ============= TOPBAR =============
@@ -764,5 +765,46 @@ export const pl = {
     userHoverCard: {
         noData: 'Brak danych',
         noPosition: 'Stanowisko nieokreślone'
-    }
+    },
+
+    team: {
+        title: 'Struktura zespołu',
+        subtitle: 'Hierarchia podległości i dane kontaktowe członków zespołu.',
+        view: 'Widok',
+        viewChart: 'Diagram',
+        viewList: 'Lista kontaktów',
+        rootLabel: 'Pokaż strukturę od',
+        organization: 'Cała organizacja',
+        teamOf: 'Zespół:',
+        myPosition: 'Moja pozycja',
+        search: 'Szukaj osoby lub e-maila…',
+        matches: 'Znaleziono: {n}',
+        showInactive: 'Pokaż nieaktywnych',
+        expandAll: 'Rozwiń wszystko',
+        collapseAll: 'Zwiń wszystko',
+        expand: 'Rozwiń',
+        collapse: 'Zwiń',
+        loading: 'Ładowanie struktury…',
+        loadError: 'Nie udało się pobrać struktury zespołu.',
+        empty: 'Brak danych o strukturze zespołu.',
+        noSubordinates: 'Ta osoba nie ma podwładnych.',
+        inactive: 'Nieaktywny',
+        contactCard: 'Karta kontaktu',
+        email: 'E-mail',
+        copy: 'Kopiuj',
+        copied: 'Skopiowano',
+        superior: 'Przełożony',
+        directSubordinates: 'Bezpośredni podwładni',
+        totalSubordinates: 'Wszyscy podwładni',
+        columnName: 'Imię i nazwisko',
+        columnRole: 'Rola',
+        columnSubordinates: 'Podwładni',
+        noResults: 'Brak osób spełniających kryteria.',
+        roles: {
+            ROLE_ADMIN: 'Administrator',
+            ROLE_HR: 'HR',
+            ROLE_MANAGER: 'Menedżer',
+            ROLE_EMPLOYEE: 'Pracownik',
+        },
+    },
 };

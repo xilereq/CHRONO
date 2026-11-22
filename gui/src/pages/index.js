@@ -21,4 +21,6 @@ export {default as UserManagementPage} from './Users/UserManagementPage'
 
 export { default as ManagerSchedulePage } from './Manager/ManagerSchedulePage';
 
+export { default as TeamStructurePage } from './Team/TeamStructurePage';
+
 

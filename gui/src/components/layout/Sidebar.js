@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, LayoutGrid, FileText, BarChart2, Settings, Shield, Terminal, Users, Calendar  } from 'lucide-react';
+import { Clock, LayoutGrid, FileText, BarChart2, Settings, Shield, Terminal, Users, Calendar, Network } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { userService, delegationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
@@ -73,6 +73,13 @@ const Sidebar = () => {
                     <NavLink to="/manager" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
                         <Clock size={24} />
                         <span style={{ textAlign: 'center' }}>{t('sidebar.teamSchedule', 'Czas pracy zespołu')}</span>
+                    </NavLink>
+                )}
+
+                {(isManager || isAdmin || isHr) && (
+                    <NavLink to="/zespol" className={({isActive}) => isActive ? 'sidebar-item active' : 'sidebar-item'}>
+                        <Network size={24} />
+                        <span style={{ textAlign: 'center' }}>{t('sidebar.teamStructure', 'Struktura zespołu')}</span>
                     </NavLink>
                 )}
 

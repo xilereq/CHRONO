@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, Topbar } from './components';
-import { Grafik, Dashboard, Requests, RequestDetail, Policies, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Settings, Logs, UserManagementPage, ManagerSchedulePage } from './pages';
+import { Grafik, Dashboard, Requests, RequestDetail, Policies, Raporty, Login, ForgotPasswordRequest, ForgotPasswordReset, Settings, Logs, UserManagementPage, ManagerSchedulePage, TeamStructurePage } from './pages';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { authService, userService, delegationService } from './services';
 import ChangePasswordModal from './components/ui/ChangePasswordModal';
@@ -104,6 +104,9 @@ const App = () => {
                             )}
                             {(isManager || isAdmin || isActingDeputy) && (
                                 <Route path="/manager" element={<ManagerSchedulePage />} />
+                            )}
+                            {(isManager || isAdmin || isHr || isActingDeputy) && (
+                                <Route path="/zespol" element={<TeamStructurePage />} />
                             )}
                             {isAdmin && (
                                 <>

@@ -50,6 +50,7 @@ export const en = {
         adminPanel: 'Admin Panel',
         systemLogs: 'System Logs',
         settings: 'Settings',
+        teamStructure: 'Team structure',
     },
 
     // ============= TOPBAR =============
@@ -816,5 +817,46 @@ export const en = {
     'userHoverCard': {
         noData: 'No data',
         noPosition: 'Position unspecified'
-    }
+    },
+
+    team: {
+        title: 'Team structure',
+        subtitle: 'Reporting hierarchy and contact details of team members.',
+        view: 'View',
+        viewChart: 'Chart',
+        viewList: 'Contact list',
+        rootLabel: 'Show structure from',
+        organization: 'Whole organization',
+        teamOf: 'Team:',
+        myPosition: 'My position',
+        search: 'Search for a person or e-mail…',
+        matches: 'Found: {n}',
+        showInactive: 'Show inactive',
+        expandAll: 'Expand all',
+        collapseAll: 'Collapse all',
+        expand: 'Expand',
+        collapse: 'Collapse',
+        loading: 'Loading structure…',
+        loadError: 'Could not load the team structure.',
+        empty: 'No team structure data.',
+        noSubordinates: 'This person has no subordinates.',
+        inactive: 'Inactive',
+        contactCard: 'Contact card',
+        email: 'E-mail',
+        copy: 'Copy',
+        copied: 'Copied',
+        superior: 'Manager',
+        directSubordinates: 'Direct reports',
+        totalSubordinates: 'All reports',
+        columnName: 'Full name',
+        columnRole: 'Role',
+        columnSubordinates: 'Reports',
+        noResults: 'No people match the criteria.',
+        roles: {
+            ROLE_ADMIN: 'Administrator',
+            ROLE_HR: 'HR',
+            ROLE_MANAGER: 'Manager',
+            ROLE_EMPLOYEE: 'Employee',
+        },
+    },
 };
