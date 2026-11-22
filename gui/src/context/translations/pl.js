@@ -764,7 +764,10 @@ export const pl = {
     },
     userHoverCard: {
         noData: 'Brak danych',
-        noPosition: 'Stanowisko nieokreślone'
+        noPosition: 'Stanowisko nieokreślone',
+        defaultName: 'Użytkownik',
+        defaultPosition: 'Pracownik',
+        defaultDepartment: 'Zespół',
     },
 
     team: {

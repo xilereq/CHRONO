@@ -815,6 +815,14 @@ export const de = {
         placeholderRepeat: 'Neues Passwort wiederholen',
     },
 
+    userHoverCard: {
+        noData: 'Keine Daten',
+        noPosition: 'Position nicht angegeben',
+        defaultName: 'Benutzer',
+        defaultPosition: 'Mitarbeiter',
+        defaultDepartment: 'Team',
+    },
+
     team: {
         title: 'Teamstruktur',
         subtitle: 'Unterstellungshierarchie und Kontaktdaten der Teammitglieder.',

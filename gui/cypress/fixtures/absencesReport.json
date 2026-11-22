@@ -1,0 +1,62 @@
+{
+  "title": "Raport Wniosków i Absencji",
+  "fields": [
+    {
+      "label": "Okres",
+      "value": "2026-11-01 - 2026-11-30",
+      "type": "TEXT"
+    }
+  ],
+  "columns": [
+    {
+      "label": "Pracownik",
+      "type": "TEXT"
+    },
+    {
+      "label": "Typ Wniosku",
+      "type": "TEXT"
+    },
+    {
+      "label": "Status",
+      "type": "TEXT"
+    },
+    {
+      "label": "Data Od",
+      "type": "DATE"
+    },
+    {
+      "label": "Data Do",
+      "type": "DATE"
+    }
+  ],
+  "rows": [
+    [
+      "Ola Zielinska",
+      "HOLIDAY_LEAVE",
+      "APPROVED",
+      "2026-11-03",
+      "2026-11-05"
+    ],
+    [
+      "Marek Wojcik",
+      "HOME_OFFICE",
+      "PENDING",
+      "2026-11-10",
+      "2026-11-10"
+    ],
+    [
+      "Piotr Adamski",
+      "SICK_LEAVE",
+      "APPROVED",
+      "2026-11-12",
+      "2026-11-14"
+    ],
+    [
+      "Ewa Kaminska",
+      "HOLIDAY_LEAVE",
+      "REJECTED",
+      "2026-11-20",
+      "2026-11-21"
+    ]
+  ]
+}

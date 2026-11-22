@@ -56,10 +56,10 @@ const Topbar = ({ userEmail, userDetails, onLogout }) => {
     };
 
     const hoverUserData = {
-        name: userDetails?.name || (userEmail ? userEmail.split('@')[0] : 'Użytkownik'),
-        position: userDetails?.position || 'Pracownik',
+        name: userDetails?.name || (userEmail ? userEmail.split('@')[0] : t('userHoverCard.defaultName', 'Użytkownik')),
+        position: userDetails?.position || t('userHoverCard.defaultPosition', 'Pracownik'),
         email: userEmail || '',
-        department: userDetails?.department || 'Zespół',
+        department: userDetails?.department || t('userHoverCard.defaultDepartment', 'Zespół'),
         avatarUrl: userDetails?.avatarUrl || null
     };
 

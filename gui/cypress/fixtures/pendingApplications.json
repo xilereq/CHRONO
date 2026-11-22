@@ -1,0 +1,8 @@
+[
+  { "id": 101, "type": "HOLIDAY_LEAVE", "status": "PENDING", "startDate": "2026-12-01", "endDate": "2026-12-03",
+    "reason": "Wyjazd", "employeeId": 11, "employeeEmail": "ola.zielinska@chrono.test" },
+  { "id": 102, "type": "HOME_OFFICE", "status": "PENDING", "startDate": "2026-12-04", "endDate": "2026-12-04",
+    "reason": null, "employeeId": 12, "employeeEmail": "marek.wojcik@chrono.test" },
+  { "id": 103, "type": "SICK_LEAVE", "status": "PENDING", "startDate": "2026-12-07", "endDate": "2026-12-08",
+    "reason": null, "employeeId": 5, "employeeEmail": "piotr.adamski@chrono.test" }
+]

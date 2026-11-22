@@ -93,9 +93,9 @@ const ScheduleChangeTab = () => {
 
                         const employeeData = {
                             name: req.employeeName || t('manager.unknownEmployee', 'Nieznany pracownik'),
-                            position: req.employeePosition || t('userHoverCard.noPosition', 'Pracownik'),
+                            position: req.employeePosition || t('userHoverCard.defaultPosition', 'Pracownik'),
                             email: req.employeeEmail || '',
-                            department: req.department || t('manager.teamScheduleTab', 'Zespół')
+                            department: req.department || t('userHoverCard.defaultDepartment', 'Zespół')
                         };
 
                         return (
@@ -112,9 +112,9 @@ const ScheduleChangeTab = () => {
                                                     width: '28px',
                                                     height: '28px',
                                                     borderRadius: '50%',
-                                                    background: '#fff8e1',
-                                                    border: '1px solid #fde68a',
-                                                    color: '#b48300',
+                                                    background: 'var(--primary-soft)',
+                                                    border: '1px solid var(--primary-color)',
+                                                    color: 'var(--warning-text)',
                                                     cursor: 'pointer'
                                                 }}
                                                 title={employeeData.name}

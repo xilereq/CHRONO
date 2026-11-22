@@ -814,9 +814,12 @@ export const en = {
         placeholderMin8: 'Minimum 8 characters',
         placeholderRepeat: 'Repeat new password',
     },
-    'userHoverCard': {
+    userHoverCard: {
         noData: 'No data',
-        noPosition: 'Position unspecified'
+        noPosition: 'Position unspecified',
+        defaultName: 'User',
+        defaultPosition: 'Employee',
+        defaultDepartment: 'Team',
     },
 
     team: {

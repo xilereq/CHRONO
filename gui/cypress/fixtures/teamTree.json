@@ -1,0 +1,20 @@
+{
+  "userId": 2, "name": "Anna", "surname": "Kowalska", "email": "anna.kowalska@chrono.test",
+  "roles": ["ROLE_MANAGER"], "active": true, "directSubordinates": 3, "totalSubordinates": 5,
+  "subordinates": [
+    {
+      "userId": 4, "name": "Kasia", "surname": "Nowak", "email": "kasia.nowak@chrono.test",
+      "roles": ["ROLE_MANAGER"], "active": true, "directSubordinates": 2, "totalSubordinates": 2,
+      "subordinates": [
+        { "userId": 11, "name": "Ola", "surname": "Zielinska", "email": "ola.zielinska@chrono.test",
+          "roles": ["ROLE_EMPLOYEE"], "active": true, "directSubordinates": 0, "totalSubordinates": 0, "subordinates": [] },
+        { "userId": 12, "name": "Marek", "surname": "Wojcik", "email": "marek.wojcik@chrono.test",
+          "roles": ["ROLE_EMPLOYEE"], "active": true, "directSubordinates": 0, "totalSubordinates": 0, "subordinates": [] }
+      ]
+    },
+    { "userId": 5, "name": "Piotr", "surname": "Adamski", "email": "piotr.adamski@chrono.test",
+      "roles": ["ROLE_EMPLOYEE"], "active": true, "directSubordinates": 0, "totalSubordinates": 0, "subordinates": [] },
+    { "userId": 6, "name": "Ewa", "surname": "Kaminska", "email": "ewa.kaminska@chrono.test",
+      "roles": ["ROLE_EMPLOYEE"], "active": true, "directSubordinates": 0, "totalSubordinates": 0, "subordinates": [] }
+  ]
+}

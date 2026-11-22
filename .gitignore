@@ -40,3 +40,6 @@ application-local.properties
 *.p12
 *.jks
 /docs
+gui/cypress/downloads
+gui/cypress/screenshots
+gui/cypress/videos
