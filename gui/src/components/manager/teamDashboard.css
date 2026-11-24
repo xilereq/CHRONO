@@ -1,0 +1,334 @@
+/* src/components/manager/teamDashboard.css */
+
+.team-dash {
+    --status-office: var(--info);
+    --status-home: var(--success-bright);
+    --status-leave: var(--warning);
+    --status-none: var(--text-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.team-dash-status-office { --status-color: var(--status-office); --status-bg: var(--info-bg); }
+.team-dash-status-home   { --status-color: var(--status-home);   --status-bg: var(--success-bg); }
+.team-dash-status-leave  { --status-color: var(--status-leave);  --status-bg: var(--warning-bg); }
+.team-dash-status-none   { --status-color: var(--status-none);   --status-bg: var(--bg-main); }
+
+/* Header */
+.team-dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.team-dash-title {
+    margin: 0;
+    font-size: 1.4rem;
+    color: var(--text-main);
+}
+
+.team-dash-subtitle {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.team-dash-actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+}
+
+
+.team-dash-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.team-dash-icon-btn:disabled { opacity: 0.6; cursor: default; }
+
+.team-dash-spin { animation: team-dash-spin 0.9s linear infinite; }
+@keyframes team-dash-spin { to { transform: rotate(360deg); } }
+
+/* Date navigation & team select */
+.team-dash-datenav {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.team-dash-date,
+.team-dash-select {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.85rem;
+    color-scheme: light dark;
+}
+
+.team-dash-today-btn {
+    height: 36px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--primary-color);
+    color: var(--on-primary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.team-dash-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    transition: opacity 0.2s;
+}
+
+.team-dash-stale { opacity: 0.6; }
+
+/* KPI tiles */
+.team-dash-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--space-4);
+}
+
+.team-dash-kpi {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        "icon label"
+        "value value"
+        "meta meta";
+    align-items: center;
+    column-gap: var(--space-2);
+    text-align: left;
+    padding: var(--space-4) var(--space-4) var(--space-4) calc(var(--space-4) + 4px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    overflow: hidden;
+    color: var(--text-main);
+    font: inherit;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.team-dash-kpi::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--status-color);
+}
+
+.team-dash-kpi:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.team-dash-kpi.active { border-color: var(--status-color); box-shadow: 0 0 0 2px var(--status-bg), var(--shadow-md); }
+
+.team-dash-kpi-icon {
+    grid-area: icon;
+    display: inline-flex;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    background: var(--status-bg);
+    color: var(--status-color);
+}
+
+.team-dash-kpi-label { grid-area: label; font-size: 0.85rem; color: var(--text-muted); }
+.team-dash-kpi-value {
+    grid-area: value;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: var(--space-3);
+    font-variant-numeric: tabular-nums;
+}
+.team-dash-kpi-meta { grid-area: meta; font-size: 0.8rem; color: var(--text-muted); }
+
+/* Cards */
+.team-dash-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-sm);
+}
+
+.team-dash-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.team-dash-card-head h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.team-dash-muted { color: var(--text-muted); font-size: 0.85rem; }
+
+/* Stacked bar */
+.team-dash-bar {
+    display: flex;
+    gap: 2px;
+    height: 18px;
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    background: var(--bg-main);
+}
+
+.team-dash-bar-seg { background: var(--status-color); min-width: 4px; transition: flex-grow 0.3s; }
+.team-dash-bar-empty { flex: 1; }
+
+.team-dash-legend {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.team-dash-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.team-dash-legend strong { color: var(--text-main); }
+
+.team-dash-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--status-color);
+}
+
+/* People list */
+.team-dash-filter-tag {
+    border: 0;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--primary-soft);
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.team-dash-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-muted);
+}
+
+.team-dash-search input {
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.85rem;
+    width: 180px;
+}
+
+.team-dash-people {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.team-dash-people li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.team-dash-people li:first-child { border-top: 0; }
+
+.team-dash-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-soft);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.team-dash-person { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.team-dash-person-name { color: var(--text-main); font-weight: 500; }
+.team-dash-person .team-dash-muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.team-dash-pill {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--status-bg);
+    color: var(--status-color);
+    border: 1px solid var(--status-color);
+}
+
+.team-dash-live {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--status-home);
+}
+
+.team-dash-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-home);
+    animation: team-dash-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes team-dash-pulse { 50% { opacity: 0.35; } }
+
+.team-dash-no-results { margin: 0; text-align: center; padding: var(--space-4); }
+
+@media (max-width: 640px) {
+    .team-dash-search input { width: 120px; }
+    .team-dash-card { padding: var(--space-4); }
+}

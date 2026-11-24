@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, UserPlus, ClipboardList, UserCheck } from 'lucide-react';
+import { Clock, UserPlus, ClipboardList, UserCheck, LayoutDashboard } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const ManagerSidebar = ({ activeTab, setActiveTab, isActingDeputy = false }) => {
@@ -11,6 +11,13 @@ const ManagerSidebar = ({ activeTab, setActiveTab, isActingDeputy = false }) => 
                 <h2>{t('manager.toolsTitle', 'Narzędzia')}</h2>
             </div>
             <nav className="policies-nav">
+
+                <button
+                    className={`policies-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('dashboard')}
+                >
+                    <LayoutDashboard size={18} /> {t('manager.dashboardTab', 'Dashboard zespołu')}
+                </button>
 
                 {!isActingDeputy && (
                     <button

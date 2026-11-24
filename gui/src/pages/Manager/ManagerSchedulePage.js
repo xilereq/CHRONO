@@ -3,6 +3,7 @@ import ManagerSidebar from '../../components/manager/ManagerSidebar';
 import ScheduleChangeTab from '../../components/manager/ScheduleChangeTab';
 import ManagerRequestTab from '../../components/manager/ManagerRequestTab';
 import DeputyTab from '../../components/manager/DeputyTab';
+import TeamDashboardTab from '../../components/manager/TeamDashboardTab';
 import ApprovalList from '../Requests/ApprovalList';
 import { userService, delegationService } from '../../services';
 import { useLanguage } from '../../context/LanguageContext';
@@ -53,6 +54,10 @@ const ManagerSchedulePage = () => {
                                 {t('manager.actingDeputyBanner', 'Zastępujesz menedżera:')}{' '}
                                 {represented.map(d => `${d.managerName} (${d.startDate} – ${d.endDate})`).join(', ')}
                             </div>
+                        )}
+
+                        {ready && activeTab === 'dashboard' && (
+                            <TeamDashboardTab represented={represented} isRealManager={isRealManager} />
                         )}
 
                         {ready && activeTab === 'schedule' && <ScheduleChangeTab />}

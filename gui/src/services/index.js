@@ -10,3 +10,4 @@ export { default as workLogRequestService } from './workLogRequestService';
 export { default as reportService } from './reportService';
 export { default as delegationService } from './delegationService';
 export { default as scheduledReportService } from './scheduledReportService';
+export { default as teamDashboardService } from './teamDashboardService';
